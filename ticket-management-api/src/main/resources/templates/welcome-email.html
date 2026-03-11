@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="margin:0; padding:0; background-color:#f0f2f5; font-family:'Segoe UI', Arial, sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f2f5; padding:48px 0;">
+    <tr>
+        <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0"
+                   style="background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e0e0e0;">
+
+                <!-- HEADER -->
+                <tr>
+                    <td style="padding:36px 40px; border-bottom:1px solid #e8e8e8;">
+                        <table width="100%">
+                            <tr>
+                                <td>
+                                    <h1 style="color:#1a1a1a; margin:0; font-size:20px; font-weight:700; letter-spacing:-0.3px;">
+                                        Ticket Management
+                                    </h1>
+                                    <p style="color:#888888; margin:4px 0 0; font-size:12px; text-transform:uppercase; letter-spacing:1.5px;">
+                                        Tunisie Telecom - Support Platform
+                                    </p>
+                                </td>
+                                <td align="right" style="vertical-align:middle;">
+                                    <span style="background:#1a1a1a; color:#ffffff; padding:6px 14px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px;">
+                                        Confidentiel
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- BODY -->
+                <tr>
+                    <td style="padding:40px;">
+
+                        <!-- Salutation -->
+                        <p style="color:#1a1a1a; font-size:16px; margin:0 0 6px; font-weight:600;">
+                            Bonjour <span th:text="${firstName}">Prenom</span> <span th:text="${lastName}">Nom</span>,
+                        </p>
+                        <p style="color:#555555; font-size:14px; line-height:1.7; margin:0 0 32px;">
+                            Votre compte a ete cree sur la plateforme Ticket Management.
+                            Vous trouverez ci-dessous vos identifiants de connexion.
+                        </p>
+
+                        <!-- IDENTIFIANTS -->
+                        <table width="100%" style="border:1px solid #e0e0e0; border-radius:6px; overflow:hidden; margin:0 0 32px;">
+
+                            <!-- Titre section -->
+                            <tr>
+                                <td colspan="2" style="background:#fafafa; padding:14px 20px; border-bottom:1px solid #e0e0e0;">
+                                    <strong style="color:#1a1a1a; font-size:12px; text-transform:uppercase; letter-spacing:1.2px;">
+                                        Informations du compte
+                                    </strong>
+                                </td>
+                            </tr>
+
+                            <!-- Nom -->
+                            <tr>
+                                <td style="padding:14px 20px; border-bottom:1px solid #f0f0f0; width:140px;">
+                                    <span style="color:#888888; font-size:12px;">Nom complet</span>
+                                </td>
+                                <td style="padding:14px 20px; border-bottom:1px solid #f0f0f0;">
+                                    <strong style="color:#1a1a1a; font-size:14px;">
+                                        <span th:text="${firstName}">Prenom</span>
+                                        <span th:text="${lastName}">Nom</span>
+                                    </strong>
+                                </td>
+                            </tr>
+
+                            <!-- Email -->
+                            <tr>
+                                <td style="padding:14px 20px; border-bottom:1px solid #f0f0f0;">
+                                    <span style="color:#888888; font-size:12px;">Identifiant</span>
+                                </td>
+                                <td style="padding:14px 20px; border-bottom:1px solid #f0f0f0;">
+                                    <code style="color:#1a1a1a; font-size:14px; background:#f5f5f5; padding:3px 8px; border-radius:3px; font-family:'Courier New', monospace;"
+                                          th:text="${email}">
+                                        email@example.com
+                                    </code>
+                                </td>
+                            </tr>
+
+                            <!-- Mot de passe -->
+                            <tr>
+                                <td style="padding:14px 20px; border-bottom:1px solid #f0f0f0;">
+                                    <span style="color:#888888; font-size:12px;">Mot de passe</span>
+                                </td>
+                                <td style="padding:14px 20px; border-bottom:1px solid #f0f0f0;">
+                                    <code style="color:#1a1a1a; font-size:15px; background:#f5f5f5; padding:4px 12px; border-radius:3px; font-family:'Courier New', monospace; letter-spacing:1.5px; font-weight:700;"
+                                          th:text="${password}">
+                                        ********
+                                    </code>
+                                </td>
+                            </tr>
+
+                            <!-- Role -->
+                            <tr>
+                                <td style="padding:14px 20px;">
+                                    <span style="color:#888888; font-size:12px;">Role</span>
+                                </td>
+                                <td style="padding:14px 20px;">
+                                    <span th:if="${roleName == 'ROLE_ADMIN'}"
+                                          style="background:#1a1a1a; color:#ffffff; padding:4px 12px; border-radius:3px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;">
+                                        Administrateur
+                                    </span>
+                                    <span th:if="${roleName == 'ROLE_IT'}"
+                                          style="background:#444444; color:#ffffff; padding:4px 12px; border-radius:3px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;">
+                                        Support IT
+                                    </span>
+                                    <span th:if="${roleName == 'ROLE_METIER'}"
+                                          style="background:#777777; color:#ffffff; padding:4px 12px; border-radius:3px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;">
+                                        Metier
+                                    </span>
+                                </td>
+                            </tr>
+
+                        </table>
+
+                        <!-- AVERTISSEMENT -->
+                        <table width="100%" style="margin:0 0 32px;">
+                            <tr>
+                                <td style="padding:16px 20px; background:#fafafa; border-left:3px solid #1a1a1a; border-radius:0 4px 4px 0;">
+                                    <p style="margin:0; color:#555555; font-size:13px; line-height:1.6;">
+                                        <strong style="color:#1a1a1a;">Securite :</strong>
+                                        Ce mot de passe est temporaire. Veuillez le modifier
+                                        lors de votre premiere connexion. Ne partagez jamais
+                                        vos identifiants avec un tiers.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- BOUTON -->
+                        <table width="100%" style="margin:0 0 16px;">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${loginUrl}"
+                                       style="background:#1a1a1a; color:#ffffff; padding:14px 48px; border-radius:6px; text-decoration:none; font-weight:600; font-size:14px; display:inline-block; letter-spacing:0.3px;">
+                                        Acceder a la plateforme
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="text-align:center; margin:0; color:#aaaaaa; font-size:12px;">
+                            <span th:text="${loginUrl}">http://localhost:4200/login</span>
+                        </p>
+
+                    </td>
+                </tr>
+
+                <!-- SEPARATOR -->
+                <tr>
+                    <td style="padding:0 40px;">
+                        <hr style="border:none; border-top:1px solid #e8e8e8; margin:0;">
+                    </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                    <td style="padding:24px 40px 32px;">
+                        <table width="100%">
+                            <tr>
+                                <td>
+                                    <p style="color:#aaaaaa; font-size:11px; margin:0; line-height:1.6;">
+                                        Ce message est confidentiel et destine uniquement a son destinataire.
+                                        <br>
+                                        Si vous n'etes pas le destinataire prevu, veuillez supprimer ce message.
+                                    </p>
+                                </td>
+                                <td align="right" style="vertical-align:top;">
+                                    <p style="color:#aaaaaa; font-size:11px; margin:0;">
+                                        &copy; 2026
+                                        <br>
+                                        Tunisie Telecom
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </table>
+
+            <!-- SUB-FOOTER -->
+            <p style="color:#bbbbbb; font-size:10px; margin:16px 0 0; text-align:center;">
+                Email genere automatiquement - Ne pas repondre
+            </p>
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

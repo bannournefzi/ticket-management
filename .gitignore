@@ -1,0 +1,18 @@
+# Backend Spring Boot
+target/
+.idea/
+*.iml
+.mvn/wrapper/maven-wrapper.jar
+*.jar
+*.class
+
+# Frontend Angular
+node_modules/
+dist/
+.angular/
+
+# Général
+*.log
+.DS_Store
+Thumbs.db
+*.env
