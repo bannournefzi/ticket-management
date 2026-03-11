@@ -1,0 +1,419 @@
+<div class="profile-page">
+
+  <!-- Hero Banner -->
+  <div class="profile-hero">
+    <div class="hero-bg">
+      <div class="hero-shape shape-1"></div>
+      <div class="hero-shape shape-2"></div>
+    </div>
+    <div class="hero-content">
+      <div class="avatar-wrapper">
+        <div class="avatar-ring" [style.borderColor]="avatarColor">
+          <div class="avatar-circle" *ngIf="!avatarPreview" [style.background]="avatarColor">
+            <span class="avatar-initials">{{ initials }}</span>
+          </div>
+          <img *ngIf="avatarPreview" [src]="avatarPreview" class="avatar-img" alt="Photo"/>
+        </div>
+        <button class="avatar-edit-btn" (click)="activeTab = 'photo'">
+          <i class="fas fa-camera"></i>
+        </button>
+      </div>
+      <div class="hero-user-info">
+        <h1 class="hero-name">{{ fullName }}</h1>
+        <p class="hero-email"><i class="fas fa-envelope"></i> {{ email }}</p>
+        <div class="hero-badges">
+          <span class="role-badge" [class]="getRoleBadgeClass()">
+            <i class="fas" [ngClass]="{
+              'fa-crown': role === 'ROLE_ADMIN',
+              'fa-chart-bar': role === 'ROLE_BUSINESS_ANALYST',
+              'fa-briefcase': role === 'ROLE_METIER'
+            }"></i>
+            {{ roleLabel }}
+          </span>
+          <span class="dept-badge" *ngIf="departement">
+            <i class="fas fa-building"></i> {{ getDepartementLabel(departement) }}
+          </span>
+          <span class="member-since">
+            <i class="fas fa-calendar-alt"></i> Membre depuis {{ memberSince }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="profile-tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'info'" (click)="activeTab = 'info'">
+      <i class="fas fa-user"></i><span>Informations</span>
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'photo'" (click)="activeTab = 'photo'">
+      <i class="fas fa-camera"></i><span>Photo de profil</span>
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'password'" (click)="activeTab = 'password'">
+      <i class="fas fa-shield-halved"></i><span>Sécurité</span>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="profile-body">
+
+    <!-- ══════════════════════════════════════════════
+         TAB 1 : INFORMATIONS
+    ══════════════════════════════════════════════ -->
+    <div class="tab-panel" *ngIf="activeTab === 'info'">
+      <div class="panel-grid">
+
+        <div class="panel-main">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-header-icon"><i class="fas fa-user-edit"></i></div>
+              <div>
+                <h3>Informations personnelles</h3>
+                <p>Modifiez vos informations de profil</p>
+              </div>
+            </div>
+
+            <div class="alert-success" *ngIf="successInfo">
+              <i class="fas fa-check-circle"></i> Informations mises à jour avec succès !
+            </div>
+            <div class="alert-error" *ngIf="errorInfo">
+              <i class="fas fa-exclamation-triangle"></i> {{ errorInfo }}
+            </div>
+
+            <form [formGroup]="infoForm" (ngSubmit)="onSubmitInfo()" class="profile-form">
+
+              <div class="form-row">
+                <div class="input-group">
+                  <label class="input-label">Prénom <span class="required">*</span></label>
+                  <div class="input-wrapper" [class.input-error]="infoForm.get('firstName')?.invalid && infoForm.get('firstName')?.touched">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" formControlName="firstName" class="input-field" placeholder="Votre prénom"/>
+                  </div>
+                  <span class="input-hint" *ngIf="infoForm.get('firstName')?.invalid && infoForm.get('firstName')?.touched">Champ obligatoire</span>
+                </div>
+
+                <div class="input-group">
+                  <label class="input-label">Nom <span class="required">*</span></label>
+                  <div class="input-wrapper" [class.input-error]="infoForm.get('lastName')?.invalid && infoForm.get('lastName')?.touched">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" formControlName="lastName" class="input-field" placeholder="Votre nom"/>
+                  </div>
+                  <span class="input-hint" *ngIf="infoForm.get('lastName')?.invalid && infoForm.get('lastName')?.touched">Champ obligatoire</span>
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Adresse email</label>
+                <div class="input-wrapper input-disabled">
+                  <i class="fas fa-envelope input-icon"></i>
+                  <input type="email" formControlName="email" class="input-field" readonly/>
+                  <span class="input-badge">Non modifiable</span>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="input-group">
+                  <label class="input-label">Téléphone</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-phone input-icon"></i>
+                    <input type="tel" formControlName="phone" class="input-field" placeholder="+216 XX XXX XXX"/>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label class="input-label">Date de naissance</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-birthday-cake input-icon"></i>
+                    <input type="date" formControlName="dateOfBirth" class="input-field"/>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="input-group">
+                  <label class="input-label">Département</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-building input-icon"></i>
+                    <select formControlName="departement" class="input-field input-select">
+                      <option value="">-- Non défini --</option>
+                      <option *ngFor="let d of departements" [value]="d">{{ getDepartementLabel(d) }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label class="input-label">Adresse</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-map-marker-alt input-icon"></i>
+                    <input type="text" formControlName="address" class="input-field" placeholder="Votre adresse"/>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="loadUserData(); buildForms()">
+                  <i class="fas fa-undo"></i> Annuler
+                </button>
+                <button type="submit" class="btn-primary" [disabled]="isLoadingInfo">
+                  <span *ngIf="!isLoadingInfo"><i class="fas fa-floppy-disk"></i> Enregistrer</span>
+                  <span *ngIf="isLoadingInfo"><span class="spinner"></span> Enregistrement...</span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <!-- Side cards -->
+        <div class="panel-side">
+          <div class="card info-summary-card">
+            <div class="card-header">
+              <div class="card-header-icon"><i class="fas fa-id-card"></i></div>
+              <div><h3>Résumé du compte</h3></div>
+            </div>
+            <div class="summary-list">
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-user"></i> Nom complet</span>
+                <span class="summary-value">{{ fullName }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-envelope"></i> Email</span>
+                <span class="summary-value email-val">{{ email }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-phone"></i> Téléphone</span>
+                <span class="summary-value" *ngIf="phone">{{ phone }}</span>
+                <span class="summary-value text-muted" *ngIf="!phone">Non renseigné</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-birthday-cake"></i> Naissance</span>
+                <span class="summary-value" *ngIf="dateOfBirth">{{ dateOfBirth | date:'dd/MM/yyyy' }}</span>
+                <span class="summary-value text-muted" *ngIf="!dateOfBirth">Non renseignée</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-building"></i> Département</span>
+                <span class="summary-value" *ngIf="departement">{{ getDepartementLabel(departement) }}</span>
+                <span class="summary-value text-muted" *ngIf="!departement">Non défini</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-shield-alt"></i> Rôle</span>
+                <span class="summary-value">
+                  <span class="role-badge-sm" [class]="getRoleBadgeClass()">{{ roleLabel }}</span>
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-circle"></i> Statut</span>
+                <span class="summary-value status-online">
+                  <span class="dot"></span> Actif
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"><i class="fas fa-calendar"></i> Membre depuis</span>
+                <span class="summary-value">{{ memberSince }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card quick-actions-card">
+            <div class="card-header">
+              <div class="card-header-icon"><i class="fas fa-bolt"></i></div>
+              <div><h3>Actions rapides</h3></div>
+            </div>
+            <div class="quick-actions-list">
+              <button class="quick-action-item" (click)="activeTab = 'photo'">
+                <div class="qa-icon"><i class="fas fa-camera"></i></div>
+                <span>Changer la photo</span>
+                <i class="fas fa-chevron-right qa-arrow"></i>
+              </button>
+              <button class="quick-action-item" (click)="activeTab = 'password'">
+                <div class="qa-icon"><i class="fas fa-lock"></i></div>
+                <span>Modifier le mot de passe</span>
+                <i class="fas fa-chevron-right qa-arrow"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 2 : PHOTO
+    ══════════════════════════════════════════════ -->
+    <div class="tab-panel" *ngIf="activeTab === 'photo'">
+      <div class="panel-grid">
+        <div class="panel-main">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-header-icon"><i class="fas fa-image"></i></div>
+              <div>
+                <h3>Photo de profil</h3>
+                <p>Personnalisez votre avatar</p>
+              </div>
+            </div>
+            <div class="photo-section">
+
+              <div class="alert-success" *ngIf="successPhoto">
+                <i class="fas fa-check-circle"></i> Photo mise à jour avec succès !
+              </div>
+              <div class="alert-error" *ngIf="errorPhoto">
+                <i class="fas fa-exclamation-triangle"></i> {{ errorPhoto }}
+              </div>
+
+              <div class="photo-preview-area">
+                <div class="photo-preview-ring" [style.borderColor]="avatarColor">
+                  <div class="photo-preview-circle" *ngIf="!avatarPreview" [style.background]="avatarColor">
+                    <span>{{ initials }}</span>
+                  </div>
+                  <img *ngIf="avatarPreview" [src]="avatarPreview" class="photo-preview-img" alt="Preview"/>
+                </div>
+                <div class="photo-preview-labels">
+                  <h4>{{ fullName }}</h4>
+                  <p>{{ email }}</p>
+                  <span class="role-badge" [class]="getRoleBadgeClass()">{{ roleLabel }}</span>
+                </div>
+              </div>
+              <div class="upload-zone" (click)="fileInput.click()">
+                <input #fileInput type="file" accept="image/*" class="file-input-hidden" (change)="onFileSelected($event)"/>
+                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                <h4>Cliquez ou glissez une image</h4>
+                <p>JPG, PNG, GIF — Max 5 Mo</p>
+                <button type="button" class="btn-outline"><i class="fas fa-folder-open"></i> Parcourir les fichiers</button>
+              </div>
+              <div class="photo-rules">
+                <div class="rule-item"><i class="fas fa-check-circle"></i> Format carré recommandé (1:1)</div>
+                <div class="rule-item"><i class="fas fa-check-circle"></i> Résolution minimale : 200x200 px</div>
+                <div class="rule-item"><i class="fas fa-check-circle"></i> Formats acceptés : JPG, PNG, GIF</div>
+                <div class="rule-item"><i class="fas fa-check-circle"></i> Taille maximale : 5 Mo</div>
+              </div>
+              <div class="form-actions" *ngIf="avatarPreview">
+                <button type="button" class="btn-danger" (click)="removePhoto()"><i class="fas fa-trash"></i> Supprimer</button>
+                <button type="button" class="btn-primary" (click)="savePhoto()" [disabled]="isLoadingPhoto || !selectedFile">
+                  <span *ngIf="!isLoadingPhoto"><i class="fas fa-floppy-disk"></i> Enregistrer la photo</span>
+                  <span *ngIf="isLoadingPhoto"><span class="spinner"></span> Upload...</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-side">
+          <div class="card tips-card">
+            <div class="card-header">
+              <div class="card-header-icon tips"><i class="fas fa-lightbulb"></i></div>
+              <div><h3>Conseils</h3></div>
+            </div>
+            <div class="tips-list">
+              <div class="tip-item"><i class="fas fa-star"></i><p>Une photo professionnelle renforce votre crédibilité.</p></div>
+              <div class="tip-item"><i class="fas fa-crop-alt"></i><p>Utilisez une image carrée pour un meilleur rendu.</p></div>
+              <div class="tip-item"><i class="fas fa-eye"></i><p>Votre photo est visible par tous les membres.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 3 : SÉCURITÉ
+    ══════════════════════════════════════════════ -->
+    <div class="tab-panel" *ngIf="activeTab === 'password'">
+      <div class="panel-grid">
+        <div class="panel-main">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-header-icon"><i class="fas fa-lock"></i></div>
+              <div>
+                <h3>Changer le mot de passe</h3>
+                <p>Gardez votre compte sécurisé</p>
+              </div>
+            </div>
+
+            <div class="alert-success" *ngIf="successPassword">
+              <i class="fas fa-check-circle"></i> Mot de passe modifié avec succès !
+            </div>
+            <div class="alert-error" *ngIf="errorPassword">
+              <i class="fas fa-exclamation-triangle"></i> {{ errorPassword }}
+              <button class="alert-close" (click)="errorPassword = null"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="profile-form">
+              <div class="input-group">
+                <label class="input-label">Mot de passe actuel <span class="required">*</span></label>
+                <div class="input-wrapper" [class.input-error]="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input [type]="showCurrent ? 'text' : 'password'" formControlName="currentPassword" class="input-field" placeholder="Votre mot de passe actuel" autocomplete="current-password"/>
+                  <button type="button" class="toggle-password" (click)="showCurrent = !showCurrent"><i [class]="showCurrent ? 'fas fa-eye-slash' : 'fas fa-eye'"></i></button>
+                </div>
+                <span class="input-hint" *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">Champ obligatoire</span>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Nouveau mot de passe <span class="required">*</span></label>
+                <div class="input-wrapper" [class.input-error]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+                  <i class="fas fa-key input-icon"></i>
+                  <input [type]="showNew ? 'text' : 'password'" formControlName="newPassword" class="input-field" placeholder="Minimum 8 caractères" autocomplete="new-password"/>
+                  <button type="button" class="toggle-password" (click)="showNew = !showNew"><i [class]="showNew ? 'fas fa-eye-slash' : 'fas fa-eye'"></i></button>
+                </div>
+                <div class="strength-bar" *ngIf="passwordForm.value.newPassword">
+                  <div class="strength-track"><div class="strength-fill" [class]="strengthClass" [style.width.%]="strengthWidth"></div></div>
+                  <span class="strength-label" [class]="strengthClass">{{ strengthLabel }}</span>
+                </div>
+                <ul class="password-rules" *ngIf="passwordForm.get('newPassword')?.dirty">
+                  <li [class.ok]="passwordForm.value.newPassword?.length >= 8"><i [class]="passwordForm.value.newPassword?.length >= 8 ? 'fas fa-check' : 'fas fa-circle'"></i> Au moins 8 caractères</li>
+                  <li [class.ok]="hasUpperCase(passwordForm.value.newPassword)"><i [class]="hasUpperCase(passwordForm.value.newPassword) ? 'fas fa-check' : 'fas fa-circle'"></i> Une majuscule</li>
+                  <li [class.ok]="hasNumber(passwordForm.value.newPassword)"><i [class]="hasNumber(passwordForm.value.newPassword) ? 'fas fa-check' : 'fas fa-circle'"></i> Un chiffre</li>
+                  <li [class.ok]="hasSpecialChar(passwordForm.value.newPassword)"><i [class]="hasSpecialChar(passwordForm.value.newPassword) ? 'fas fa-check' : 'fas fa-circle'"></i> Un caractère spécial</li>
+                </ul>
+                <span class="input-hint" *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">Le mot de passe doit contenir au moins 8 caractères</span>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Confirmer le nouveau mot de passe <span class="required">*</span></label>
+                <div class="input-wrapper" [class.input-error]="passwordForm.get('confirmPassword')?.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input [type]="showConfirm ? 'text' : 'password'" formControlName="confirmPassword" class="input-field" placeholder="Répétez le nouveau mot de passe" autocomplete="new-password"/>
+                  <button type="button" class="toggle-password" (click)="showConfirm = !showConfirm"><i [class]="showConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'"></i></button>
+                </div>
+                <span class="input-hint" *ngIf="passwordForm.get('confirmPassword')?.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched">Les mots de passe ne correspondent pas</span>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="passwordForm.reset()"><i class="fas fa-undo"></i> Annuler</button>
+                <button type="submit" class="btn-primary" [disabled]="passwordForm.invalid || isLoadingPassword">
+                  <span *ngIf="!isLoadingPassword"><i class="fas fa-shield-halved"></i> Mettre à jour</span>
+                  <span *ngIf="isLoadingPassword"><span class="spinner"></span> Enregistrement...</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="panel-side">
+          <div class="card tips-card">
+            <div class="card-header">
+              <div class="card-header-icon security"><i class="fas fa-shield-alt"></i></div>
+              <div><h3>Conseils de sécurité</h3></div>
+            </div>
+            <div class="tips-list">
+              <div class="tip-item"><i class="fas fa-key"></i><p>Utilisez un mot de passe unique, différent de vos autres comptes.</p></div>
+              <div class="tip-item"><i class="fas fa-random"></i><p>Combinez lettres majuscules, minuscules, chiffres et symboles.</p></div>
+              <div class="tip-item"><i class="fas fa-sync-alt"></i><p>Changez votre mot de passe tous les 3 mois.</p></div>
+              <div class="tip-item"><i class="fas fa-eye-slash"></i><p>Ne partagez jamais votre mot de passe.</p></div>
+            </div>
+          </div>
+          <div class="card security-status-card">
+            <div class="card-header">
+              <div class="card-header-icon"><i class="fas fa-shield-check"></i></div>
+              <div><h3>État de sécurité</h3></div>
+            </div>
+            <div class="security-items">
+              <div class="security-item ok"><i class="fas fa-check-circle"></i><span>Compte activé</span></div>
+              <div class="security-item ok"><i class="fas fa-check-circle"></i><span>Email vérifié</span></div>
+              <div class="security-item warn"><i class="fas fa-exclamation-circle"></i><span>Mettre à jour le mot de passe régulièrement</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,152 @@
+<div class="chat-app">
+
+  <!-- ─── SIDEBAR ─── -->
+  <div class="sidebar">
+    <app-chat-list
+      [chats]="chats"
+      [selectedChatId]="selectedChat.id ?? null"
+      (chatSelected)="chatSelected($event)">
+    </app-chat-list>
+  </div>
+
+  <!-- ─── MAIN AREA ─── -->
+  <div class="main-chat" [class.active]="selectedChat.id">
+
+    <!-- HEADER -->
+    <div *ngIf="selectedChat.id" class="chat-header">
+      <div class="user-info">
+        <div class="header-avatar">
+          <span>{{ getAvatarEmoji(selectedChat.name) }}</span>
+          <span *ngIf="selectedChat.recipientOnline" class="online-indicator"></span>
+        </div>
+        <div class="user-details">
+          <h3>{{ selectedChat.name || 'Inconnu' }}</h3>
+          <span class="status" [class.online]="selectedChat.recipientOnline">
+            {{ selectedChat.recipientOnline ? 'En ligne' : 'Hors ligne' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="hdr-btn danger" (click)="deleteChat()" title="Supprimer la conversation">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div #scrollableDiv
+         *ngIf="selectedChat.id"
+         class="messages-container"
+         (click)="onClick()">
+
+      <div *ngFor="let message of chatMessages; trackBy: trackByMessageId"
+           class="message-row"
+           [class.self-row]="isSelfMessage(message)">
+
+        <div class="message-bubble-wrapper"
+             [class.self]="isSelfMessage(message)">
+
+          <!-- Avatar for received messages -->
+          <div *ngIf="!isSelfMessage(message)" class="avatar-small">
+            {{ getAvatarEmoji(selectedChat.name) }}
+          </div>
+
+          <!-- Bubble -->
+          <div class="message-bubble">
+
+            <!-- Image -->
+            <div *ngIf="hasMedia(message)" class="media-preview">
+              <img [src]="getMediaSrc(message)"
+                   alt="Image"
+                   class="media-img"
+                   (click)="openImage(getMediaSrc(message))">
+            </div>
+
+            <!-- Text -->
+            <div *ngIf="message.content && message.content.trim()"
+                 class="message-content">
+              {{ message.content }}
+            </div>
+
+            <!-- Meta -->
+            <div class="message-meta">
+              <span class="time">{{ message.createdAt | date:'HH:mm' }}</span>
+              <span *ngIf="isSelfMessage(message)"
+                    class="status-icon"
+                    [class.seen]="message.state === 'SEEN'"
+                    [title]="message.state === 'SEEN' ? 'Lu' : 'Envoyé'">
+                <i class="fas" [class.fa-check-double]="true" [class.seen-check]="message.state === 'SEEN'"></i>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="loadingMessages" class="loading-messages">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+
+    </div>
+
+    <div *ngIf="!selectedChat.id" class="no-chat-selected">
+      <div class="welcome-icon">💬</div>
+      <h2>Vos conversations</h2>
+      <p>Sélectionnez une conversation pour commencer</p>
+    </div>
+
+    <div *ngIf="lightboxSrc" class="lightbox" (click)="lightboxSrc = null">
+      <img [src]="lightboxSrc" alt="Image">
+      <button class="lightbox-close"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div *ngIf="selectedChat.id" class="input-container">
+
+      <div *ngIf="showEmojis" class="emoji-grid">
+        <span *ngFor="let emoji of emojis; trackBy: trackByEmoji"
+              class="emoji-item"
+              (click)="addEmoji(emoji)">{{ emoji }}</span>
+      </div>
+
+      <div class="input-wrapper">
+
+        <input type="file"
+               #fileInput
+               (change)="uploadMedia($event)"
+               accept="image/*,video/*"
+               class="file-input">
+
+        <button class="input-icon-btn" type="button" (click)="fileInput.click()" title="Joindre un fichier">
+          <i class="fas fa-paperclip"></i>
+        </button>
+
+        <button class="input-icon-btn emoji-toggle" type="button"
+                (click)="showEmojis = !showEmojis"
+                [class.active]="showEmojis"
+                title="Emojis">
+          <i class="far fa-smile"></i>
+        </button>
+
+        <input type="text"
+               [(ngModel)]="messageContent"
+               (keydown)="keyDown($event)"
+               (focus)="onClick()"
+               placeholder="Écrivez un message…"
+               class="message-input"
+               autocomplete="off">
+
+        <!-- ✅ FIX ligne 146 : ?. supprimé, messageContent est string pur -->
+        <button class="send-btn"
+                type="button"
+                (click)="sendMessage()"
+                [disabled]="!messageContent.trim()"
+                title="Envoyer">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+</div>

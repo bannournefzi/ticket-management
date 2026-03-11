@@ -1,0 +1,197 @@
+<div class="calendar-page">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="cal-header">
+    <div class="cal-header-left">
+      <h1 class="cal-title"><i class="fas fa-calendar-alt"></i> Calendrier SLA</h1>
+      <p class="cal-subtitle">Visualisez les échéances et le suivi SLA de vos tickets</p>
+    </div>
+    <div class="cal-header-right">
+      <button class="btn-icon" (click)="loadTickets()" title="Actualiser">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+      <button class="btn-icon" (click)="exportCalendar()" title="Exporter CSV">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ STATS ═══ -->
+  <!-- <div class="stats-row">
+    <div class="stat-card stat-total">
+      <i class="fas fa-ticket-alt"></i>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalTickets }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+    </div>
+    <div class="stat-card stat-sla" *ngIf="slaViolations > 0">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div class="stat-info">
+        <span class="stat-value">{{ slaViolations }}</span>
+        <span class="stat-label">SLA dépassé</span>
+      </div>
+    </div>
+    <div class="stat-card stat-critical" *ngIf="criticalTickets > 0">
+      <i class="fas fa-fire"></i>
+      <div class="stat-info">
+        <span class="stat-value">{{ criticalTickets }}</span>
+        <span class="stat-label">Critique</span>
+      </div>
+    </div>
+    <div class="stat-card stat-resolved">
+      <i class="fas fa-check-circle"></i>
+      <div class="stat-info">
+        <span class="stat-value">{{ resolvedTickets }}</span>
+        <span class="stat-label">Résolus</span>
+      </div>
+    </div>
+    <div class="stat-card stat-hold" *ngIf="onHoldTickets > 0">
+      <i class="fas fa-pause-circle"></i>
+      <div class="stat-info">
+        <span class="stat-value">{{ onHoldTickets }}</span>
+        <span class="stat-label">En attente</span>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- ═══ CONTROLS ═══ -->
+  <div class="cal-controls">
+    <div class="controls-left">
+      <div class="view-buttons">
+        <button class="view-btn" [class.active]="currentView === 'dayGridMonth'"
+                (click)="changeView('dayGridMonth')">
+          <i class="fas fa-calendar"></i> Mois
+        </button>
+        <button class="view-btn" [class.active]="currentView === 'timeGridWeek'"
+                (click)="changeView('timeGridWeek')">
+          <i class="fas fa-calendar-week"></i> Semaine
+        </button>
+        <button class="view-btn" [class.active]="currentView === 'timeGridDay'"
+                (click)="changeView('timeGridDay')">
+          <i class="fas fa-calendar-day"></i> Jour
+        </button>
+        <button class="view-btn" [class.active]="currentView === 'listWeek'"
+                (click)="changeView('listWeek')">
+          <i class="fas fa-list"></i> Liste
+        </button>
+      </div>
+    </div>
+    <div class="controls-right">
+      <label class="sla-toggle">
+        <input type="checkbox" [(ngModel)]="showSlaAlerts" (change)="toggleSlaAlerts()"/>
+        <span><i class="fas fa-bell"></i> Alertes SLA</span>
+      </label>
+      <div class="filter-group">
+        <button class="filter-btn" [class.active]="currentFilter === 'ALL'"
+                (click)="filterByStatus('ALL')">Tous</button>
+        <button class="filter-btn" [class.active]="currentFilter === 'OPEN'"
+                (click)="filterByStatus('OPEN')">Ouverts</button>
+        <button class="filter-btn" [class.active]="currentFilter === 'IN_PROGRESS'"
+                (click)="filterByStatus('IN_PROGRESS')">En cours</button>
+        <button class="filter-btn" [class.active]="currentFilter === 'ON_HOLD'"
+                (click)="filterByStatus('ON_HOLD')">En attente</button>
+        <button class="filter-btn" [class.active]="currentFilter === 'RESOLVED'"
+                (click)="filterByStatus('RESOLVED')">Résolus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CALENDAR ═══ -->
+  <div class="cal-container">
+    <full-calendar
+      *ngIf="calendarVisible()"
+      [options]="calendarOptions()"
+      #calendar>
+    </full-calendar>
+  </div>
+
+  <!-- ═══ LEGEND ═══ -->
+  <div class="cal-legend">
+    <div class="legend-section">
+      <h4><i class="fas fa-palette"></i> Couleurs par statut</h4>
+      <div class="legend-items">
+        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Ouvert</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> En cours</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span> En attente</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span> Résolu</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#6b7280"></span> Fermé</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Rejeté / SLA dépassé</span>
+      </div>
+    </div>
+    <div class="legend-section">
+      <h4><i class="fas fa-border-style"></i> Bordure par priorité</h4>
+      <div class="legend-items">
+        <span class="legend-item"><span class="legend-border" style="border-color:#10b981"></span> Basse</span>
+        <span class="legend-item"><span class="legend-border" style="border-color:#3b82f6"></span> Moyenne</span>
+        <span class="legend-item"><span class="legend-border" style="border-color:#f59e0b"></span> Haute</span>
+        <span class="legend-item"><span class="legend-border" style="border-color:#ef4444"></span> Critique</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TICKET DETAIL MODAL ═══ -->
+<div class="modal-overlay" *ngIf="isDetailModalOpen" (click)="closeDetailModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header" *ngIf="selectedTicket">
+      <div class="modal-title-row">
+        <i class="fas fa-ticket-alt"></i>
+        <h2>#{{ selectedTicket.id }}</h2>
+        <span class="status-badge" [ngClass]="getStatusClass(selectedTicket.status)">
+          {{ statusLabels[selectedTicket.status] }}
+        </span>
+        <span class="sla-badge" *ngIf="selectedTicket.slaStatus"
+              [ngClass]="getSLAClass(selectedTicket.slaStatus)">
+          {{ getSLALabel(selectedTicket.slaStatus) }}
+        </span>
+      </div>
+      <button class="modal-close" (click)="closeDetailModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedTicket">
+      <h3>{{ selectedTicket.title }}</h3>
+
+      <div class="modal-badges">
+        <span class="badge-priority" [ngClass]="getPriorityClass(selectedTicket.priority)">
+          <i [class]="priorityConfig[selectedTicket.priority]?.icon"></i>
+          {{ priorityConfig[selectedTicket.priority]?.label }}
+        </span>
+      </div>
+
+      <div class="modal-desc">
+        <label><i class="fas fa-align-left"></i> Description</label>
+        <p>{{ selectedTicket.description }}</p>
+      </div>
+
+      <div class="modal-info-grid">
+        <div class="info-item">
+          <label><i class="fas fa-user"></i> Créé par</label>
+          <p>{{ selectedTicket.creatorFullName }}</p>
+        </div>
+        <div class="info-item">
+          <label><i class="fas fa-user-tie"></i> Assigné à</label>
+          <p>{{ selectedTicket.assignedToFullName || 'Non assigné' }}</p>
+        </div>
+        <div class="info-item">
+          <label><i class="fas fa-building"></i> Département</label>
+          <p>{{ selectedTicket.departement || 'Non défini' }}</p>
+        </div>
+        <div class="info-item">
+          <label><i class="fas fa-calendar"></i> Créé le</label>
+          <p>{{ selectedTicket.createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <div class="info-item" *ngIf="selectedTicket.dueDate">
+          <label><i class="fas fa-clock"></i> Échéance SLA</label>
+          <p [ngClass]="getSLAClass(selectedTicket.slaStatus)">
+            {{ selectedTicket.dueDate | date:'dd/MM/yyyy HH:mm' }}
+          </p>
+        </div>
+        <div class="info-item" *ngIf="selectedTicket.resolvedDate">
+          <label><i class="fas fa-check"></i> Résolu le</label>
+          <p>{{ selectedTicket.resolvedDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

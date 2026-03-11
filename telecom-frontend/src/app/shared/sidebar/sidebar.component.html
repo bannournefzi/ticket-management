@@ -1,0 +1,213 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+
+  <!-- Header -->
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <img src="https://e7.pngegg.com/pngimages/620/4/png-clipart-tunisie-telecom-wynsys-sfax-telecommunication-telecom-tower-text-logo.png" alt="Logo" class="logo-img" />
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">Ticket Manager</span>
+      <span class="brand-sub">{{ getMenuTitle() }}</span>
+    </div>
+    <button class="collapse-btn" (click)="toggleSidebar()" [title]="isCollapsed ? 'Ouvrir' : 'Réduire'">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+  </div>
+
+  
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+
+    <!-- ══════════════ MÉTIER ══════════════ -->
+    <ng-container *ngIf="isMetier">
+
+      <div class="nav-section">
+        <span class="nav-section-label">Principal</span>
+      </div>
+
+      <a routerLink="/metier" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+         class="nav-link" [title]="isCollapsed ? 'Dashboard' : ''">
+        <i class="fas fa-th-large"></i>
+        <span class="nav-text">Dashboard</span>
+      </a>
+
+      <a routerLink="/create-ticket" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Créer un Ticket' : ''">
+        <i class="fas fa-plus-circle"></i>
+        <span class="nav-text">Créer un Ticket</span>
+      </a>
+
+      <a routerLink="/my-tickets" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Mes Tickets' : ''">
+        <i class="fas fa-list-alt"></i>
+        <span class="nav-text">Mes Tickets</span>
+        <span class="nav-badge" *ngIf="myTicketCount">{{ myTicketCount }}</span>
+      </a>
+      <a routerLink="/metier/calendar" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Calendrier' : ''">
+        <i class="fas fa-calendar-alt"></i>
+        <span class="nav-text">Calendrier SLA</span>
+      </a>
+
+      <div class="nav-divider"></div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Suivi</span>
+      </div>
+
+      <a routerLink="/metier/pending" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Ouverts' : ''">
+        <i class="fas fa-inbox"></i>
+        <span class="nav-text">Ouverts</span>
+        <span class="nav-badge" *ngIf="stats?.openTickets">{{ stats?.openTickets }}</span>
+      </a>
+
+      <a routerLink="/metier/in-progress" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'En cours' : ''">
+        <i class="fas fa-spinner"></i>
+        <span class="nav-text">En cours</span>
+        <span class="nav-badge badge-warn" *ngIf="stats?.inProgressTickets">{{ stats?.inProgressTickets }}</span>
+      </a>
+
+      <a routerLink="/metier/resolved" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Résolus' : ''">
+        <i class="fas fa-check-circle"></i>
+        <span class="nav-text">Résolus</span>
+        <span class="nav-badge badge-ok" *ngIf="stats?.resolvedTickets">{{ stats?.resolvedTickets }}</span>
+      </a>
+
+      <a routerLink="/metier/history" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Historique' : ''">
+        <i class="fas fa-history"></i>
+        <span class="nav-text">Historique</span>
+      </a>
+
+    </ng-container>
+
+    <!-- ══════════════ BUSINESS ANALYST ══════════════ -->
+    <ng-container *ngIf="isIT">
+
+      <div class="nav-section">
+        <span class="nav-section-label">Tickets</span>
+      </div>
+
+      <a routerLink="/business-analyst" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+         class="nav-link" [title]="isCollapsed ? 'Dashboard' : ''">
+        <i class="fas fa-th-large"></i>
+        <span class="nav-text">Dashboard</span>
+      </a>
+
+      <a routerLink="/business-analyst/assigned" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Mes assignations' : ''">
+        <i class="fas fa-tasks"></i>
+        <span class="nav-text">Mes assignations</span>
+        <span class="nav-badge badge-warn" *ngIf="stats?.inProgressTickets">{{ stats?.inProgressTickets }}</span>
+      </a>
+
+      <a routerLink="/business-analyst/unassigned" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Non assignés' : ''">
+        <i class="fas fa-user-clock"></i>
+        <span class="nav-text">Non assignés</span>
+        <span class="nav-badge" *ngIf="stats?.openTickets">{{ stats?.openTickets }}</span>
+      </a>
+
+      <div class="nav-divider"></div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Gestion</span>
+      </div>
+
+      <a routerLink="/business-analyst/tickets" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Mes tickets assignés' : ''">
+        <i class="fas fa-tasks"></i>
+        <span class="nav-text">Mes tickets assignés</span>
+        <span class="nav-badge" *ngIf="stats?.inProgressTickets">{{ stats?.inProgressTickets }}</span>
+      </a>
+
+      <a routerLink="/business-analyst/resolved" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Résolus' : ''">
+        <i class="fas fa-check-double"></i>
+        <span class="nav-text">Résolus</span>
+      </a>
+
+      <a routerLink="/business-analyst/closed" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Clôturés' : ''">
+        <i class="fas fa-archive"></i>
+        <span class="nav-text">Clôturés</span>
+      </a>
+
+      <div class="nav-divider"></div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Outils</span>
+      </div>
+
+      <a routerLink="/ticket-calendar" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Calendrier SLA' : ''">
+        <i class="fas fa-calendar-alt"></i>
+        <span class="nav-text">Calendrier SLA</span>
+        <span class="nav-badge badge-danger" *ngIf="stats?.slaBreachedTickets">{{ stats?.slaBreachedTickets }}</span>
+      </a>
+
+    </ng-container>
+
+    <!-- ══════════════ ADMIN ══════════════ -->
+    <ng-container *ngIf="isAdmin">
+
+      <div class="nav-section">
+        <span class="nav-section-label">Vue d'ensemble</span>
+      </div>
+
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+         class="nav-link" [title]="isCollapsed ? 'Dashboard' : ''">
+        <i class="fas fa-th-large"></i>
+        <span class="nav-text">Dashboard</span>
+      </a>
+
+      
+
+      <div class="nav-divider"></div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Administration</span>
+      </div>
+
+      <a routerLink="/admin/users" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Utilisateurs' : ''">
+        <i class="fas fa-users"></i>
+        <span class="nav-text">Utilisateurs</span>
+      </a>
+
+      <a routerLink="/admin/statistics" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Statistiques' : ''">
+        <i class="fas fa-chart-bar"></i>
+        <span class="nav-text">Statistiques</span>
+      </a>
+
+      <a routerLink="/admin/settings" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Paramètres' : ''">
+        <i class="fas fa-cog"></i>
+        <span class="nav-text">Paramètres</span>
+      </a>
+
+    </ng-container>
+
+  </nav>
+
+  <!-- Footer -->
+  <div class="sidebar-bottom">
+    <div class="nav-divider"></div>
+    <a routerLink="/chat" routerLinkActive="active"
+       class="nav-link" [title]="isCollapsed ? 'Messages' : ''">
+      <i class="fas fa-comment-dots"></i>
+      <span class="nav-text">Messages</span>
+    </a>
+    <a routerLink="/profile" routerLinkActive="active"
+       class="nav-link" [title]="isCollapsed ? 'Mon Profil' : ''">
+      <i class="fas fa-user-circle"></i>
+      <span class="nav-text">Mon Profil</span>
+    </a>
+  </div>
+
+</aside>

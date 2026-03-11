@@ -1,0 +1,450 @@
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+$bg-app       : #f4f4f2;
+$bg-surface   : #ffffff;
+$bg-hover     : #f5f5f4;
+$bg-messages  : #f0f0ee;
+$border       : #e8e8e6;
+$text-primary : #1a1a18;
+$text-secondary: #6b7280;
+$text-muted   : #9ca3af;
+$accent       : #2563eb;
+$accent-soft  : #eff4ff;
+$bubble-self  : #2563eb;      // sent messages
+$bubble-other : #ffffff;      // received messages
+$bubble-self-text : #ffffff;
+$bubble-other-text: #1a1a18;
+$online-green : #16a34a;
+$seen-color   : #93c5fd;
+$danger       : #dc2626;
+$radius-sm    : 8px;
+$radius-md    : 16px;
+$radius-bubble: 18px;
+$shadow-sm    : 0 1px 3px rgba(0,0,0,.08);
+$shadow-md    : 0 4px 16px rgba(0,0,0,.12);
+
+// ─── ROOT LAYOUT ──────────────────────────────────────────────────────────────
+.chat-app {
+  display: flex;
+  height: 100%;      // ← était 100vh, maintenant 100% du parent
+  overflow: hidden;
+}
+
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+.sidebar {
+  width: 340px;
+  flex-shrink: 0;
+  background: $bg-surface;
+  border-right: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) { width: 100%; }
+}
+
+// ─── MAIN CHAT PANEL ──────────────────────────────────────────────────────────
+.main-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;      // ← pareil ici
+  overflow: hidden;
+  min-width: 0;
+}
+
+
+// ─── CHAT HEADER ──────────────────────────────────────────────────────────────
+.chat-header {
+  flex-shrink: 0;           // ← ne jamais compresser le header
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: $bg-surface;
+  border-bottom: 1px solid $border;
+  min-height: 64px;
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: $bg-hover;
+    border: 1px solid $border;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    position: relative;
+
+    .online-indicator {
+      position: absolute;
+      bottom: 1px; right: 1px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: $online-green;
+      border: 2px solid $bg-surface;
+    }
+  }
+
+  .user-details {
+    h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: $text-primary;
+    }
+
+    .status {
+      font-size: 12px;
+      color: $text-muted;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      &.online {
+        color: $online-green;
+        &::before {
+          content: '';
+          width: 6px; height: 6px;
+          border-radius: 50%;
+          background: $online-green;
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.hdr-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: $radius-sm;
+  border: 1px solid $border;
+  background: transparent;
+  color: $text-secondary;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: $bg-hover; color: $text-primary; }
+
+  &.danger {
+    &:hover { background: #fef2f2; color: $danger; border-color: #fecaca; }
+  }
+}
+
+.messages-container {
+  flex: 1;
+  min-height: 0;          // ← CRITIQUE : sans ça flex ignore overflow
+  overflow-y: auto;       // ← scroll uniquement ici
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  gap: 2px;
+}
+
+.message-row {
+  display: flex;
+  margin-top: 4px;
+
+  &.self-row { justify-content: flex-end; }
+}
+
+.message-bubble-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 62%;
+
+  &.self {
+    flex-direction: row-reverse;
+
+    .message-bubble {
+      background: $bubble-self;
+      color: $bubble-self-text;
+      border-radius: $radius-bubble $radius-bubble 4px $radius-bubble;
+    }
+
+    .message-meta { color: rgba(255,255,255,.7); }
+    .fa-check-double { color: rgba(255,255,255,.6); &.seen-check { color: $seen-color; } }
+  }
+
+  &:not(.self) {
+    .message-bubble {
+      background: $bubble-other;
+      color: $bubble-other-text;
+      border-radius: $radius-bubble $radius-bubble $radius-bubble 4px;
+      box-shadow: $shadow-sm;
+    }
+    .message-meta { color: $text-muted; }
+  }
+}
+
+// ─── AVATAR (received) ────────────────────────────────────────────────────────
+.avatar-small {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: $bg-hover;
+  border: 1px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+// ─── BUBBLE ───────────────────────────────────────────────────────────────────
+.message-bubble {
+  padding: 8px 12px 6px;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.message-content {
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// ─── MEDIA ────────────────────────────────────────────────────────────────────
+.media-preview {
+  border-radius: $radius-sm;
+  overflow: hidden;
+  margin-bottom: 4px;
+  max-width: 280px;
+
+  .media-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: zoom-in;
+    transition: filter 0.15s;
+    &:hover { filter: brightness(0.95); }
+  }
+}
+
+// ─── MESSAGE META ─────────────────────────────────────────────────────────────
+.message-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 11px;
+
+  .time { font-weight: 400; }
+  .status-icon { font-size: 11px; }
+}
+
+// ─── TYPING / LOADING ─────────────────────────────────────────────────────────
+.loading-messages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  gap: 4px;
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: $text-muted;
+    animation: blink 1.4s infinite;
+
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40%            { opacity: 1;   transform: scale(1);   }
+}
+
+// ─── LIGHTBOX ─────────────────────────────────────────────────────────────────
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: zoom-out;
+
+  img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: $radius-sm;
+    box-shadow: $shadow-md;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 16px; right: 20px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,.15);
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    &:hover { background: rgba(255,255,255,.25); }
+  }
+}
+
+// ─── EMPTY / NO CHAT ──────────────────────────────────────────────────────────
+.no-chat-selected {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $text-secondary;
+  user-select: none;
+
+  .welcome-icon {
+    font-size: 56px;
+    opacity: .3;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: $text-primary;
+  }
+
+  p { margin: 0; font-size: 14px; color: $text-secondary; }
+}
+
+// ─── INPUT AREA ───────────────────────────────────────────────────────────────
+.input-container {
+  padding: 10px 16px 14px;
+  background: $bg-surface;
+  border-top: 1px solid $border;
+  flex-shrink: 0;           // ← ne jamais compresser l'input
+  position: relative;
+}
+
+.emoji-grid {
+  position: absolute;
+  bottom: 68px; left: 16px; right: 16px;
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 10px;
+  box-shadow: $shadow-md;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 2px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 10;
+
+  .emoji-item {
+    font-size: 20px;
+    cursor: pointer;
+    text-align: center;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.1s, transform 0.1s;
+    &:hover { background: $bg-hover; transform: scale(1.15); }
+  }
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: $bg-hover;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 4px 6px;
+  transition: border-color 0.15s;
+
+  &:focus-within { border-color: $accent; }
+}
+
+.file-input { display: none; }
+
+.input-icon-btn {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: $text-secondary;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+
+  &.active { color: $accent; }
+}
+
+.message-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 7px 8px;
+  font-size: 14px;
+  color: $text-primary;
+  outline: none;
+  font-family: inherit;
+  &::placeholder { color: $text-muted; }
+}
+
+.send-btn {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: $accent;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) { background: darken($accent, 8%); }
+  &:active:not(:disabled) { transform: scale(0.93); }
+  &:disabled { background: $text-muted; cursor: not-allowed; }
+}
+
+// Extra alias for bg-active used in input-icon-btn hover
+$bg-active: #ebebea;
+
+// ─── RESPONSIVE ───────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .messages-container { padding: 0 12px 12px; }
+  .input-container    { padding: 8px 12px 12px; }
+  .message-bubble-wrapper { max-width: 80%; }
+  .chat-header { padding: 10px 14px; }
+}

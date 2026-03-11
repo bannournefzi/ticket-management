@@ -1,0 +1,143 @@
+<div class="chat-list-container">
+
+  <!-- ─── HEADER ─── -->
+  <div class="sidebar-header">
+    <div class="header-top">
+      <h4>Messages</h4>
+      <button class="icon-action-btn"
+              *ngIf="!searchNewContact"
+              (click)="searchContact()"
+              title="Nouvelle conversation">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button class="icon-action-btn close-variant"
+              *ngIf="searchNewContact"
+              (click)="searchNewContact = false"
+              title="Annuler">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text"
+             [(ngModel)]="searchQuery"
+             placeholder="Rechercher une conversation…"
+             autocomplete="off">
+      <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''">
+        <i class="fas fa-times-circle"></i>
+      </button>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="filter-tabs" *ngIf="!searchNewContact">
+      <button class="tab" [class.active]="activeFilter === 'all'"    (click)="setFilter('all')">Tous</button>
+      <button class="tab" [class.active]="activeFilter === 'unread'" (click)="setFilter('unread')">
+        Non lus
+        <span *ngIf="totalUnread > 0" class="tab-badge">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
+      </button>
+      <button class="tab" [class.active]="activeFilter === 'fav'"   (click)="setFilter('fav')">
+        ⭐ Favoris
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── LIST ─── -->
+  <div class="chat-list">
+
+    <!-- CONVERSATIONS VIEW -->
+    <ng-container *ngIf="!searchNewContact; else contactsView">
+
+      <ng-container *ngIf="filteredChats().length > 0; else noChats">
+        <div *ngFor="let chat of filteredChats(); trackBy: trackByChatId"
+             class="chat-item"
+             [class.has-unread]="chat.unreadCount && chat.unreadCount > 0"
+             [class.is-selected]="selectedChatId === chat.id"
+             (click)="chatClicked(chat)">
+
+          <!-- Avatar -->
+          <div class="chat-avatar">
+            <span class="avatar-emoji">{{ getAvatarEmoji(chat.name) }}</span>
+            <span *ngIf="chat.recipientOnline" class="online-dot"></span>
+          </div>
+
+          <!-- Info -->
+          <div class="chat-info">
+            <div class="chat-header-row">
+              <span class="chat-name">{{ getChatName(chat) }}</span>
+              <div class="chat-right-meta">
+                <button class="fav-btn"
+                        (click)="toggleFavorite($event, chat)"
+                        [class.is-fav]="isFavorite(chat)"
+                        title="Favori">
+                  <i class="fas fa-star"></i>
+                </button>
+                <span class="msg-time">{{ formatTime(chat.lastMessageTime) }}</span>
+              </div>
+            </div>
+            <div class="last-msg-row">
+              <div class="last-msg">
+                <i *ngIf="isMediaMessage(chat.lastMessage)" class="fas fa-image media-icon"></i>
+                <span *ngIf="isMediaMessage(chat.lastMessage)">Photo</span>
+                <span *ngIf="!isMediaMessage(chat.lastMessage)">{{ wrapMessage(chat.lastMessage) || 'Démarrer la conversation…' }}</span>
+              </div>
+              <span *ngIf="chat.unreadCount && chat.unreadCount > 0" class="unread-badge">
+                {{ chat.unreadCount > 99 ? '99+' : chat.unreadCount }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #noChats>
+        <div class="empty-state">
+          <span class="empty-icon">
+            {{ activeFilter === 'unread' ? '✅' : activeFilter === 'fav' ? '⭐' : '💬' }}
+          </span>
+          <p>{{ emptyStateText() }}</p>
+          <small *ngIf="activeFilter === 'all'">Cliquez sur le crayon pour démarrer</small>
+          <button *ngIf="activeFilter !== 'all'" class="reset-filter-btn" (click)="setFilter('all')">
+            Voir toutes les conversations
+          </button>
+        </div>
+      </ng-template>
+
+    </ng-container>
+
+    <!-- CONTACTS VIEW -->
+    <ng-template #contactsView>
+      <div class="section-label">
+        <i class="fas fa-users"></i> Contacts disponibles
+      </div>
+
+      <div *ngFor="let contact of contacts"
+           class="contact-item"
+           (click)="selectContact(contact)">
+        <div class="contact-avatar">
+          <span class="avatar-emoji">{{ getContactEmoji(contact) }}</span>
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">{{ contact.firstName }} {{ contact.lastName }}</div>
+          <div class="contact-status" [class.online]="contact.online">
+            <ng-container *ngIf="contact.online; else lastSeenTpl">
+              <span class="status-dot"></span> En ligne
+            </ng-container>
+            <ng-template #lastSeenTpl>
+              <span *ngIf="contact.lastSeen">Vu {{ contact.lastSeen | date:'dd/MM à HH:mm' }}</span>
+              <span *ngIf="!contact.lastSeen">Hors ligne</span>
+            </ng-template>
+          </div>
+        </div>
+        <div class="contact-arrow"><i class="fas fa-chevron-right"></i></div>
+      </div>
+
+      <div *ngIf="contacts.length === 0" class="empty-state">
+        <span class="empty-icon">👥</span>
+        <p>Aucun contact disponible</p>
+        <small>Tous vos contacts ont déjà une conversation</small>
+      </div>
+    </ng-template>
+
+  </div>
+</div>

@@ -1,0 +1,65 @@
+<div class="validate-container">
+  <div class="validate-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <h1 class="title">Validation du Compte</h1>
+      <p class="subtitle">Veuillez saisir le code de vérification reçu par email</p>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="input-group">
+        <label for="token" class="input-label">Code de Vérification</label>
+        <input 
+          id="token"
+          type="text" 
+          class="form-input" 
+          placeholder="000000" 
+          formControlName="token"
+          maxlength="6"
+          [class.invalid]="form.get('token')?.invalid && form.get('token')?.touched"
+        />
+        <span class="input-hint">6 chiffres</span>
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-primary" 
+        [disabled]="form.invalid || isLoading"
+      >
+        <span *ngIf="!isLoading">Valider le Compte</span>
+        <span *ngIf="isLoading" class="spinner"></span>
+      </button>
+    </form>
+
+    <!-- Messages -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      {{ successMessage }}
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <p class="footer-text">Vous n'avez pas reçu le code ?</p>
+      <button type="button" class="btn-link" (click)="resendCode()">Renvoyer le code</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,355 @@
+<div class="dashboard" [class.is-loading]="loading">
+
+  <!-- ═══════ TOPBAR ═══════ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title">Tableau de bord</h1>
+      <span class="page-breadcrumb">Administration / Vue d'ensemble</span>
+    </div>
+    <div class="topbar-right">
+      <span class="refresh-info">
+        <i class="fas fa-sync-alt" (click)="refreshData()" [class.spinning]="loading"></i>
+        Mis à jour {{ lastRefresh | date:'HH:mm' }}
+      </span>
+      <div class="admin-badge">
+        <div class="admin-avatar">{{ getInitials(adminName.split(' ')[0] || 'A', adminName.split(' ')[1] || 'D') }}</div>
+        <div class="admin-info">
+          <span class="admin-name">{{ adminName }}</span>
+          <span class="admin-role">Administrateur</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════ VIEW TABS ═══════ -->
+  <nav class="view-tabs">
+    <button class="tab" [class.active]="activeView === 'overview'" (click)="setView('overview')">
+      <i class="fas fa-th-large"></i> Vue d'ensemble
+    </button>
+    <button class="tab" [class.active]="activeView === 'tickets'" (click)="setView('tickets')">
+      <i class="fas fa-ticket-alt"></i> Tickets
+      <span class="tab-count" *ngIf="ticketStats">{{ ticketStats.totalTickets }}</span>
+    </button>
+    <button class="tab" [class.active]="activeView === 'users'" (click)="setView('users')">
+      <i class="fas fa-users"></i> Utilisateurs
+      <span class="tab-count" *ngIf="userStats">{{ userStats.totalUsers }}</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- OVERVIEW VIEW                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <ng-container *ngIf="activeView === 'overview'">
+
+    <!-- KPI ROW -->
+    <section class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-label">Utilisateurs</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-users"></i></div>
+        </div>
+        <span class="kpi-value">{{ userStats?.totalUsers ?? '—' }}</span>
+        <div class="kpi-meta">
+          <span class="meta-pill pill-positive">{{ activePercent }}% actifs</span>
+          <span class="meta-text">{{ userStats?.inactiveUsers ?? 0 }} inactifs</span>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-label">Total Tickets</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-ticket-alt"></i></div>
+        </div>
+        <span class="kpi-value">{{ ticketStats?.totalTickets ?? '—' }}</span>
+        <div class="kpi-meta">
+          <span class="meta-pill" [class.pill-positive]="resolutionRate >= 50" [class.pill-neutral]="resolutionRate < 50">{{ resolutionRate }}% résolus</span>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-label">Tickets Ouverts</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-folder-open"></i></div>
+        </div>
+        <span class="kpi-value">{{ ticketStats?.openTickets ?? '—' }}</span>
+        <div class="kpi-meta">
+          <span class="meta-text">{{ ticketStats?.inProgressTickets ?? 0 }} en traitement</span>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-label">Taux Ouverture</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-chart-pie"></i></div>
+        </div>
+        <span class="kpi-value">{{ openRate }}%</span>
+        <div class="kpi-meta">
+          <span class="meta-pill pill-neutral">{{ ticketStats?.rejectedTickets ?? 0 }} rejetés</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MIDDLE GRID -->
+    <section class="grid-2">
+
+      <!-- Ticket Status Breakdown -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Répartition par statut</h2>
+        </div>
+        <div class="panel-body">
+          <div class="stat-row">
+            <div class="stat-label"><span class="dot dot-open"></span>Ouvert</div>
+            <div class="stat-bar-track"><div class="stat-bar bar-open" [style.width.%]="ticketStats ? (ticketStats.openTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats?.openTickets ?? 0 }}</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label"><span class="dot dot-progress"></span>En cours</div>
+            <div class="stat-bar-track"><div class="stat-bar bar-progress" [style.width.%]="ticketStats ? (ticketStats.inProgressTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats?.inProgressTickets ?? 0 }}</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label"><span class="dot dot-resolved"></span>Résolu</div>
+            <div class="stat-bar-track"><div class="stat-bar bar-resolved" [style.width.%]="ticketStats ? (ticketStats.resolvedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats?.resolvedTickets ?? 0 }}</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label"><span class="dot dot-closed"></span>Fermé</div>
+            <div class="stat-bar-track"><div class="stat-bar bar-closed" [style.width.%]="ticketStats ? (ticketStats.closedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats?.closedTickets ?? 0 }}</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label"><span class="dot dot-rejected"></span>Rejeté</div>
+            <div class="stat-bar-track"><div class="stat-bar bar-rejected" [style.width.%]="ticketStats ? (ticketStats.rejectedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats?.rejectedTickets ?? 0 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority Breakdown -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Répartition par priorité</h2>
+        </div>
+        <div class="panel-body">
+          <div class="priority-grid">
+            <div class="prio-card">
+              <span class="prio-count">{{ ticketStats?.criticalPriority ?? 0 }}</span>
+              <span class="prio-name">Critique</span>
+              <div class="prio-indicator ind-critical"></div>
+            </div>
+            <div class="prio-card">
+              <span class="prio-count">{{ ticketStats?.highPriority ?? 0 }}</span>
+              <span class="prio-name">Haute</span>
+              <div class="prio-indicator ind-high"></div>
+            </div>
+            <div class="prio-card">
+              <span class="prio-count">{{ ticketStats?.mediumPriority ?? 0 }}</span>
+              <span class="prio-name">Moyenne</span>
+              <div class="prio-indicator ind-medium"></div>
+            </div>
+            <div class="prio-card">
+              <span class="prio-count">{{ ticketStats?.lowPriority ?? 0 }}</span>
+              <span class="prio-name">Basse</span>
+              <div class="prio-indicator ind-low"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM: Activity + User Distribution -->
+    <section class="grid-2">
+
+      <!-- Activity Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Activité récente</h2>
+          <span class="panel-badge">Temps réel</span>
+        </div>
+        <div class="panel-body feed-body">
+          <div class="feed-item" *ngFor="let item of activityFeed">
+            <div class="feed-icon" [ngClass]="'feed-' + item.type">
+              <i class="fas" [ngClass]="item.icon"></i>
+            </div>
+            <div class="feed-content">
+              <p class="feed-message">{{ item.message }}</p>
+              <span class="feed-detail">{{ item.detail }}</span>
+            </div>
+            <span class="feed-time">{{ getTimeAgo(item.time) }}</span>
+          </div>
+          <div class="feed-empty" *ngIf="activityFeed.length === 0">
+            Aucune activité récente
+          </div>
+        </div>
+      </div>
+
+      <!-- User Role Distribution -->
+        <div class="panel">
+        <div class="panel-header">
+          <h2><i class="fas fa-id-badge"></i> Comptes par rôle</h2>
+        </div>
+        <div class="panel-body">
+          <div class="role-cards">
+            <div class="role-card rc-metier">
+              <div class="role-icon"><i class="fas fa-briefcase"></i></div>
+              <div class="role-info">
+                <span class="role-count">{{ userStats?.metierCount ?? 0 }}</span>
+                <span class="role-name">Métier</span>
+              </div>
+              <div class="role-bar">
+                <div class="role-fill" [style.width.%]="rolePercent(userStats?.metierCount ?? 0)"></div>
+              </div>
+            </div>
+            <div class="role-card rc-ba">
+              <div class="role-icon"><i class="fas fa-laptop-code"></i></div>
+              <div class="role-info">
+                <span class="role-count">{{ userStats?.itCount ?? 0 }}</span>
+                <span class="role-name">Business Analyst</span>
+              </div>
+              <div class="role-bar">
+                <div class="role-fill" [style.width.%]="rolePercent(userStats?.itCount ?? 0)"></div>
+              </div>
+            </div>
+            <div class="role-card rc-admin">
+              <div class="role-icon"><i class="fas fa-shield-alt"></i></div>
+              <div class="role-info">
+                <span class="role-count">{{ userStats?.adminCount ?? 0 }}</span>
+                <span class="role-name">Admin</span>
+              </div>
+              <div class="role-bar">
+                <div class="role-fill" [style.width.%]="rolePercent(userStats?.adminCount ?? 0)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TICKETS VIEW                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <ng-container *ngIf="activeView === 'tickets'">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Tous les tickets</h2>
+        <div class="panel-actions">
+          <button class="btn-sm" (click)="exportTicketsCSV()">
+            <i class="fas fa-download"></i> Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters bar -->
+      <div class="filters-bar">
+        <div class="filter-group">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Rechercher un ticket..." [(ngModel)]="ticketSearch">
+        </div>
+        <select [(ngModel)]="ticketStatusFilter">
+          <option value="ALL">Tous les statuts</option>
+          <option value="OPEN">Ouvert</option>
+          <option value="IN_PROGRESS">En cours</option>
+          <option value="RESOLVED">Résolu</option>
+          <option value="CLOSED">Fermé</option>
+          <option value="REJECTED">Rejeté</option>
+        </select>
+        <select [(ngModel)]="ticketPriorityFilter">
+          <option value="ALL">Toutes les priorités</option>
+          <option value="LOW">Basse</option>
+          <option value="MEDIUM">Moyenne</option>
+          <option value="HIGH">Haute</option>
+          <option value="CRITICAL">Critique</option>
+        </select>
+        <span class="filter-count">{{ filteredTickets.length }} résultat(s)</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Créateur</th>
+              <th>Priorité</th>
+              <th>Statut</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ticket of filteredTickets; trackBy: trackByTicketId">
+              <td class="cell-title">{{ ticket.title }}</td>
+              <td>{{ ticket.creatorFullName }}</td>
+              <td><span class="tag" [ngClass]="getPriorityClass(ticket.priority)">{{ getPriorityLabel(ticket.priority) }}</span></td>
+              <td><span class="tag" [ngClass]="getStatusClass(ticket.status)">{{ getStatusLabel(ticket.status) }}</span></td>
+              <td class="cell-date">{{ ticket.createdDate | date:'dd/MM/yyyy HH:mm' }}</td>
+            </tr>
+            <tr *ngIf="filteredTickets.length === 0">
+              <td colspan="5" class="cell-empty">Aucun ticket trouvé</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- USERS VIEW                                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <ng-container *ngIf="activeView === 'users'">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Utilisateurs récents</h2>
+        <div class="panel-actions">
+          <button class="btn-sm" (click)="exportUsersCSV()">
+            <i class="fas fa-download"></i> Export CSV
+          </button>
+          <a routerLink="/admin/users" class="btn-sm btn-outline">
+            <i class="fas fa-external-link-alt"></i> Gestion complète
+          </a>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filter-group">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Rechercher un utilisateur..." [(ngModel)]="userSearch">
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Inscription</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredUsers">
+              <td class="cell-user">
+                <div class="avatar">{{ getInitials(user.firstName, user.lastName) }}</div>
+                <span>{{ user.firstName }} {{ user.lastName }}</span>
+              </td>
+              <td class="cell-muted">{{ user.email }}</td>
+              <td><span class="tag" [ngClass]="getRoleClass(user.roles)">{{ getRoleBadge(user.roles) }}</span></td>
+              <td>
+                <span class="status-indicator" [class.is-active]="user.enabled"></span>
+                {{ user.enabled ? 'Actif' : 'Inactif' }}
+              </td>
+              <td class="cell-date">{{ user.createdDate | date:'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr *ngIf="filteredUsers.length === 0">
+              <td colspan="5" class="cell-empty">Aucun utilisateur trouvé</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+</div>

@@ -1,0 +1,392 @@
+<div class="kanban-container">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="kanban-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <i class="fas fa-columns"></i> Gestion des Tickets
+      </h1>
+      <p class="page-subtitle">Glissez-déposez pour changer le statut</p>
+    </div>
+    <div class="header-center">
+      <div class="header-stats">
+        <div class="h-stat">
+          <span class="h-stat-value">{{ totalTickets }}</span>
+          <span class="h-stat-label">Total</span>
+        </div>
+        <div class="h-stat h-stat-critical" *ngIf="criticalCount > 0">
+          <span class="h-stat-value">{{ criticalCount }}</span>
+          <span class="h-stat-label">Critique</span>
+        </div>
+        <div class="h-stat h-stat-sla" *ngIf="slaBreachedCount > 0">
+          <span class="h-stat-value">{{ slaBreachedCount }}</span>
+          <span class="h-stat-label">SLA dépassé</span>
+        </div>
+        <div class="h-stat" *ngIf="unassignedCount > 0">
+          <span class="h-stat-value">{{ unassignedCount }}</span>
+          <span class="h-stat-label">Non assigné</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="searchQuery" (input)="onSearch()"
+               placeholder="Rechercher..."/>
+      </div>
+      <button class="btn-refresh" (click)="loadTickets()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Alertes -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+    <button class="alert-close" (click)="successMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ═══ KANBAN BOARD ═══ -->
+  <div class="kanban-board" *ngIf="!isLoading">
+    <div class="kanban-column" *ngFor="let col of columns">
+
+      <div class="column-header" [style.border-top-color]="col.color">
+        <div class="column-title">
+          <i [class]="col.icon" [style.color]="col.color"></i>
+          <span>{{ col.label }}</span>
+        </div>
+        <span class="column-count" [style.background]="col.color">{{ col.tickets.length }}</span>
+      </div>
+
+      <div class="column-body"
+           cdkDropList
+           [id]="'col-' + col.id"
+           [cdkDropListData]="col.tickets"
+           [cdkDropListConnectedTo]="connectedLists"
+           (cdkDropListDropped)="drop($event, col)">
+
+        <div class="ticket-card" *ngFor="let ticket of col.tickets"
+             cdkDrag [cdkDragData]="ticket"
+             [class.sla-breached-card]="ticket.slaStatus === 'BREACHED'"
+             [class.critical-card]="ticket.priority === 'CRITICAL'"
+             (click)="openDetailModal(ticket)">
+
+          <div class="drag-placeholder" *cdkDragPlaceholder></div>
+
+          <div class="card-top">
+            <span class="card-id">#{{ ticket.id }}</span>
+            <div class="card-top-right">
+              <!-- SLA indicator -->
+              <span class="sla-dot" *ngIf="ticket.slaStatus"
+                    [ngClass]="getSLAClass(ticket.slaStatus)"
+                    [title]="getSLALabel(ticket.slaStatus)"></span>
+              <span class="badge-priority" [ngClass]="getPriorityClass(ticket.priority)"
+                    [title]="priorityConfig[ticket.priority]?.label">
+                <i [class]="priorityConfig[ticket.priority]?.icon"></i>
+              </span>
+            </div>
+          </div>
+
+          <h4 class="card-title">{{ ticket.title }}</h4>
+
+          <!-- Tags -->
+          <div class="card-tags" *ngIf="ticket.tags && ticket.tags.length > 0">
+            <span class="mini-tag" *ngFor="let tag of ticket.tags | slice:0:3">{{ tag }}</span>
+            <span class="mini-tag more-tag" *ngIf="ticket.tags.length > 3">+{{ ticket.tags.length - 3 }}</span>
+          </div>
+
+          <div class="card-meta">
+            <span class="card-category">
+              <i [class]="categoryConfig[ticket.category]?.icon"></i>
+              {{ categoryConfig[ticket.category]?.label }}
+            </span>
+            <!-- SLA deadline -->
+            <span class="card-sla" *ngIf="ticket.dueDate && ticket.slaStatus === 'BREACHED'"
+                  [ngClass]="getSLAClass(ticket.slaStatus)">
+              <i class="fas fa-clock"></i> Dépassé
+            </span>
+            <span class="card-sla" *ngIf="ticket.dueDate && ticket.slaStatus === 'AT_RISK'"
+                  [ngClass]="getSLAClass(ticket.slaStatus)">
+              <i class="fas fa-clock"></i> Urgent
+            </span>
+          </div>
+
+          <div class="card-bottom">
+            <div class="card-creator" [title]="ticket.creatorFullName">
+              <span class="avatar-mini">{{ getInitial(ticket.creatorFullName) }}</span>
+              <span class="creator-name">{{ ticket.creatorFullName }}</span>
+            </div>
+            <div class="card-info-right">
+              <span class="card-comments" *ngIf="ticket.commentCount">
+                <i class="fas fa-comment"></i> {{ ticket.commentCount }}
+              </span>
+              <span class="card-time">{{ getTimeAgo(ticket.createdDate) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-column" *ngIf="col.tickets.length === 0">
+          <i class="fas fa-inbox"></i>
+          <p>Aucun ticket</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loader"></div>
+    <p>Chargement des tickets...</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL DÉTAIL (avec tabs)                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="isDetailModalOpen" (click)="closeDetailModal()">
+  <div class="modal-container modal-detail" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-title-row">
+        <i class="fas fa-ticket-alt"></i>
+        <h2>#{{ selectedTicket?.id }}</h2>
+        <span class="status-badge" [ngClass]="getStatusClass(selectedTicket?.status || '')">
+          {{ statusLabels[selectedTicket?.status || ''] }}
+        </span>
+        <span class="sla-badge" *ngIf="selectedTicket?.slaStatus"
+              [ngClass]="getSLAClass(selectedTicket?.slaStatus)">
+          <i [class]="getSLAIcon(selectedTicket?.slaStatus)"></i>
+          {{ getSLALabel(selectedTicket?.slaStatus) }}
+        </span>
+      </div>
+      <button class="modal-close" (click)="closeDetailModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedTicket">
+
+      <!-- Tabs -->
+      <div class="modal-tabs">
+        <button class="modal-tab" [class.active]="activeTab === 'details'" (click)="activeTab = 'details'">
+          <i class="fas fa-info-circle"></i> Détails
+        </button>
+        <button class="modal-tab" [class.active]="activeTab === 'comments'" (click)="activeTab = 'comments'">
+          <i class="fas fa-comments"></i> Commentaires
+          <span class="tab-count" *ngIf="comments.length > 0">{{ comments.length }}</span>
+        </button>
+        <button class="modal-tab" [class.active]="activeTab === 'history'"
+                (click)="activeTab = 'history'; loadHistory(selectedTicket!.id)">
+          <i class="fas fa-history"></i> Historique
+          <span class="tab-count" *ngIf="ticketHistory.length > 0">{{ ticketHistory.length }}</span>
+        </button>
+      </div>
+
+      <!-- ═══ TAB 1: Détails ═══ -->
+      <div *ngIf="activeTab === 'details'">
+        <h3 class="detail-title">{{ selectedTicket.title }}</h3>
+
+        <div class="detail-badges">
+          <span class="badge-priority" [ngClass]="getPriorityClass(selectedTicket.priority)">
+            <i [class]="priorityConfig[selectedTicket.priority]?.icon"></i>
+            {{ priorityConfig[selectedTicket.priority]?.label }}
+          </span>
+          <span class="badge-category">
+            <i [class]="categoryConfig[selectedTicket.category]?.icon"></i>
+            {{ categoryConfig[selectedTicket.category]?.label }}
+          </span>
+        </div>
+
+        <!-- Tags -->
+        <div class="detail-tags" *ngIf="selectedTicket.tags && selectedTicket.tags.length > 0">
+          <span class="mini-tag" *ngFor="let tag of selectedTicket.tags">{{ tag }}</span>
+        </div>
+
+        <div class="detail-description">
+          <label><i class="fas fa-align-left"></i> Description</label>
+          <p>{{ selectedTicket.description }}</p>
+        </div>
+
+        <div class="detail-info-grid">
+          <div class="detail-info">
+            <label><i class="fas fa-user"></i> Créé par</label>
+            <p>{{ selectedTicket.creatorFullName }}</p>
+            <span class="detail-sub">{{ selectedTicket.creatorEmail }}</span>
+          </div>
+          <div class="detail-info">
+            <label><i class="fas fa-building"></i> Département</label>
+            <p>{{ selectedTicket.departement || 'Non défini' }}</p>
+          </div>
+          <div class="detail-info">
+            <label><i class="fas fa-calendar"></i> Créé le</label>
+            <p>{{ selectedTicket.createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <div class="detail-info" *ngIf="selectedTicket.dueDate">
+            <label><i class="fas fa-clock"></i> Échéance SLA</label>
+            <p [ngClass]="getSLAClass(selectedTicket.slaStatus)">
+              {{ selectedTicket.dueDate | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+          </div>
+          <div class="detail-info" *ngIf="selectedTicket.resolvedDate">
+            <label><i class="fas fa-check-circle"></i> Résolu le</label>
+            <p>{{ selectedTicket.resolvedDate | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <div class="detail-info" *ngIf="selectedTicket.assignedToFullName">
+            <label><i class="fas fa-user-tie"></i> Assigné à</label>
+            <p>{{ selectedTicket.assignedToFullName }}</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions" *ngIf="getAvailableTransitions(selectedTicket).length > 0">
+          <label><i class="fas fa-exchange-alt"></i> Actions rapides</label>
+          <div class="action-buttons">
+            <button *ngFor="let s of getAvailableTransitions(selectedTicket)"
+                    class="btn-action" [ngClass]="getStatusClass(s)"
+                    (click)="changeStatus(selectedTicket, s)">
+              <i class="fas fa-arrow-right"></i> {{ statusLabels[s] }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 2: Commentaires ═══ -->
+      <div *ngIf="activeTab === 'comments'">
+        <div class="comments-list">
+          <div class="comment-item" *ngFor="let c of comments" [class.internal-note]="c.internalNote">
+            <div class="comment-header">
+              <span class="comment-avatar">{{ getInitial(c.authorFullName) }}</span>
+              <div class="comment-meta">
+                <span class="comment-author">{{ c.authorFullName }}</span>
+                <span class="comment-role">{{ getCommentRoleLabel(c.authorRole) }}</span>
+              </div>
+              <span class="comment-date">{{ getTimeAgo(c.createdDate) }}</span>
+              <span class="internal-badge" *ngIf="c.internalNote">
+                <i class="fas fa-lock"></i> Interne
+              </span>
+              <button class="comment-delete" *ngIf="canDeleteComment(c)" (click)="deleteComment(c)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+            <p class="comment-body">{{ c.content }}</p>
+          </div>
+
+          <div class="empty-msg" *ngIf="comments.length === 0 && !isLoadingComments">
+            <i class="fas fa-comments"></i> Aucun commentaire
+          </div>
+          <div class="empty-msg" *ngIf="isLoadingComments">
+            <i class="fas fa-spinner fa-spin"></i> Chargement...
+          </div>
+        </div>
+
+        <div class="comment-form">
+          <div class="comment-form-input">
+            <span class="comment-form-avatar">{{ getInitial('Moi') }}</span>
+            <textarea [(ngModel)]="newComment" rows="3"
+                      placeholder="Écrire un commentaire..." class="comment-textarea"></textarea>
+          </div>
+          <div class="comment-form-actions">
+            <label class="internal-toggle">
+              <input type="checkbox" [(ngModel)]="isInternalNote"/>
+              <span><i class="fas fa-lock"></i> Note interne</span>
+            </label>
+            <button class="btn-send" (click)="sendComment()"
+                    [disabled]="isSendingComment || !newComment.trim()">
+              <i class="fas fa-spinner fa-spin" *ngIf="isSendingComment"></i>
+              <i class="fas fa-paper-plane" *ngIf="!isSendingComment"></i>
+              {{ isSendingComment ? 'Envoi...' : 'Envoyer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 3: Historique ═══ -->
+      <div *ngIf="activeTab === 'history'">
+        <div class="history-timeline" *ngIf="ticketHistory.length > 0">
+          <div class="history-item" *ngFor="let h of ticketHistory">
+            <div class="history-dot" [ngClass]="getHistoryDotClass(h.fieldChanged)"></div>
+            <div class="history-content">
+              <div class="history-header">
+                <span class="history-user">{{ h.changedByFullName }}</span>
+                <span class="history-date">{{ getTimeAgo(h.changedAt) }}</span>
+              </div>
+              <div class="history-body">
+                <span class="history-field">{{ getHistoryFieldLabel(h.fieldChanged) }}</span>
+                <span class="history-change" *ngIf="h.oldValue && h.newValue">
+                  <span class="history-old">{{ h.oldValue }}</span>
+                  <i class="fas fa-arrow-right"></i>
+                  <span class="history-new">{{ h.newValue }}</span>
+                </span>
+                <span class="history-change" *ngIf="!h.oldValue && h.newValue">
+                  → <span class="history-new">{{ h.newValue }}</span>
+                </span>
+              </div>
+              <p class="history-comment" *ngIf="h.comment">
+                <i class="fas fa-quote-left"></i> {{ h.comment }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-msg" *ngIf="ticketHistory.length === 0 && !isLoadingHistory">
+          <i class="fas fa-history"></i> Aucun historique
+        </div>
+        <div class="empty-msg" *ngIf="isLoadingHistory">
+          <i class="fas fa-spinner fa-spin"></i> Chargement...
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REJECT MODAL ═══ -->
+<div class="modal-overlay" *ngIf="isRejectModalOpen" (click)="closeRejectModal()">
+  <div class="modal-container modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header reject-header">
+      <h2><i class="fas fa-ban"></i> Rejeter #{{ rejectTicket?.id }}</h2>
+      <button class="modal-close" (click)="closeRejectModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-context">{{ rejectTicket?.title }}</p>
+      <label class="form-label">Motif du rejet <span class="required">*</span></label>
+      <textarea class="form-textarea" [(ngModel)]="rejectReason" rows="4"
+                placeholder="Expliquez pourquoi ce ticket est rejeté..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeRejectModal()">Annuler</button>
+      <button class="btn-reject" (click)="confirmReject()" [disabled]="!rejectReason.trim()">
+        <i class="fas fa-ban"></i> Confirmer le rejet
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STATUS CHANGE WITH COMMENT MODAL ═══ -->
+<div class="modal-overlay" *ngIf="isStatusModalOpen" (click)="closeStatusModal()">
+  <div class="modal-container modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-exchange-alt"></i>
+        {{ statusLabels[targetStatus || ''] }} — #{{ statusTicket?.id }}
+      </h2>
+      <button class="modal-close" (click)="closeStatusModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-context">{{ statusTicket?.title }}</p>
+      <label class="form-label">Commentaire <span class="optional">(optionnel)</span></label>
+      <textarea class="form-textarea" [(ngModel)]="statusComment" rows="3"
+                placeholder="Ajoutez un commentaire sur ce changement..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeStatusModal()">Annuler</button>
+      <button class="btn-confirm" (click)="confirmStatusChange()">
+        <i class="fas fa-check"></i> Confirmer
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<nav class="navbar">
+
+  <!-- Left: breadcrumb-style page context -->
+  <div class="navbar-left">
+    <span class="nav-greeting">Bonjour, <strong>{{ userName }}</strong></span>
+  </div>
+
+  <!-- Right: actions -->
+  <div class="navbar-right">
+
+    <!-- Notifications -->
+    <div class="notification-wrapper">
+      <button class="icon-btn" (click)="toggleNotifications($event)" [class.active]="isNotificationsOpen">
+        <i class="fas fa-bell"></i>
+        <span class="dot-badge" *ngIf="notificationCount > 0"></span>
+      </button>
+
+      <div class="dropdown-panel notif-panel" *ngIf="isNotificationsOpen" [@dropdownAnimation]>
+        <div class="panel-header">
+          <span class="panel-title">Notifications</span>
+          <button class="text-btn" (click)="markAllAsRead()">Tout lire</button>
+        </div>
+        <div class="notif-list">
+          <div class="notif-item" *ngFor="let notif of notifications" [class.unread]="notif.unread">
+            <div class="notif-icon" [ngClass]="notif.type">
+              <i class="fas" [ngClass]="{
+                'fa-ticket-alt': notif.type === 'ticket',
+                'fa-user-plus': notif.type === 'user',
+                'fa-exclamation-triangle': notif.type === 'alert'
+              }"></i>
+            </div>
+            <div class="notif-body">
+              <span class="notif-title">{{ notif.title }}</span>
+              <span class="notif-msg">{{ notif.message }}</span>
+              <span class="notif-time">{{ notif.time }}</span>
+            </div>
+            <button class="notif-close" (click)="removeNotification(notif.id)">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <div class="panel-footer" *ngIf="notifications.length === 0">
+          <span class="empty-text">Aucune notification</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <button class="icon-btn" (click)="goToChat()">
+      <i class="fas fa-comment-dots"></i>
+    </button>
+
+    <!-- User -->
+    <div class="user-menu-wrapper">
+      <button class="user-btn" (click)="toggleDropdown($event)" [class.active]="isDropdownOpen">
+        <div class="user-avatar-sm">
+          <img *ngIf="avatarPhoto" [src]="avatarPhoto" class="avatar-img" alt="" (error)="onAvatarError()"/>
+          <span *ngIf="!avatarPhoto">{{ getUserInitials() }}</span>
+        </div>
+        <i class="fas fa-chevron-down chevron" [class.open]="isDropdownOpen"></i>
+      </button>
+
+      <div class="dropdown-panel user-panel" *ngIf="isDropdownOpen" [@dropdownAnimation]>
+        <div class="user-panel-header">
+          <div class="user-avatar-lg">
+            <img *ngIf="avatarPhoto" [src]="avatarPhoto" class="avatar-img" alt="" (error)="onAvatarError()"/>
+            <span *ngIf="!avatarPhoto">{{ getUserInitials() }}</span>
+          </div>
+          <div class="user-panel-info">
+            <span class="user-panel-name">{{ userName }}</span>
+            <span class="user-panel-email">{{ getEmail() }}</span>
+            <span class="user-panel-role">{{ getUserRole() }}</span>
+          </div>
+        </div>
+        <div class="panel-divider"></div>
+        <div class="panel-menu">
+          <button class="panel-item" (click)="goToProfile()">
+            <i class="fas fa-user"></i>
+            <span>Mon Profil</span>
+          </button>
+          <a routerLink="/settings" class="panel-item" (click)="closeDropdown()">
+            <i class="fas fa-cog"></i>
+            <span>Paramètres</span>
+          </a>
+        </div>
+        <div class="panel-divider"></div>
+        <div class="panel-menu">
+          <button class="panel-item item-danger" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</nav>
+
+<div class="click-away" *ngIf="isDropdownOpen || isNotificationsOpen" (click)="closeAll()"></div>

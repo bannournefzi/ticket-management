@@ -1,0 +1,452 @@
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+$bg-surface   : #ffffff;
+$bg-hover     : #f5f5f4;
+$bg-active    : #ebebea;
+$bg-unread    : #f0f4ff;
+$border       : #e8e8e6;
+$text-primary : #1a1a18;
+$text-secondary: #6b7280;
+$text-muted   : #9ca3af;
+$accent       : #2563eb;     // single accent colour — professional blue
+$accent-soft  : #eff4ff;
+$unread-dot   : #2563eb;
+$online-green : #16a34a;
+$fav-gold     : #d97706;
+$radius-sm    : 8px;
+$radius-md    : 12px;
+$radius-full  : 9999px;
+
+// ─── CONTAINER ────────────────────────────────────────────────────────────────
+.chat-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: $bg-surface;
+  font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+}
+
+// ─── SIDEBAR HEADER ───────────────────────────────────────────────────────────
+.sidebar-header {
+  padding: 20px 16px 12px;
+  background: $bg-surface;
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+
+    h4 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: $text-primary;
+      letter-spacing: -0.3px;
+    }
+  }
+}
+
+// ─── ICON BUTTON ──────────────────────────────────────────────────────────────
+.icon-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: $radius-sm;
+  border: 1px solid $border;
+  background: $bg-surface;
+  color: $text-secondary;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+  }
+
+  &.close-variant {
+    background: $bg-active;
+    color: $text-primary;
+
+    &:hover { background: darken($bg-active, 4%); }
+  }
+}
+
+// ─── SEARCH BAR ───────────────────────────────────────────────────────────────
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: $bg-hover;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:focus-within {
+    background: $bg-surface;
+    border-color: $accent;
+  }
+
+  i.fa-search { color: $text-muted; font-size: 13px; }
+
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: $text-primary;
+    outline: none;
+    &::placeholder { color: $text-muted; }
+  }
+
+  .clear-search {
+    border: none;
+    background: transparent;
+    color: $text-muted;
+    cursor: pointer;
+    padding: 0;
+    font-size: 13px;
+    &:hover { color: $text-secondary; }
+  }
+}
+
+// ─── FILTER TABS ──────────────────────────────────────────────────────────────
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+
+  .tab {
+    position: relative;
+    padding: 5px 12px;
+    border-radius: $radius-full;
+    font-size: 13px;
+    font-weight: 500;
+    color: $text-secondary;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+
+    &:hover {
+      background: $bg-hover;
+      color: $text-primary;
+    }
+
+    &.active {
+      background: $accent-soft;
+      color: $accent;
+      border-color: darken($accent-soft, 6%);
+    }
+
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: $accent;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: $radius-full;
+      margin-left: 4px;
+    }
+  }
+}
+
+// ─── CHAT LIST SCROLL AREA ────────────────────────────────────────────────────
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+
+  &::-webkit-scrollbar       { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: $border;
+    border-radius: 2px;
+    &:hover { background: darken($border, 12%); }
+  }
+}
+
+// ─── CHAT ITEM ────────────────────────────────────────────────────────────────
+.chat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-left: 3px solid transparent;
+  position: relative;
+
+  &:hover       { background: $bg-hover; }
+  &:active      { background: $bg-active; }
+  &.is-selected { background: $accent-soft; border-left-color: $accent; }
+
+  &.has-unread {
+    background: $bg-unread;
+    border-left-color: $accent;
+
+    &:hover { background: darken($bg-unread, 2%); }
+
+    .chat-name  { font-weight: 700; color: $text-primary; }
+    .last-msg   { font-weight: 600; color: $text-primary; }
+    .msg-time   { color: $accent; font-weight: 600; }
+  }
+}
+
+// ─── AVATAR ───────────────────────────────────────────────────────────────────
+.chat-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: $radius-full;
+  background: $bg-hover;
+  border: 1px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+
+  .avatar-emoji {
+    font-size: 22px;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .online-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 10px;
+    height: 10px;
+    background: $online-green;
+    border: 2px solid $bg-surface;
+    border-radius: 50%;
+  }
+}
+
+// ─── CHAT INFO ────────────────────────────────────────────────────────────────
+.chat-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chat-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.chat-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-right-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.fav-btn {
+  background: transparent;
+  border: none;
+  color: $text-muted;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 11px;
+  line-height: 1;
+  transition: color 0.15s, transform 0.15s;
+  opacity: 0;
+
+  &:hover   { color: $fav-gold; transform: scale(1.2); }
+  &.is-fav  { color: $fav-gold; opacity: 1; }
+
+  .chat-item:hover &  { opacity: 1; }
+  .is-selected & { opacity: 1; }
+}
+
+.msg-time {
+  font-size: 11px;
+  color: $text-muted;
+}
+
+.last-msg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.last-msg {
+  font-size: 13px;
+  color: $text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .media-icon { font-size: 11px; color: $text-muted; }
+}
+
+.unread-badge {
+  background: $accent;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: $radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+// ─── SECTION LABEL ────────────────────────────────────────────────────────────
+.section-label {
+  padding: 10px 16px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  i { font-size: 11px; }
+}
+
+// ─── CONTACT ITEM ─────────────────────────────────────────────────────────────
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover  { background: $bg-hover; }
+  &:active { background: $bg-active; }
+}
+
+.contact-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-full;
+  background: $bg-hover;
+  border: 1px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .avatar-emoji { font-size: 20px; line-height: 1; }
+}
+
+.contact-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.contact-status {
+  font-size: 12px;
+  color: $text-muted;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &.online {
+    color: $online-green;
+    font-weight: 500;
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: $online-green;
+      display: inline-block;
+    }
+  }
+}
+
+.contact-arrow {
+  color: $text-muted;
+  font-size: 12px;
+}
+
+// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+  gap: 6px;
+
+  .empty-icon { font-size: 42px; opacity: 0.5; line-height: 1; }
+
+  p {
+    font-size: 15px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 4px 0 0;
+  }
+
+  small {
+    font-size: 13px;
+    color: $text-secondary;
+  }
+}
+
+.reset-filter-btn {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border-radius: $radius-sm;
+  border: 1px solid $border;
+  background: transparent;
+  color: $accent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: $accent-soft; }
+}
+
+// ─── RESPONSIVE ───────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .sidebar-header { padding: 14px 12px 10px; }
+  .chat-item, .contact-item { padding: 9px 12px; }
+}
