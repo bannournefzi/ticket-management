@@ -20,5 +20,5 @@ public class MessageResponse {
     private MessageType type;
     private MessageState state;
     private List<String> media;
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 }

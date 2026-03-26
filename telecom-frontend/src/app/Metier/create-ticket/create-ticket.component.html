@@ -151,17 +151,17 @@
         </div>
 
         <!-- Département -->
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label class="form-label"><i class="fas fa-building"></i> Département</label>
           <select class="form-input" [(ngModel)]="newTicket.departement">
             <option value="">-- Automatique --</option>
             <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
           </select>
           <span class="form-hint">Si vide, votre département sera utilisé</span>
-        </div>
+        </div> -->
 
         <!-- Assigner -->
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label class="form-label">
             <i class="fas fa-user-tie"></i> Assigner à <span class="optional">(optionnel)</span>
           </label>
@@ -174,7 +174,7 @@
           <span class="form-hint" *ngIf="newTicket.assignedToId">
             <i class="fas fa-info-circle"></i> Le ticket passera en statut "En cours"
           </span>
-        </div>
+        </div> -->
 
       </div>
     </div>

@@ -37,26 +37,31 @@ public class TicketService {
     // ══════════════════════════════════════════
 
     public TicketDTO createTicket(CreateTicketRequest request, User currentUser) {
+
+        // Si l'utilisateur est un Métier, on force automatiquement SON département
+        // et on annule toute tentative d'assignation directe.
+        boolean isMetier = currentUser.isMetier();
+
         Ticket ticket = Ticket.builder()
                 .title(request.getTitle().trim())
                 .description(request.getDescription().trim())
                 .priority(request.getPriority())
                 .status(TicketStatus.OPEN)
                 .category(request.getCategory())
-                .departement(request.getDepartement() != null
-                        ? request.getDepartement()
-                        : currentUser.getDepartement())
+                // Forcer le département de l'utilisateur métier
+                .departement(isMetier ? currentUser.getDepartement() : (request.getDepartement() != null ? request.getDepartement() : currentUser.getDepartement()))
                 .creator(currentUser)
                 .tags(request.getTags() != null ? request.getTags() : List.of())
                 .build();
 
-        // Assignation optionnelle dès la création
-        if (request.getAssignedToId() != null) {
+        // Assignation optionnelle dès la création (INTERDIT pour les Métiers)
+        if (!isMetier && request.getAssignedToId() != null) {
             User assignee = findAssigneeOrThrow(request.getAssignedToId());
             ticket.setAssignedTo(assignee);
             ticket.setStatus(TicketStatus.IN_PROGRESS);
             ticket.setFirstResponseAt(LocalDateTime.now());
         }
+
 
         Ticket saved = ticketRepository.save(ticket);
 
@@ -91,9 +96,6 @@ public class TicketService {
         if (currentUser.isMetier()) {
             return ticketRepository.findByCreatorId(currentUser.getId(), pageable)
                     .map(this::convertToDTO);
-        } else if (currentUser.isIT()) {
-            return ticketRepository.findByAssignedToId(currentUser.getId(), pageable)
-                    .map(this::convertToDTO);
         } else {
             return ticketRepository.findAll(pageable).map(this::convertToDTO);
         }
@@ -106,7 +108,15 @@ public class TicketService {
         if (currentUser.isMetier()) {
             tickets = ticketRepository.findByCreatorId(currentUser.getId());
         } else if (currentUser.isIT()) {
-            tickets = ticketRepository.findByAssignedToId(currentUser.getId());
+            // Le BA voit SES tickets + TOUS les tickets non assignés (ouverts)
+            List<Ticket> myTickets = ticketRepository.findByAssignedToId(currentUser.getId());
+            List<Ticket> unassignedOpenTickets = ticketRepository.findUnassignedOpenTickets();
+            tickets = new java.util.ArrayList<>(myTickets);
+            for (Ticket t : unassignedOpenTickets) {
+                if (!tickets.contains(t)) {
+                    tickets.add(t);
+                }
+            }
         } else {
             tickets = ticketRepository.findAll();
         }
