@@ -12,7 +12,7 @@
       </button>
       <button class="icon-action-btn close-variant"
               *ngIf="searchNewContact"
-              (click)="searchNewContact = false"
+              (click)="searchNewContact = false; searchQuery = ''"
               title="Annuler">
         <i class="fas fa-times"></i>
       </button>
@@ -23,7 +23,7 @@
       <i class="fas fa-search"></i>
       <input type="text"
              [(ngModel)]="searchQuery"
-             placeholder="Rechercher une conversation…"
+             [placeholder]="searchNewContact ? 'Rechercher un contact…' : 'Rechercher une conversation…'"
              autocomplete="off">
       <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''">
         <i class="fas fa-times-circle"></i>
@@ -116,7 +116,7 @@
         <i class="fas fa-users"></i> Contacts disponibles
       </div>
 
-      <div *ngFor="let contact of contacts"
+      <div *ngFor="let contact of filteredContacts()"
            class="contact-item"
            (click)="selectContact(contact)">
         <div class="contact-avatar">
@@ -137,10 +137,10 @@
         <div class="contact-arrow"><i class="fas fa-chevron-right"></i></div>
       </div>
 
-      <div *ngIf="contacts.length === 0" class="empty-state">
+      <div *ngIf="filteredContacts().length === 0" class="empty-state">
         <span class="empty-icon">👥</span>
-        <p>Aucun contact disponible</p>
-        <small>Tous vos contacts ont déjà une conversation</small>
+        <p>{{ searchQuery ? 'Aucun résultat' : 'Aucun contact disponible' }}</p>
+        <small>{{ searchQuery ? 'Essayez un autre nom' : 'Tous vos contacts ont déjà une conversation' }}</small>
       </div>
     </ng-template>
 

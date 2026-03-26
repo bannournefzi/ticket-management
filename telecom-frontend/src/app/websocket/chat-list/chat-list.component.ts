@@ -130,12 +130,22 @@ export class ChatListComponent implements OnChanges {
   // ─── CONTACTS ─────────────────────────────────────────────────────────────
 
   searchContact(): void {
+    this.searchQuery = '';   // reset search so it filters contacts, not old chat query
     this.userService.getAllUsers().subscribe({
       next: (users) => {
         this.contacts = users;
         this.searchNewContact = true;
       }
     });
+  }
+
+  filteredContacts(): UserResponse[] {
+    if (!this.searchQuery.trim()) return this.contacts;
+    const q = this.searchQuery.toLowerCase();
+    return this.contacts.filter(c =>
+      `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+      (c.email ?? '').toLowerCase().includes(q)
+    );
   }
 
   selectContact(contact: UserResponse): void {

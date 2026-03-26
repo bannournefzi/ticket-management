@@ -76,6 +76,8 @@ $radius-full  : 9999px;
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;        // ← ADD THIS
+  overflow: hidden;  
   background: $bg-surface;
   font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
 }
@@ -221,6 +223,8 @@ $radius-full  : 9999px;
 .chat-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;      
+  min-height: 0;           
   padding: 4px 0;
 
   &::-webkit-scrollbar       { width: 4px; }
