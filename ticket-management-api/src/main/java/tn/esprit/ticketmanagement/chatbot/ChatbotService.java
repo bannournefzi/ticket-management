@@ -112,7 +112,7 @@ public class ChatbotService {
                   manage users, monitor account health, and make smart decisions.
                 ╚══════════════════════════════════════════════════════════════╝
 
-                ┌─ LOGGED-IN ADMIN ──────────────────────────────────────────┐
+                ┌─ LOGGED-IN ADMIN ────────────────────────────────��─────────┐
                   Name  : %s %s
                   Email : %s
                   Time  : %s
@@ -204,10 +204,27 @@ public class ChatbotService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        List<Ticket> userTickets = ticketRepository.findAll().stream()
-                .filter(t -> t.getCreator() != null &&
-                        t.getCreator().getId().equals(currentUser.getId()))
-                .collect(Collectors.toList());
+        // ── Nouvelle logique pour récupérer les tickets selon le rôle ───────
+        List<Ticket> userTickets;
+        if (currentUser.isMetier()) {
+            userTickets = ticketRepository.findAll().stream()
+                    .filter(t -> t.getCreator() != null &&
+                            t.getCreator().getId().equals(currentUser.getId()))
+                    .collect(Collectors.toList());
+        } else if (currentUser.isIT()) {
+            // Le BA voit SES tickets + TOUS les tickets non assignés (ouverts)
+            List<Ticket> myTickets = ticketRepository.findByAssignedToId(currentUser.getId());
+            List<Ticket> unassignedOpenTickets = ticketRepository.findUnassignedOpenTickets();
+
+            userTickets = new ArrayList<>(myTickets);
+            for (Ticket t : unassignedOpenTickets) {
+                if (!userTickets.contains(t)) {
+                    userTickets.add(t);
+                }
+            }
+        } else {
+            userTickets = new ArrayList<>();
+        }
 
         // ── Ticket analytics ─────────────────────────────────────────────────
         long openCount       = userTickets.stream().filter(t -> t.getStatus() == TicketStatus.OPEN).count();
@@ -250,9 +267,12 @@ public class ChatbotService {
                 .sorted(Comparator.comparing(t -> priorityOrder(t.getPriority())))
                 .map(t -> {
                     String slaFlag = t.isSLABreached() ? " ⚠ SLA BREACHED" : "";
-                    String age     = t.getCreatedDate() != null
-                            ? " | Age: " + ChronoUnit.DAYS.between(t.getCreatedDate(), now) + "d"
+
+                    // Amélioration : Remplacer l'âge en jours (souvent 0) par la date exacte de création
+                    String age = t.getCreatedDate() != null
+                            ? " | Created on: " + t.getCreatedDate().format(DATE_FMT)
                             : "";
+
                     String due     = t.getDueDate() != null
                             ? " | Due: " + t.getDueDate().format(DATE_FMT) : "";
                     String desc    = t.getDescription() != null
@@ -303,6 +323,7 @@ public class ChatbotService {
 
                   INTELLIGENCE & PRIORITIZATION:
                   - Always reason through the data before answering.
+                  - Pay close attention to the "Created on" date compared to the current "Time".
                   - Prioritization order: SLA breached first → CRITICAL → HIGH
                     → MEDIUM → then by age (oldest first).
                   - For "what should I do first?" → give a ranked action plan,
@@ -316,7 +337,7 @@ public class ChatbotService {
                   TONE & FORMAT:
                   - Be warm, encouraging, and human — like a brilliant colleague.
                   - Use bullet points and short paragraphs for readability.
-                  - For ticket details show: ID, title, priority, status, age, SLA.
+                  - For ticket details show: ID, title, priority, status, date created, SLA.
                   - Keep answers focused and actionable — not just informational.
                   - When listing multiple tickets, always sort by urgency.
                   - End with 1 clear next step or encouragement when appropriate.
