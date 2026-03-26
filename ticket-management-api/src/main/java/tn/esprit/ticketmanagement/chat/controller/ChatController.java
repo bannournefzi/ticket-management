@@ -13,7 +13,7 @@ import tn.esprit.ticketmanagement.chat.dto.StringResponse;
 import java.util.List;
 
 @RestController
-@RequestMapping("/chats")
+@RequestMapping("/conversations")
 @RequiredArgsConstructor
 @Tag(name = "Chat")
 public class ChatController {

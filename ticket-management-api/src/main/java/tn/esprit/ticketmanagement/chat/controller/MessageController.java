@@ -2,6 +2,7 @@ package tn.esprit.ticketmanagement.chat.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.ticketmanagement.chat.dto.MessageRequest;
 import tn.esprit.ticketmanagement.chat.dto.MessageResponse;
+import tn.esprit.ticketmanagement.chat.service.FileService;
 import tn.esprit.ticketmanagement.chat.service.MessageService;
 
 import java.util.List;
@@ -29,6 +31,8 @@ import java.util.List;
 public class MessageController {
 
     private final MessageService messageService;
+    private final FileService fileService;
+
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -57,5 +61,28 @@ public class MessageController {
             @PathVariable("chat-id") String chatId
     ) {
         return ResponseEntity.ok(messageService.findChatMessages(chatId));
+    }
+
+    @GetMapping("/media/**")
+    public ResponseEntity<byte[]> getMedia(HttpServletRequest request) {
+        // Extract the file path after "/messages/media/"
+        String filePath = request.getRequestURI().substring(
+                request.getContextPath().length() + "/messages/media/".length()
+        );
+
+        byte[] fileContent = fileService.readFileFromLocation(filePath);
+        if (fileContent.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String contentType = "image/jpeg"; // default
+        if (filePath.endsWith(".png")) contentType = "image/png";
+        else if (filePath.endsWith(".gif")) contentType = "image/gif";
+        else if (filePath.endsWith(".webp")) contentType = "image/webp";
+        else if (filePath.endsWith(".pdf")) contentType = "application/pdf";
+
+        return ResponseEntity.ok()
+                .header("Content-Type", contentType)
+                .body(fileContent);
     }
 }

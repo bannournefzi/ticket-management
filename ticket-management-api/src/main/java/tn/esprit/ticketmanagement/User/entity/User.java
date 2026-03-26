@@ -9,7 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import tn.esprit.ticketmanagement.User.enums.Departement;
-import tn.esprit.ticketmanagement.chat.entity.Chat;
+import tn.esprit.ticketmanagement.chat.entity.Conversation;
 import tn.esprit.ticketmanagement.common.UserConstants;
 import tn.esprit.ticketmanagement.role.Role;
 
@@ -79,10 +79,10 @@ public class User implements UserDetails, Principal {
     private List<Role> roles;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Chat> chatsAsSender;
+    private List<Conversation> chatsAsSender;
 
     @OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Chat> chatsAsRecipient;
+    private List<Conversation> chatsAsRecipient;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

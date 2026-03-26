@@ -1,7 +1,7 @@
 package tn.esprit.ticketmanagement.chat.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -12,7 +12,7 @@ import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.chat.repository.MessageRepository;
 import tn.esprit.ticketmanagement.chat.dto.ChatResponse;
-import tn.esprit.ticketmanagement.chat.entity.Chat;
+import tn.esprit.ticketmanagement.chat.entity.Conversation;
 import tn.esprit.ticketmanagement.chat.mapper.ChatMapper;
 import tn.esprit.ticketmanagement.chat.repository.ChatRepository;
 
@@ -43,25 +43,27 @@ public class ChatService {
                 .toList();
     }
 
+
     @Transactional
     public String createChat(Integer senderId, Integer receiverId) {
-        // Check if chat already exists
-        Optional<Chat> existingChat = chatRepository.findChatByReceiverAndSender(senderId, receiverId);
+        Optional<Conversation> existingChat = chatRepository.findChatByReceiverAndSender(senderId, receiverId);
         if (existingChat.isPresent()) {
             log.info("Chat already exists between sender {} and receiver {}", senderId, receiverId);
             return existingChat.get().getId();
         }
+
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new EntityNotFoundException("Sender with id " + senderId + " not found"));
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new EntityNotFoundException("Receiver with id " + receiverId + " not found"));
-        Chat chat = new Chat();
-        chat.setSender(sender);
-        chat.setRecipient(receiver);
 
-        Chat savedChat = chatRepository.save(chat);
-        log.info("New chat created with id: {}", savedChat.getId());
-        return savedChat.getId();
+        Conversation conversation = new Conversation();
+        conversation.setSender(sender);
+        conversation.setRecipient(receiver);
+
+        Conversation savedConversation = chatRepository.saveAndFlush(conversation); // ✅ saveAndFlush
+        log.info("New chat created with id: {}", savedConversation.getId());
+        return savedConversation.getId();
     }
 
     private String extractUsername(Authentication authentication) {
@@ -74,15 +76,15 @@ public class ChatService {
 
     public void deleteChatById(String chatId, Integer userId) {
 
-        Chat chat = chatRepository.findById(chatId)
+        Conversation conversation = chatRepository.findById(chatId)
                 .orElseThrow(() -> new EntityNotFoundException("Chat not found"));
 
-        if (!chat.getSender().getId().equals(userId) &&
-                !chat.getRecipient().getId().equals(userId)) {
+        if (!conversation.getSender().getId().equals(userId) &&
+                !conversation.getRecipient().getId().equals(userId)) {
 
             throw new RuntimeException("Not authorized to delete this chat");
         }
 
-        chatRepository.delete(chat);
+        chatRepository.delete(conversation);
     }
 }

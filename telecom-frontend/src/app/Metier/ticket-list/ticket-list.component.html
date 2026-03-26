@@ -157,7 +157,7 @@
 
             <td class="td-center">
               <span class="status-tag" [ngClass]="getStatusClass(ticket.status)">
-                {{ statusConfig[ticket.status]?.label || ticket.status }}
+                {{ statusConfig[ticket.status].label || ticket.status }}
               </span>
             </td>
 
@@ -236,11 +236,11 @@
     <div class="modal-top">
       <span class="modal-id">#{{ viewedTicket?.id }}</span>
       <span class="status-tag" [ngClass]="getStatusClass(viewedTicket?.status || '')">
-        {{ statusConfig[viewedTicket?.status || '']?.label }}
+        {{ statusConfig[viewedTicket?.status || ''].label }}
       </span>
       <span class="badge-priority" [ngClass]="getPriorityClass(viewedTicket?.priority || '')">
-        <i [class]="priorityConfig[viewedTicket?.priority || '']?.icon"></i>
-        {{ priorityConfig[viewedTicket?.priority || '']?.label }}
+        <i [class]="priorityConfig[viewedTicket?.priority || ''].icon"></i>
+        {{ priorityConfig[viewedTicket?.priority || ''].label }}
       </span>
       <span class="sla-badge" *ngIf="viewedTicket?.slaStatus"
             [ngClass]="getSLAClass(viewedTicket?.slaStatus)">
@@ -279,7 +279,7 @@
         </div>
 
         <div class="modal-meta">
-          <span><i [class]="categoryConfig[viewedTicket.category]?.icon"></i> {{ categoryConfig[viewedTicket.category]?.label }}</span>
+          <span><i [class]="categoryConfig[viewedTicket.category].icon"></i> {{ categoryConfig[viewedTicket.category].label }}</span>
           <span *ngIf="viewedTicket.departement"><i class="fas fa-building"></i> {{ viewedTicket.departement }}</span>
           <span><i class="fas fa-calendar"></i> {{ viewedTicket.createdDate | date:'dd MMM yyyy, HH:mm' }}</span>
         </div>

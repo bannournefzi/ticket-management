@@ -23,12 +23,12 @@ import static jakarta.persistence.GenerationType.UUID;
 @Entity
 @Table(name = "chat")
 @NamedQuery(name = ChatConstants.FIND_CHAT_BY_SENDER_ID,
-        query = "SELECT DISTINCT c FROM Chat c WHERE c.sender.id = :senderId OR c.recipient.id = :senderId ORDER BY c.createdDate DESC"
+        query = "SELECT DISTINCT c FROM Conversation c WHERE c.sender.id = :senderId OR c.recipient.id = :senderId ORDER BY c.createdDate DESC"
 )
 @NamedQuery(name = ChatConstants.FIND_CHAT_BY_SENDER_ID_AND_RECEIVER,
-        query = "SELECT DISTINCT c FROM Chat c WHERE (c.sender.id = :senderId AND c.recipient.id = :recipientId) OR (c.sender.id = :recipientId AND c.recipient.id = :senderId) ORDER BY c.createdDate DESC"
+        query = "SELECT DISTINCT c FROM Conversation c WHERE (c.sender.id = :senderId AND c.recipient.id = :recipientId) OR (c.sender.id = :recipientId AND c.recipient.id = :senderId) ORDER BY c.createdDate DESC"
 )
-public class Chat extends BaseAuditingEntity {
+public class Conversation extends BaseAuditingEntity {
 
     @Id
     @GeneratedValue(strategy = UUID)
@@ -42,7 +42,7 @@ public class Chat extends BaseAuditingEntity {
     @JoinColumn(name = "recipient_id", nullable = false)
     private User recipient;
 
-    @OneToMany(mappedBy = "chat", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "conversation", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdDate DESC")
     private List<Message> messages;
 

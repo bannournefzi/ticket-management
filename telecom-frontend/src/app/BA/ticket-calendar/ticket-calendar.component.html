@@ -16,45 +16,6 @@
     </div>
   </div>
 
-  <!-- ═══ STATS ═══ -->
-  <!-- <div class="stats-row">
-    <div class="stat-card stat-total">
-      <i class="fas fa-ticket-alt"></i>
-      <div class="stat-info">
-        <span class="stat-value">{{ totalTickets }}</span>
-        <span class="stat-label">Total</span>
-      </div>
-    </div>
-    <div class="stat-card stat-sla" *ngIf="slaViolations > 0">
-      <i class="fas fa-exclamation-triangle"></i>
-      <div class="stat-info">
-        <span class="stat-value">{{ slaViolations }}</span>
-        <span class="stat-label">SLA dépassé</span>
-      </div>
-    </div>
-    <div class="stat-card stat-critical" *ngIf="criticalTickets > 0">
-      <i class="fas fa-fire"></i>
-      <div class="stat-info">
-        <span class="stat-value">{{ criticalTickets }}</span>
-        <span class="stat-label">Critique</span>
-      </div>
-    </div>
-    <div class="stat-card stat-resolved">
-      <i class="fas fa-check-circle"></i>
-      <div class="stat-info">
-        <span class="stat-value">{{ resolvedTickets }}</span>
-        <span class="stat-label">Résolus</span>
-      </div>
-    </div>
-    <div class="stat-card stat-hold" *ngIf="onHoldTickets > 0">
-      <i class="fas fa-pause-circle"></i>
-      <div class="stat-info">
-        <span class="stat-value">{{ onHoldTickets }}</span>
-        <span class="stat-label">En attente</span>
-      </div>
-    </div>
-  </div> -->
-
   <!-- ═══ CONTROLS ═══ -->
   <div class="cal-controls">
     <div class="controls-left">
@@ -154,8 +115,8 @@
 
       <div class="modal-badges">
         <span class="badge-priority" [ngClass]="getPriorityClass(selectedTicket.priority)">
-          <i [class]="priorityConfig[selectedTicket.priority]?.icon"></i>
-          {{ priorityConfig[selectedTicket.priority]?.label }}
+          <i [class]="priorityConfig[selectedTicket.priority].icon"></i>
+          {{ priorityConfig[selectedTicket.priority].label }}
         </span>
       </div>
 

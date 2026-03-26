@@ -1,14 +1,11 @@
 package tn.esprit.ticketmanagement.chat.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import tn.esprit.ticketmanagement.chat.enums.MessageState;
 import tn.esprit.ticketmanagement.chat.enums.MessageType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,6 +19,6 @@ public class MessageResponse {
     private String receiverId;
     private MessageType type;
     private MessageState state;
-    private String mediaFilePath;
-    private LocalDateTime createdDate;
+    private List<String> media;
+    private LocalDateTime createdAt;
 }

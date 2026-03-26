@@ -38,6 +38,8 @@ import { TicketListComponent } from './Metier/ticket-list/ticket-list.component'
 import { ItDashboardComponentComponent } from './BA/it-dashboard-component/it-dashboard-component.component';
 import { BaTicketManagementComponent } from './BA/ba-ticket-management/ba-ticket-management.component';
 import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.component';
+import { ChatbotComponent } from './chatbot/chatbot.component';
+import { ChatFormatPipe } from './Pipe/chat-format.pipe';
 
 @NgModule({
   declarations: [
@@ -59,9 +61,12 @@ import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.co
     TicketListComponent,
     ItDashboardComponentComponent,
     BaTicketManagementComponent,
-    TicketCalendarComponent
+    TicketCalendarComponent,
+    ChatbotComponent,
+    ChatFormatPipe
   ],
   imports: [
+    FormsModule,
     BrowserModule,
     BrowserAnimationsModule,
     AppRoutingModule,

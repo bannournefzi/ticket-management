@@ -49,12 +49,15 @@ public class SecurityConfig {
                                         "/payments/webhook",
                                         "/payments/confirm",
                                         "/ws/**",
+                                        "/messages/media/**",
                                         "/v3/api-docs",
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**",
                                         "/swagger-ui.html",
                                         "/swagger-resources/**",
-                                        "/actuator/**"
+                                        "/actuator/**",
+                                        "/chatbot/**"
+
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
@@ -69,7 +72,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:*"));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

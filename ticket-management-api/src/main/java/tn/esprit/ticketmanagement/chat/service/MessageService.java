@@ -13,7 +13,7 @@ import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.chat.dto.MessageRequest;
 import tn.esprit.ticketmanagement.chat.dto.MessageResponse;
-import tn.esprit.ticketmanagement.chat.entity.Chat;
+import tn.esprit.ticketmanagement.chat.entity.Conversation;
 import tn.esprit.ticketmanagement.chat.entity.Message;
 import tn.esprit.ticketmanagement.chat.enums.MessageState;
 import tn.esprit.ticketmanagement.chat.enums.MessageType;
@@ -22,11 +22,6 @@ import tn.esprit.ticketmanagement.chat.repository.ChatRepository;
 import tn.esprit.ticketmanagement.chat.repository.MessageRepository;
 
 import java.util.List;
-
-// ✅ IMPORTANT: DO NOT have any of these imports:
-// import org.hibernate.validator.internal.engine.messageinterpolation.parser.MessageState;
-// import java.awt.TrayIcon.MessageType;
-// These should NOT be here!
 
 @Slf4j
 @Service
@@ -42,30 +37,42 @@ public class MessageService {
 
     @Transactional
     public void saveMessage(MessageRequest messageRequest) {
-        Chat chat = chatRepository.findById(messageRequest.getChatId())
-                .orElseThrow(() -> new EntityNotFoundException("Chat not found"));
-
-        // ✅ Get sender from authenticated user instead of trusting the request
         User currentUser = getCurrentUser();
         String senderId = currentUser.getId().toString();
+        Integer receiverIdInt = Integer.parseInt(messageRequest.getReceiverId());
+
+        User receiver = userRepository.findById(receiverIdInt)
+                .orElseThrow(() -> new EntityNotFoundException("Receiver not found"));
+
+        // ✅ Always resolve by user IDs — never trust the chatId from the request
+        Conversation conversation = chatRepository
+                .findChatByReceiverAndSender(currentUser.getId(), receiverIdInt)
+                .orElseGet(() -> {
+                    Conversation newConversation = new Conversation();
+                    newConversation.setSender(currentUser);
+                    newConversation.setRecipient(receiver);
+                    Conversation saved = chatRepository.saveAndFlush(newConversation);
+                    log.info("New conversation created: {}", saved.getId());
+                    return saved;
+                });
 
         Message message = new Message();
         message.setContent(messageRequest.getContent());
-        message.setChat(chat);
+        message.setConversation(conversation);
         message.setSenderId(senderId);
         message.setReceiverId(messageRequest.getReceiverId());
         message.setType(messageRequest.getType());
         message.setState(MessageState.SENT);
 
         messageRepository.save(message);
-        log.info("Message saved with id: {}", message.getId());
+        log.info("Message saved: {}", message.getId());
 
         notificationService.sendMessageNotification(
                 messageRequest.getReceiverId(),
-                chat.getId(),
+                conversation.getId(),
                 messageRequest.getContent(),
                 senderId,
-                chat.getTargetChatName(senderId)
+                conversation.getTargetChatName(senderId)
         );
     }
 
@@ -79,11 +86,11 @@ public class MessageService {
 
     @Transactional
     public void setMessagesToSeen(String chatId) {
-        Chat chat = chatRepository.findById(chatId)
+        Conversation conversation = chatRepository.findById(chatId)
                 .orElseThrow(() -> new EntityNotFoundException("Chat not found"));
 
         User currentUser = getCurrentUser();
-        final String recipientId = getRecipientId(chat, currentUser.getId());
+        final String recipientId = getRecipientId(conversation, currentUser.getId());
 
         messageRepository.setMessagesToSeenByChatId(chatId, MessageState.SEEN);
         log.info("Messages marked as seen for chat: {}", chatId);
@@ -97,12 +104,12 @@ public class MessageService {
 
     @Transactional
     public void uploadMediaMessage(String chatId, MultipartFile file) {
-        Chat chat = chatRepository.findById(chatId)
+        Conversation conversation = chatRepository.findById(chatId)
                 .orElseThrow(() -> new EntityNotFoundException("Chat not found"));
 
         User currentUser = getCurrentUser();
         final String senderId = currentUser.getId().toString();
-        final String receiverId = getRecipientId(chat, currentUser.getId());
+        final String receiverId = getRecipientId(conversation, currentUser.getId());
 
         final String filePath = fileService.saveFile(file, senderId);
 
@@ -112,7 +119,7 @@ public class MessageService {
         message.setState(MessageState.SENT);
         message.setType(MessageType.IMAGE);
         message.setMediaFilePath(filePath);
-        message.setChat(chat);
+        message.setConversation(conversation);
 
         messageRepository.save(message);
         log.info("Media message saved with path: {}", filePath);
@@ -126,18 +133,11 @@ public class MessageService {
         );
     }
 
-    private String getSenderId(Chat chat, User currentUser) {
-        if (chat.getSender().getId().equals(currentUser.getId())) {
-            return chat.getSender().getId().toString();
+    private String getRecipientId(Conversation conversation, Integer currentUserId) {
+        if (conversation.getSender().getId().equals(currentUserId)) {
+            return conversation.getRecipient().getId().toString();
         }
-        return chat.getRecipient().getId().toString();
-    }
-
-    private String getRecipientId(Chat chat, Integer currentUserId) {
-        if (chat.getSender().getId().equals(currentUserId)) {
-            return chat.getRecipient().getId().toString();
-        }
-        return chat.getSender().getId().toString();
+        return conversation.getSender().getId().toString();
     }
 
     private User getCurrentUser() {

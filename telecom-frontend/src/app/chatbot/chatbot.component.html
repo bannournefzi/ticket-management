@@ -1,0 +1,125 @@
+<ng-container *ngIf="isLoggedIn">
+
+  <!-- Floating toggle button -->
+  <button class="chat-toggle" (click)="toggleChat()" [class.open]="isOpen" title="TasKi Assistant">
+    <div class="toggle-robot" *ngIf="!isOpen">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <rect x="5" y="8" width="14" height="10" rx="3" fill="white" />
+        <rect x="9" y="5" width="6" height="4" rx="1" fill="rgba(255,255,255,0.6)" />
+        <circle cx="9" cy="13" r="1.5" fill="#534AB7" />
+        <circle cx="15" cy="13" r="1.5" fill="#534AB7" />
+        <rect x="8" y="15.5" width="8" height="1.5" rx="0.75" fill="#534AB7" />
+        <line x1="3" y1="11" x2="5" y2="11" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" />
+        <line x1="19" y1="11" x2="21" y2="11" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"
+          stroke-linecap="round" />
+        <circle cx="12" cy="2.5" r="1" fill="white" />
+        <line x1="12" y1="3" x2="12" y2="5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </div>
+    <svg *ngIf="isOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+      stroke-linecap="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+    <span class="toggle-badge" *ngIf="!isOpen && unreadCount > 0">{{ unreadCount }}</span>
+  </button>
+
+  <!-- Chat window -->
+  <div class="chat-window" [class.visible]="isOpen">
+
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="header-robot">
+        <div class="robot-face">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="8" width="14" height="10" rx="3" fill="white" />
+            <rect x="9" y="5" width="6" height="4" rx="1" fill="rgba(255,255,255,0.6)" />
+            <circle cx="9" cy="13" r="1.5" fill="#534AB7" />
+            <circle cx="15" cy="13" r="1.5" fill="#534AB7" />
+            <rect x="8" y="15.5" width="8" height="1.5" rx="0.75" fill="#534AB7" />
+            <line x1="3" y1="11" x2="5" y2="11" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"
+              stroke-linecap="round" />
+            <line x1="19" y1="11" x2="21" y2="11" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"
+              stroke-linecap="round" />
+            <circle cx="12" cy="2.5" r="1" fill="white" />
+            <line x1="12" y1="3" x2="12" y2="5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"
+              stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="robot-ping"></div>
+      </div>
+      <div class="header-info">
+        <span class="header-name">TasKi</span>
+        <span class="header-status">
+          <span class="status-dot"></span>
+          AI Assistant · Online
+        </span>
+      </div>
+      <button class="header-close" (click)="toggleChat()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" #messagesContainer>
+      <div *ngFor="let msg of messages" class="message-row" [class.user-row]="msg.role === 'user'"
+        [class.bot-row]="msg.role === 'assistant'">
+        <div *ngIf="msg.role === 'assistant'" class="bot-avatar-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="8" width="14" height="10" rx="3" fill="#534AB7" />
+            <rect x="9" y="5" width="6" height="4" rx="1" fill="#7F77DD" />
+            <circle cx="9" cy="13" r="1.5" fill="#EEEDFE" />
+            <circle cx="15" cy="13" r="1.5" fill="#EEEDFE" />
+            <rect x="8" y="15.5" width="8" height="1.5" rx="0.75" fill="#EEEDFE" />
+          </svg>
+        </div>
+
+        <div class="bubble" [class.user-bubble]="msg.role === 'user'" [class.bot-bubble]="msg.role === 'assistant'">
+          <div class="bubble-sender" *ngIf="msg.role === 'assistant'">TasKi</div>
+          <span [innerHTML]="msg.content | chatFormat"></span>
+          <div class="bubble-time">{{ msg.timestamp | date: 'HH:mm' }}</div>
+        </div>
+
+        <div *ngIf="msg.role === 'user'" class="user-avatar-sm">Me</div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="message-row bot-row" *ngIf="isLoading">
+        <div class="bot-avatar-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="8" width="14" height="10" rx="3" fill="#534AB7" />
+            <rect x="9" y="5" width="6" height="4" rx="1" fill="#7F77DD" />
+            <circle cx="9" cy="13" r="1.5" fill="#EEEDFE" />
+            <circle cx="15" cy="13" r="1.5" fill="#EEEDFE" />
+            <rect x="8" y="15.5" width="8" height="1.5" rx="0.75" fill="#EEEDFE" />
+          </svg>
+        </div>
+        <div class="bubble bot-bubble typing-bubble">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="chat-footer">
+      <div class="input-wrap">
+        <textarea [(ngModel)]="userInput" (keydown)="onKeyDown($event)" placeholder="Ask TasKi anything…" rows="1"
+          [disabled]="isLoading"></textarea>
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput.trim() || isLoading">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" fill="white" stroke="none" />
+          </svg>
+        </button>
+      </div>
+      <div class="footer-hint">Enter to send · Shift+Enter for new line</div>
+    </div>
+
+  </div>
+
+</ng-container>

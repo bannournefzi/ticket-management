@@ -1,5 +1,5 @@
 export interface ChatResponse {
-  id?: string | number;  // Can be UUID string or number
+  id?: string ;  // Can be UUID string or number
   senderId?: number;
   receiverId?: number;  // Frontend uses this
   recipientId?: string | number;  // Backend sends this

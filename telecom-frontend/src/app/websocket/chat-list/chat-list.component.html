@@ -32,12 +32,12 @@
 
     <!-- Filter tabs -->
     <div class="filter-tabs" *ngIf="!searchNewContact">
-      <button class="tab" [class.active]="activeFilter === 'all'"    (click)="setFilter('all')">Tous</button>
+      <button class="tab" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">Tous</button>
       <button class="tab" [class.active]="activeFilter === 'unread'" (click)="setFilter('unread')">
         Non lus
         <span *ngIf="totalUnread > 0" class="tab-badge">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
       </button>
-      <button class="tab" [class.active]="activeFilter === 'fav'"   (click)="setFilter('fav')">
+      <button class="tab" [class.active]="activeFilter === 'fav'" (click)="setFilter('fav')">
         ⭐ Favoris
       </button>
     </div>
@@ -46,18 +46,17 @@
   <!-- ─── LIST ─── -->
   <div class="chat-list">
 
-    <!-- CONVERSATIONS VIEW -->
     <ng-container *ngIf="!searchNewContact; else contactsView">
-
       <ng-container *ngIf="filteredChats().length > 0; else noChats">
+
         <div *ngFor="let chat of filteredChats(); trackBy: trackByChatId"
              class="chat-item"
-             [class.has-unread]="chat.unreadCount && chat.unreadCount > 0"
+             [class.has-unread]="hasUnread(chat)"
              [class.is-selected]="selectedChatId === chat.id"
              (click)="chatClicked(chat)">
 
           <!-- Avatar -->
-          <div class="chat-avatar">
+          <div class="chat-avatar" [class.has-unread-avatar]="hasUnread(chat)">
             <span class="avatar-emoji">{{ getAvatarEmoji(chat.name) }}</span>
             <span *ngIf="chat.recipientOnline" class="online-dot"></span>
           </div>
@@ -65,7 +64,9 @@
           <!-- Info -->
           <div class="chat-info">
             <div class="chat-header-row">
-              <span class="chat-name">{{ getChatName(chat) }}</span>
+              <span class="chat-name" [class.unread-name]="hasUnread(chat)">
+                {{ getChatName(chat) }}
+              </span>
               <div class="chat-right-meta">
                 <button class="fav-btn"
                         (click)="toggleFavorite($event, chat)"
@@ -73,21 +74,26 @@
                         title="Favori">
                   <i class="fas fa-star"></i>
                 </button>
-                <span class="msg-time">{{ formatTime(chat.lastMessageTime) }}</span>
+                <span class="msg-time" [class.unread-time]="hasUnread(chat)">
+                  {{ formatTime(chat.lastMessageTime) }}
+                </span>
               </div>
             </div>
             <div class="last-msg-row">
-              <div class="last-msg">
+              <div class="last-msg" [class.unread-msg]="hasUnread(chat)">
                 <i *ngIf="isMediaMessage(chat.lastMessage)" class="fas fa-image media-icon"></i>
                 <span *ngIf="isMediaMessage(chat.lastMessage)">Photo</span>
-                <span *ngIf="!isMediaMessage(chat.lastMessage)">{{ wrapMessage(chat.lastMessage) || 'Démarrer la conversation…' }}</span>
+                <span *ngIf="!isMediaMessage(chat.lastMessage)">
+                  {{ wrapMessage(chat.lastMessage) || 'Démarrer la conversation…' }}
+                </span>
               </div>
-              <span *ngIf="chat.unreadCount && chat.unreadCount > 0" class="unread-badge">
-                {{ chat.unreadCount > 99 ? '99+' : chat.unreadCount }}
+              <span *ngIf="hasUnread(chat)" class="unread-badge">
+                {{ formatUnread(chat) }}
               </span>
             </div>
           </div>
         </div>
+
       </ng-container>
 
       <ng-template #noChats>
@@ -102,7 +108,6 @@
           </button>
         </div>
       </ng-template>
-
     </ng-container>
 
     <!-- CONTACTS VIEW -->

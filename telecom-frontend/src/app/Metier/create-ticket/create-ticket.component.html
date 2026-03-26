@@ -92,7 +92,7 @@
             <span class="form-hint" *ngIf="newTicket.description && newTicket.description.length < 10">
               <i class="fas fa-exclamation-triangle"></i> Minimum 10 caractères
             </span>
-            <span class="char-count">{{ newTicket.description?.length || 0 }} / 5000</span>
+            <span class="char-count">{{ newTicket.description.length || 0 }} / 5000</span>
           </div>
         </div>
 

@@ -17,10 +17,10 @@ import tn.esprit.ticketmanagement.common.MessageConstants;
 @Entity
 @Table(name = "messages")
 @NamedQuery(name = MessageConstants.FIND_MESSAGES_BY_CHAT_ID,
-        query = "SELECT m FROM Message m WHERE m.chat.id = :chatId ORDER BY m.createdDate DESC"
+        query = "SELECT m FROM Message m WHERE m.conversation.id = :chatId ORDER BY m.createdDate ASC"
 )
 @NamedQuery(name = MessageConstants.SET_MESSAGES_TO_SEEN_BY_CHAT,
-        query = "UPDATE Message m SET m.state = :newState WHERE m.chat.id = :chatId"
+        query = "UPDATE Message m SET m.state = :state WHERE m.conversation.id = :chatId AND m.receiverId = :receiverId"
 )
 public class Message extends BaseAuditingEntity {
 
@@ -42,7 +42,7 @@ public class Message extends BaseAuditingEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_id", nullable = false)
-    private Chat chat;
+    private Conversation conversation;
 
     @Column(name = "sender_id", nullable = false)
     private String senderId;

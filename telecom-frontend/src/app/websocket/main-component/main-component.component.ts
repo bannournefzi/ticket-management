@@ -22,8 +22,8 @@ import { Notification } from '../../models/Notification';
 import { AuthService } from '../../auth/service/auth.service';
 import { WebsocketService } from '../../services/WebsocketService';
 import { StompSubscription } from '@stomp/stompjs';
+import { environment } from '../../environments/environment';
 
-// ─── Avatar emoji map (mirrors chat-list logic) ──────────────────────────────
 const AVATAR_EMOJIS: Record<string, string> = {
   A: '🧑', B: '👤', C: '🧑', D: '👤', E: '🧑',
   F: '👩', G: '🧑', H: '👨', I: '🧑', J: '👤',
@@ -86,78 +86,110 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewChecked {
   // ─── CHAT SELECTION ────────────────────────────────────────────────────────
 
   chatSelected(chatResponse: ChatResponse): void {
+    const senderId   = Number(chatResponse.senderId);
     const receiverId = Number(chatResponse.receiverId || (chatResponse as any).recipientId);
 
-    this.selectedChat = {
-      ...chatResponse,
-      senderId:  Number(chatResponse.senderId),
-      receiverId
-    };
-
-    this.getAllChatMessages(chatResponse.id!);
-
-    setTimeout(() => {
-      this.setMessagesToSeen();
-      this.selectedChat.unreadCount = 0;
-      this.updateChatInList();
-    }, 300);
-
-    this.cdr.detectChanges();
+    this.ensureChatExists(senderId, receiverId).then((chatId) => {
+      this.selectedChat = { ...chatResponse, id: chatId, senderId, receiverId };
+      this.getAllChatMessages(chatId);
+      setTimeout(() => {
+        this.setMessagesToSeen();
+        this.selectedChat.unreadCount = 0;
+        this.updateChatInList();
+      }, 300);
+      this.cdr.detectChanges();
+    });
   }
 
   // ─── SEND MESSAGE ──────────────────────────────────────────────────────────
 
   sendMessage(): void {
-    if (!this.messageContent.trim() || !this.selectedChat.id) return;
+    if (!this.messageContent.trim()) return;
 
     const currentUserId  = Number(this.authService.getUserId());
     const chatSenderId   = Number(this.selectedChat.senderId);
     const chatReceiverId = Number(this.selectedChat.receiverId);
 
     if (isNaN(chatSenderId) || isNaN(chatReceiverId)) {
-      console.error('❌ Invalid chat IDs:', { chatSenderId, chatReceiverId });
+      console.error('Invalid chat IDs:', { chatSenderId, chatReceiverId });
       return;
     }
 
     const myReceiverId = chatSenderId === currentUserId ? chatReceiverId : chatSenderId;
 
     if (!currentUserId || !myReceiverId || isNaN(myReceiverId)) {
-      console.error('❌ Invalid IDs after calculation:', { currentUserId, myReceiverId });
+      console.error('Invalid IDs:', { currentUserId, myReceiverId });
       return;
     }
 
-    const messageRequest: MessageRequest = {
-      chatId:     this.selectedChat.id as any,
-      senderId:   currentUserId,
-      receiverId: myReceiverId,
-      content:    this.messageContent.trim(),
-      type:       'TEXT',
-    };
-
-    this.messageService.saveMessage({ body: messageRequest }).subscribe({
-      next: () => {
-        const message: MessageResponse = {
-          senderId:  currentUserId,
-          receiverId: myReceiverId,
-          content:   this.messageContent,
-          type:      'TEXT',
-          state:     'SENT',
-          createdAt: new Date().toISOString()
-        };
-       this.chatMessages.push(message);  // unshift adds to front of array = bottom visually
-this.cdr.detectChanges();
-        this.selectedChat.lastMessage = this.messageContent;
-        this.selectedChat.lastMessageTime = new Date().toISOString();
-        this.updateChatInList();
-        this.sortChats();
-        this.messageContent = '';
-        this.showEmojis     = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('❌ Erreur envoi:', err);
-        alert('Erreur lors de l\'envoi du message');
+    this.ensureChatExists(currentUserId, myReceiverId).then((chatId) => {
+      if (!chatId) {
+        console.error('Could not resolve chatId');
+        alert('Could not start conversation');
+        return;
       }
+
+      this.selectedChat.id = chatId;
+
+      const messageRequest: MessageRequest = {
+        chatId,
+        senderId:   currentUserId,
+        receiverId: myReceiverId,
+        content:    this.messageContent.trim(),
+        type:       'TEXT',
+      };
+
+      this.messageService.saveMessage({ body: messageRequest }).subscribe({
+        next: () => {
+          const message: MessageResponse = {
+            senderId:   currentUserId,
+            receiverId: myReceiverId,
+            content:    this.messageContent,
+            type:       'TEXT',
+            state:      'SENT',
+            createdAt:  new Date().toISOString()
+          };
+          this.chatMessages.push(message);
+          this.selectedChat.lastMessage     = this.messageContent;
+          this.selectedChat.lastMessageTime = new Date().toISOString();
+          this.updateChatInList();
+          this.sortChats();
+          this.messageContent = '';
+          this.showEmojis     = false;
+          this.shouldScroll   = true;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Erreur envoi:', err);
+          alert('Erreur lors de l\'envoi du message');
+        }
+      });
+    });
+  }
+
+  private ensureChatExists(senderId: number, receiverId: number): Promise<string> {
+    return new Promise((resolve) => {
+      this.chatService.createChat(senderId, receiverId).subscribe({
+        next: (res: any) => {
+          let chatId = '';
+          if (typeof res === 'string') {
+            chatId = res;
+          } else if (typeof res === 'object' && res !== null) {
+            chatId = res.response ?? res.id ?? res.chatId ?? '';
+          }
+          chatId = chatId.trim();
+          if (!chatId) {
+            console.error('createChat returned empty id:', res);
+            resolve('');
+          } else {
+            resolve(chatId);
+          }
+        },
+        error: (err) => {
+          console.error('createChat failed:', err);
+          resolve('');
+        }
+      });
     });
   }
 
@@ -173,15 +205,14 @@ this.cdr.detectChanges();
       const base64Full = reader.result!.toString();
       const mediaData  = base64Full.split(',')[1];
 
-      // Optimistic preview
       const previewMessage: MessageResponse = {
-        senderId:  this.getSenderId(),
+        senderId:   this.getSenderId(),
         receiverId: this.getReceiverId(),
-        content:   '',
-        type:      'IMAGE',
-        state:     'SENT',
-        media:     [mediaData],
-        createdAt: new Date().toISOString()
+        content:    '',
+        type:       'IMAGE',
+        state:      'SENT',
+        media:      [mediaData],
+        createdAt:  new Date().toISOString()
       };
       this.chatMessages.push(previewMessage);
       this.selectedChat.lastMessage = '📎 Photo';
@@ -189,7 +220,7 @@ this.cdr.detectChanges();
       this.cdr.detectChanges();
 
       this.messageService.uploadMedia({
-        'chat-id': this.selectedChat.id! as any,
+        'chat-id': this.selectedChat.id!,   // ✅ now string, no cast needed
         body: { file }
       }).subscribe({
         next: () => {
@@ -228,17 +259,14 @@ this.cdr.detectChanges();
     this.lightboxSrc = src;
   }
 
-  /** Returns true when a message has media content to display */
   hasMedia(message: MessageResponse): boolean {
     return message.type === 'IMAGE' && !!(message.media && message.media.length > 0);
   }
 
-  /** Builds the img src — supports both base64 blobs and regular URLs */
   getMediaSrc(message: MessageResponse): string {
     const raw = message.media![0];
-    // Already a data-URL or http URL → use as-is
+    if (raw.startsWith('/')) return `${environment.apiUrl}${raw}`;
     if (raw.startsWith('data:') || raw.startsWith('http')) return raw;
-    // Pure base64 → wrap it
     return `data:image/jpeg;base64,${raw}`;
   }
 
@@ -292,21 +320,22 @@ this.cdr.detectChanges();
   private handleNotification(notification: Notification): void {
     if (!notification?.chatId) return;
 
-    const isCurrentChat = this.selectedChat?.id === notification.chatId;
+    const notifChatId   = notification.chatId.toString();
+    const currentChatId = this.selectedChat?.id?.toString();
+    const isCurrentChat = currentChatId === notifChatId;
 
     if (isCurrentChat) {
       switch (notification.type) {
         case 'MESSAGE':
-          // TEXT messages: reconstruct from notification
           const newTextMsg: MessageResponse = {
-            senderId:  notification.senderId!,
-            receiverId: notification.receiverId!,
+            senderId:  Number(notification.senderId),
+            receiverId: Number(notification.receiverId),
             content:   notification.content || '',
             type:      'TEXT',
             state:     'SENT',
             createdAt: new Date().toISOString()
           };
-this.chatMessages.push(newTextMsg);
+          this.chatMessages.push(newTextMsg);
           this._updateLastMessage(notification.content || 'Message');
           this.shouldScroll = true;
           this.cdr.detectChanges();
@@ -314,8 +343,6 @@ this.chatMessages.push(newTextMsg);
           break;
 
         case 'IMAGE':
-          // ✅ FIX: For images, ALWAYS reload from server — the full binary
-          // is stored in the database and may not be in the WebSocket payload.
           this._updateLastMessage('📎 Photo');
           this.getAllChatMessages(this.selectedChat.id!);
           break;
@@ -328,21 +355,17 @@ this.chatMessages.push(newTextMsg);
           break;
       }
     } else {
-      // Update chat in sidebar (badge, last message)
-      const destChat = this.chats.find(c => c.id === notification.chatId);
+      const destChat = this.chats.find(c => c.id?.toString() === notifChatId);
 
       if (destChat) {
         if (notification.type !== 'SEEN') {
-          destChat.lastMessage = notification.type === 'IMAGE'
-            ? '📎 Photo'
-            : (notification.content || 'Message');
+          destChat.lastMessage     = notification.type === 'IMAGE' ? '📎 Photo' : (notification.content || 'Message');
           destChat.lastMessageTime = new Date().toISOString();
-          destChat.unreadCount = (destChat.unreadCount || 0) + 1;
+          destChat.unreadCount     = (destChat.unreadCount || 0) + 1;
           this.sortChats();
           this.cdr.detectChanges();
         }
-      } else if (notification.type === 'MESSAGE') {
-        // Completely new chat → reload list
+      } else if (notification.type === 'MESSAGE' || notification.type === 'IMAGE') {
         this.getAllChats();
       }
     }
@@ -379,27 +402,33 @@ this.chatMessages.push(newTextMsg);
     });
   }
 
- private getAllChatMessages(chatId: string | number): void {
-  this.loadingMessages = true;
-  this.messageService.getAllMessages({ 'chat-id': chatId as any }).subscribe({
-    next: (messages) => {
- 
-      this.chatMessages = messages.sort((a, b) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return timeA - timeB;  
-      });
+  private getAllChatMessages(chatId: string): void {
+    if (!chatId) return;
 
-      this.loadingMessages = false;
-      this.cdr.detectChanges();
-    },
-    error: () => { this.loadingMessages = false; }
-  });
-}
+    this.loadingMessages = true;
+    this.messageService.getAllMessages({ 'chat-id': chatId }).subscribe({
+      next: (messages) => {
+        this.chatMessages = messages.map(m => ({
+          ...m,
+          createdAt: m.createdAt || (m as any).createdDate
+        })).sort((a, b) => {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return timeA - timeB;
+        });
+
+        this.loadingMessages = false;
+        this.shouldScroll    = true;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.loadingMessages = false; }
+    });
+  }
 
   private setMessagesToSeen(): void {
-    if (!this.selectedChat.id) return;
-    this.messageService.setMessageToSeen({ 'chat-id': this.selectedChat.id as any }).subscribe();
+    const id = this.selectedChat.id;
+    if (!id) return;
+    this.messageService.setMessageToSeen({ 'chat-id': id }).subscribe();
   }
 
   private updateChatInList(): void {
@@ -434,15 +463,11 @@ this.chatMessages.push(newTextMsg);
     return Number(message.senderId) === Number(this.authService.getUserId());
   }
 
-  // ─── TRACK BY ──────────────────────────────────────────────────────────────
-
   trackByMessageId(_: number, message: MessageResponse): string {
     return message.id?.toString() || `${message.senderId}-${message.createdAt}-${_}`;
   }
 
   trackByEmoji(_: number, emoji: string): string { return emoji; }
-
-  // ─── SCROLL ────────────────────────────────────────────────────────────────
 
   private scrollToBottom(): void {
     try {

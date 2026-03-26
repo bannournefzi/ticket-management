@@ -5,30 +5,26 @@ import { MessageResponse } from '../models/MessageResponse';
 import { MessageRequest } from '../models/MessageRequest';
 import { environment } from '../environments/environment';
 
-// ── Parameter interfaces (mirror what main.component.ts passes in) ──────────
-
 interface SaveMessageParams {
   body: MessageRequest;
 }
 
 interface UploadMediaParams {
-  'chat-id': number;
+  'chat-id': string;  // ✅ was number
   body: { file: File };
 }
 
 interface GetAllMessagesParams {
-  'chat-id': number;
+  'chat-id': string;  // ✅ was number
 }
 
 interface SetMessageToSeenParams {
-  'chat-id': number;
+  'chat-id': string;  // ✅ was number
 }
-
-// ────────────────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class MessageService {
-private apiUrl = `${environment.apiUrl}/messages`;
+  private apiUrl = `${environment.apiUrl}/messages`;
 
   constructor(private http: HttpClient) {}
 
