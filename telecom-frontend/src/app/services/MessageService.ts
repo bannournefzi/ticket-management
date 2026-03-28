@@ -10,16 +10,16 @@ interface SaveMessageParams {
 }
 
 interface UploadMediaParams {
-  'chat-id': string;  // ✅ was number
+  'chat-id': string;  
   body: { file: File };
 }
 
 interface GetAllMessagesParams {
-  'chat-id': string;  // ✅ was number
+  'chat-id': string;  
 }
 
 interface SetMessageToSeenParams {
-  'chat-id': string;  // ✅ was number
+  'chat-id': string;  
 }
 
 @Injectable({ providedIn: 'root' })

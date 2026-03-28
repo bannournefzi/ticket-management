@@ -1,6 +1,6 @@
 <div class="ticket-create-container">
 
-  <!-- ✅ Header -->
+  <!-- Header -->
   <div class="page-header-simple">
     <div class="header-content">
       <div class="title-section">
@@ -49,7 +49,7 @@
     <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
   </div>
 
-  <!-- ✅ Formulaire de création -->
+  <!-- Formulaire de création -->
   <div class="main-card">
 
     <div class="card-header-section">
@@ -59,6 +59,97 @@
       <div>
         <h2 class="card-title">Nouveau ticket</h2>
         <p class="card-subtitle">Décrivez votre problème ou demande</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- ═══ VOICE-TO-TICKET AI ═══             -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="voice-section" *ngIf="voiceSupported">
+
+      <!-- Default: bouton pour démarrer -->
+      <div class="voice-prompt" *ngIf="!isRecording && !isProcessingVoice && !showVoiceResult">
+        <button class="voice-start-btn" (click)="startRecording()">
+          <div class="mic-icon-wrapper">
+            <i class="fas fa-microphone"></i>
+          </div>
+          <div class="voice-start-text">
+            <span class="voice-main-text">Dicter un ticket par voix</span>
+            <span class="voice-sub-text">Cliquez et décrivez votre problème, l'IA remplit le formulaire</span>
+          </div>
+          <div class="voice-badge">
+            <i class="fas fa-robot"></i> IA
+          </div>
+        </button>
+      </div>
+
+      <!-- Enregistrement en cours -->
+      <div class="voice-recording" *ngIf="isRecording">
+        <div class="recording-indicator">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring delay-1"></div>
+          <div class="pulse-ring delay-2"></div>
+          <div class="mic-active">
+            <i class="fas fa-microphone"></i>
+          </div>
+        </div>
+        <div class="recording-info">
+          <span class="recording-label">Enregistrement en cours...</span>
+          <span class="recording-time">{{ formatDuration(recordingDuration) }}</span>
+          <p class="recording-transcript" *ngIf="voiceTranscript">« {{ voiceTranscript }} »</p>
+          <p class="recording-hint" *ngIf="!voiceTranscript">Parlez clairement en décrivant votre problème...</p>
+        </div>
+        <div class="recording-actions">
+          <button class="btn-stop" (click)="stopRecording()">
+            <i class="fas fa-stop"></i> Arrêter
+          </button>
+          <button class="btn-cancel-voice" (click)="cancelVoice()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Traitement IA -->
+      <div class="voice-processing" *ngIf="isProcessingVoice">
+        <div class="processing-animation">
+          <div class="ai-brain">
+            <i class="fas fa-brain"></i>
+          </div>
+          <div class="processing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="processing-info">
+          <span class="processing-label">L'IA analyse votre demande...</span>
+          <p class="processing-transcript">« {{ voiceTranscript }} »</p>
+        </div>
+      </div>
+
+      <!-- Résultat -->
+      <div class="voice-result" *ngIf="showVoiceResult && !isRecording && !isProcessingVoice">
+        <div class="result-header">
+          <div class="result-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="result-text">
+            <span class="result-title">Formulaire rempli par l'IA</span>
+            <span class="result-confidence" [ngClass]="getConfidenceClass()">
+              Confiance : {{ getConfidenceLabel() }} ({{ (voiceConfidence * 100).toFixed(0) }}%)
+            </span>
+          </div>
+          <button class="btn-retry-voice" (click)="cancelVoice(); startRecording()" title="Réessayer">
+            <i class="fas fa-redo"></i>
+          </button>
+          <button class="btn-cancel-voice" (click)="cancelVoice()" title="Fermer">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p class="result-hint">Vérifiez et modifiez les champs ci-dessous avant de soumettre.</p>
+      </div>
+
+      <!-- Erreur vocale -->
+      <div class="voice-error" *ngIf="voiceError">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ voiceError }}</span>
+        <button (click)="voiceError = null"><i class="fas fa-times"></i></button>
       </div>
     </div>
 
@@ -150,32 +241,6 @@
           </span>
         </div>
 
-        <!-- Département -->
-        <!-- <div class="form-group">
-          <label class="form-label"><i class="fas fa-building"></i> Département</label>
-          <select class="form-input" [(ngModel)]="newTicket.departement">
-            <option value="">-- Automatique --</option>
-            <option *ngFor="let d of departements" [value]="d">{{ d }}</option>
-          </select>
-          <span class="form-hint">Si vide, votre département sera utilisé</span>
-        </div> -->
-
-        <!-- Assigner -->
-        <!-- <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-user-tie"></i> Assigner à <span class="optional">(optionnel)</span>
-          </label>
-          <select class="form-input" [(ngModel)]="newTicket.assignedToId">
-            <option [ngValue]="undefined">-- Non assigné --</option>
-            <option *ngFor="let ba of businessAnalysts" [ngValue]="ba.id">
-              {{ ba.firstName }} {{ ba.lastName }}
-            </option>
-          </select>
-          <span class="form-hint" *ngIf="newTicket.assignedToId">
-            <i class="fas fa-info-circle"></i> Le ticket passera en statut "En cours"
-          </span>
-        </div> -->
-
       </div>
     </div>
 
@@ -192,7 +257,7 @@
     </div>
   </div>
 
-  <!-- ✅ Mes tickets récents -->
+  <!-- Mes tickets récents -->
   <div class="main-card" style="margin-top: 24px;">
 
     <div class="card-header-section">
@@ -286,13 +351,10 @@
 
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
 <!-- ═══ MODAL VIEW ═══ -->
-<!-- ═══════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="isViewModalOpen" (click)="closeViewModal()">
   <div class="modal-container modal-large" (click)="$event.stopPropagation()">
 
-    <!-- Header -->
     <div class="modal-header">
       <div class="modal-title">
         <i class="fas fa-ticket-alt"></i>
@@ -303,60 +365,46 @@
           {{ getSLALabel(viewedTicket?.slaStatus) }}
         </span>
       </div>
-      <button class="modal-close" (click)="closeViewModal()">
-        <i class="fas fa-times"></i>
-      </button>
+      <button class="modal-close" (click)="closeViewModal()"><i class="fas fa-times"></i></button>
     </div>
 
-    <!-- Body -->
     <div class="modal-body" *ngIf="viewedTicket">
 
-      <!-- Tabs -->
       <div class="modal-tabs">
-        <button class="modal-tab" [class.active]="activeTab === 'details'"
-                (click)="activeTab = 'details'">
+        <button class="modal-tab" [class.active]="activeTab === 'details'" (click)="activeTab = 'details'">
           <i class="fas fa-info-circle"></i> Détails
         </button>
-        <button class="modal-tab" [class.active]="activeTab === 'comments'"
-                (click)="activeTab = 'comments'">
+        <button class="modal-tab" [class.active]="activeTab === 'comments'" (click)="activeTab = 'comments'">
           <i class="fas fa-comments"></i> Commentaires
           <span class="tab-count" *ngIf="comments.length > 0">{{ comments.length }}</span>
         </button>
-        <button class="modal-tab" [class.active]="activeTab === 'history'"
-                (click)="activeTab = 'history'; loadHistory(viewedTicket!.id)">
+        <button class="modal-tab" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'; loadHistory(viewedTicket!.id)">
           <i class="fas fa-history"></i> Historique
           <span class="tab-count" *ngIf="ticketHistory.length > 0">{{ ticketHistory.length }}</span>
         </button>
       </div>
 
-      <!-- ═══ TAB 1: Détails ═══ -->
+      <!-- TAB 1: Détails -->
       <div *ngIf="activeTab === 'details'">
         <h3 class="modal-ticket-title">{{ viewedTicket.title }}</h3>
-
         <div class="modal-badges">
           <span class="status-pill" [ngClass]="getStatusClass(viewedTicket.status)">
-            <span class="status-dot"></span>
-            {{ statusLabels[viewedTicket.status] }}
+            <span class="status-dot"></span> {{ statusLabels[viewedTicket.status] }}
           </span>
           <span class="badge-sm" [ngClass]="getPriorityClass(viewedTicket.priority)">
-            <i [class]="priorityConfig[viewedTicket.priority].icon"></i>
-            {{ priorityConfig[viewedTicket.priority].label }}
+            <i [class]="priorityConfig[viewedTicket.priority].icon"></i> {{ priorityConfig[viewedTicket.priority].label }}
           </span>
           <span class="badge-sm badge-type">
-            <i [class]="categoryConfig[viewedTicket.category].icon"></i>
-            {{ categoryConfig[viewedTicket.category].label }}
+            <i [class]="categoryConfig[viewedTicket.category].icon"></i> {{ categoryConfig[viewedTicket.category].label }}
           </span>
         </div>
-
         <div class="modal-tags" *ngIf="viewedTicket.tags && viewedTicket.tags.length > 0">
           <span class="mini-tag" *ngFor="let tag of viewedTicket.tags">{{ tag }}</span>
         </div>
-
         <div class="view-description-block">
           <label class="view-info-label"><i class="fas fa-align-left"></i> Description</label>
           <p class="view-description-text">{{ viewedTicket.description }}</p>
         </div>
-
         <div class="view-info-grid">
           <div class="view-info-block">
             <label class="view-info-label"><i class="fas fa-user"></i> Créé par</label>
@@ -379,26 +427,16 @@
           </div>
           <div class="view-info-block" *ngIf="viewedTicket.dueDate">
             <label class="view-info-label"><i class="fas fa-clock"></i> Échéance SLA</label>
-            <p class="view-info-value" [ngClass]="getSLAClass(viewedTicket.slaStatus)">
-              {{ viewedTicket.dueDate | date:'dd/MM/yyyy HH:mm' }}
-            </p>
+            <p class="view-info-value" [ngClass]="getSLAClass(viewedTicket.slaStatus)">{{ viewedTicket.dueDate | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
           <div class="view-info-block" *ngIf="viewedTicket.resolvedDate">
             <label class="view-info-label"><i class="fas fa-check-circle"></i> Résolu le</label>
             <p class="view-info-value">{{ viewedTicket.resolvedDate | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
-          <div class="view-info-block" *ngIf="viewedTicket.closedDate">
-            <label class="view-info-label"><i class="fas fa-times-circle"></i> Fermé le</label>
-            <p class="view-info-value">{{ viewedTicket.closedDate | date:'dd/MM/yyyy HH:mm' }}</p>
-          </div>
-          <div class="view-info-block" *ngIf="viewedTicket.commentCount !== undefined">
-            <label class="view-info-label"><i class="fas fa-comments"></i> Commentaires</label>
-            <p class="view-info-value">{{ viewedTicket.commentCount }}</p>
-          </div>
         </div>
       </div>
 
-      <!-- ═══ TAB 2: Commentaires ═══ -->
+      <!-- TAB 2: Commentaires -->
       <div *ngIf="activeTab === 'comments'">
         <div class="comments-list">
           <div class="comment-item" *ngFor="let c of comments" [class.internal-note]="c.internalNote">
@@ -409,41 +447,25 @@
                 <span class="comment-role">{{ getCommentRoleLabel(c.authorRole) }}</span>
               </div>
               <span class="comment-date">{{ getTimeAgo(c.createdDate) }}</span>
-              <span class="internal-badge" *ngIf="c.internalNote">
-                <i class="fas fa-lock"></i> Note interne
-              </span>
-              <button class="comment-delete" *ngIf="canDeleteComment(c)"
-                      (click)="deleteComment(c)" title="Supprimer">
-                <i class="fas fa-trash"></i>
-              </button>
+              <span class="internal-badge" *ngIf="c.internalNote"><i class="fas fa-lock"></i> Note interne</span>
+              <button class="comment-delete" *ngIf="canDeleteComment(c)" (click)="deleteComment(c)" title="Supprimer"><i class="fas fa-trash"></i></button>
             </div>
             <p class="comment-body">{{ c.content }}</p>
           </div>
-
-          <div class="loading-state small" *ngIf="isLoadingComments">
-            <div class="loader small"></div>
-            <p>Chargement des commentaires...</p>
-          </div>
-
-          <div class="empty-state small" *ngIf="comments.length === 0 && !isLoadingComments">
-            <i class="fas fa-comments"></i>
-            <p>Aucun commentaire pour le moment</p>
-          </div>
+          <div class="loading-state small" *ngIf="isLoadingComments"><div class="loader small"></div><p>Chargement...</p></div>
+          <div class="empty-state small" *ngIf="comments.length === 0 && !isLoadingComments"><i class="fas fa-comments"></i><p>Aucun commentaire</p></div>
         </div>
-
         <div class="comment-form">
           <div class="comment-form-input">
             <span class="comment-form-avatar">{{ getInitial('Moi') }}</span>
-            <textarea [(ngModel)]="newComment" rows="3"
-                      placeholder="Écrire un commentaire..." class="comment-textarea"></textarea>
+            <textarea [(ngModel)]="newComment" rows="3" placeholder="Écrire un commentaire..." class="comment-textarea"></textarea>
           </div>
           <div class="comment-form-actions">
             <label class="internal-toggle">
               <input type="checkbox" [(ngModel)]="isInternalNote"/>
               <span><i class="fas fa-lock"></i> Note interne</span>
             </label>
-            <button class="btn-send" (click)="sendComment()"
-                    [disabled]="isSendingComment || !newComment.trim()">
+            <button class="btn-send" (click)="sendComment()" [disabled]="isSendingComment || !newComment.trim()">
               <i class="fas fa-spinner fa-spin" *ngIf="isSendingComment"></i>
               <i class="fas fa-paper-plane" *ngIf="!isSendingComment"></i>
               {{ isSendingComment ? 'Envoi...' : 'Envoyer' }}
@@ -452,7 +474,7 @@
         </div>
       </div>
 
-      <!-- ═══ TAB 3: Historique ═══ -->
+      <!-- TAB 3: Historique -->
       <div *ngIf="activeTab === 'history'">
         <div class="history-container" *ngIf="ticketHistory.length > 0">
           <div class="history-timeline">
@@ -470,37 +492,21 @@
                     <i class="fas fa-arrow-right"></i>
                     <span class="history-new">{{ h.newValue }}</span>
                   </span>
-                  <span class="history-change" *ngIf="!h.oldValue && h.newValue">
-                    → <span class="history-new">{{ h.newValue }}</span>
-                  </span>
+                  <span class="history-change" *ngIf="!h.oldValue && h.newValue">→ <span class="history-new">{{ h.newValue }}</span></span>
                 </div>
-                <p class="history-comment" *ngIf="h.comment">
-                  <i class="fas fa-quote-left"></i> {{ h.comment }}
-                </p>
+                <p class="history-comment" *ngIf="h.comment"><i class="fas fa-quote-left"></i> {{ h.comment }}</p>
               </div>
             </div>
           </div>
         </div>
-
-        <div class="empty-state small" *ngIf="ticketHistory.length === 0 && !isLoadingHistory">
-          <i class="fas fa-history"></i>
-          <p>Aucun historique</p>
-        </div>
-
-        <div class="loading-state small" *ngIf="isLoadingHistory">
-          <div class="loader small"></div>
-          <p>Chargement...</p>
-        </div>
+        <div class="empty-state small" *ngIf="ticketHistory.length === 0 && !isLoadingHistory"><i class="fas fa-history"></i><p>Aucun historique</p></div>
+        <div class="loading-state small" *ngIf="isLoadingHistory"><div class="loader small"></div><p>Chargement...</p></div>
       </div>
 
     </div>
 
-    <!-- Footer -->
     <div class="modal-footer">
-      <button class="btn-cancel" (click)="closeViewModal()">
-        <i class="fas fa-times"></i> Fermer
-      </button>
+      <button class="btn-cancel" (click)="closeViewModal()"><i class="fas fa-times"></i> Fermer</button>
     </div>
-
   </div>
 </div>

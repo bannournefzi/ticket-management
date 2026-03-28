@@ -11,9 +11,7 @@ export class PhotoService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Upload une photo de profil
-   */
+   
   uploadPhoto(userId: number, file: File): Observable<string> {
     const formData = new FormData();
     formData.append('file', file);
@@ -26,23 +24,17 @@ export class PhotoService {
     });
   }
 
-  /**
-   * Retourne l'URL de la photo de profil
-   */
+   
   getPhotoUrl(userId: number): string {
     return `${this.baseUrl}/${userId}/photo`;
   }
 
-  /**
-   * Supprimer la photo de profil
-   */
+  
   deletePhoto(userId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${userId}/photo`);
   }
 
-  /**
-   * Vérifier si l'utilisateur a une photo
-   */
+   
   hasPhoto(userId: number): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/${userId}/photo/exists`);
   }

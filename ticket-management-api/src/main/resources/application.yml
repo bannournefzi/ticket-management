@@ -24,6 +24,11 @@ spring:
         dimensions: 768
         distance-type: COSINE_DISTANCE
 
+# Voice-to-Ticket AI config
+ollama:
+  base-url: http://localhost:11434
+  model: llama3.2:3b
+
 pgvector:
   datasource:
     url: jdbc:postgresql://localhost:5433/Telecom
