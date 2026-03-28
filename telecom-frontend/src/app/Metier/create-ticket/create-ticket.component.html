@@ -278,7 +278,6 @@
             <th class="th-center">Type</th>
             <th class="th-center">Statut</th>
             <th class="th-center">SLA</th>
-            <th>Assigné à</th>
             <th>Créé</th>
             <th class="th-center">Actions</th>
           </tr>
@@ -320,10 +319,7 @@
                 {{ getSLAShortLabel(ticket.slaStatus) }}
               </span>
             </td>
-            <td>
-              <span *ngIf="ticket.assignedToFullName">{{ ticket.assignedToFullName }}</span>
-              <span *ngIf="!ticket.assignedToFullName" class="text-muted">—</span>
-            </td>
+           
             <td class="td-date">{{ getTimeAgo(ticket.createdDate) }}</td>
             <td class="td-center">
               <div class="action-group">
@@ -411,11 +407,7 @@
             <p class="view-info-value">{{ viewedTicket.creatorFullName }}</p>
             <p class="view-info-sub">{{ viewedTicket.creatorEmail }}</p>
           </div>
-          <div class="view-info-block">
-            <label class="view-info-label"><i class="fas fa-user-tie"></i> Assigné à</label>
-            <p class="view-info-value" *ngIf="viewedTicket.assignedToFullName">{{ viewedTicket.assignedToFullName }}</p>
-            <p class="view-info-value text-muted" *ngIf="!viewedTicket.assignedToFullName">Non assigné</p>
-          </div>
+          
           <div class="view-info-block">
             <label class="view-info-label"><i class="fas fa-building"></i> Département</label>
             <p class="view-info-value" *ngIf="viewedTicket.departement">{{ viewedTicket.departement }}</p>

@@ -57,7 +57,8 @@ public class SecurityConfig {
                                         "/swagger-resources/**",
                                         "/actuator/**",
                                         "/chatbot/**",
-                                        "/ai/**"
+                                        "/ai/**",
+                                        "/settings/**"
 
                                 ).permitAll()
                                 .anyRequest().authenticated()

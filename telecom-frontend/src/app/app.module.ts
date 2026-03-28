@@ -40,6 +40,7 @@ import { BaTicketManagementComponent } from './BA/ba-ticket-management/ba-ticket
 import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.component';
 import { ChatbotComponent } from './chatbot/chatbot.component';
 import { ChatFormatPipe } from './Pipe/chat-format.pipe';
+import { BaSettingsComponent } from './BA/settings/settings.component';
 
 @NgModule({
   declarations: [
@@ -63,7 +64,9 @@ import { ChatFormatPipe } from './Pipe/chat-format.pipe';
     BaTicketManagementComponent,
     TicketCalendarComponent,
     ChatbotComponent,
-    ChatFormatPipe
+    ChatFormatPipe,
+    BaSettingsComponent,
+    
   ],
   imports: [
     FormsModule,

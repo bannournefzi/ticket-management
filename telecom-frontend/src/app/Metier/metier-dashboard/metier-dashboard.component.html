@@ -1,1 +1,157 @@
-<p>metier-dashboard works!</p>
+<div class="dash">
+
+  <div class="dash-top">
+    <div class="dash-title">
+      <h1>Tableau de bord</h1>
+      <span class="dash-sub">Suivi de vos demandes et tickets</span>
+    </div>
+    <div class="dash-actions">
+      <button class="btn-outline" (click)="goToMyTickets()"><i class="fas fa-list"></i> Mes tickets</button>
+      <button class="btn-main" (click)="goToCreateTicket()"><i class="fas fa-plus"></i> Nouveau ticket</button>
+    </div>
+  </div>
+
+  <div class="loading-bar" *ngIf="isLoading"><div class="loading-progress"></div></div>
+
+  <div class="stats-row">
+    <div class="stat-card" (click)="goToMyTickets()">
+      <div class="stat-icon si-total"><i class="fas fa-ticket-alt"></i></div>
+      <div class="stat-body">
+        <span class="stat-num">{{ totalCount }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-open"><i class="fas fa-circle"></i></div>
+      <div class="stat-body">
+        <span class="stat-num">{{ openCount }}</span>
+        <span class="stat-label">Ouverts</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-prog"><i class="fas fa-play-circle"></i></div>
+      <div class="stat-body">
+        <span class="stat-num">{{ inProgressCount }}</span>
+        <span class="stat-label">En cours</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-hold"><i class="fas fa-pause-circle"></i></div>
+      <div class="stat-body">
+        <span class="stat-num">{{ onHoldCount }}</span>
+        <span class="stat-label">En attente</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-ok"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-body">
+        <span class="stat-num">{{ resolvedCount }}</span>
+        <span class="stat-label">Résolus</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-rej"><i class="fas fa-ban"></i></div>
+      <div class="stat-body">
+        <span class="stat-num">{{ rejectedCount }}</span>
+        <span class="stat-label">Rejetés</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-banner" *ngIf="slaBreachedCount > 0">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span><strong>{{ slaBreachedCount }} ticket{{ slaBreachedCount > 1 ? 's' : '' }}</strong> en dépassement SLA</span>
+    <button class="btn-sm" (click)="goToMyTickets()">Voir</button>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head"><h3>Répartition par statut</h3></div>
+      <div class="chart-box"><canvas #statusChart></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Tickets par priorité</h3></div>
+      <div class="chart-box"><canvas #priorityChart></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card card-span2">
+      <div class="card-head"><h3>Évolution des tickets</h3><span class="card-sub">8 dernières semaines</span></div>
+      <div class="chart-box chart-wide"><canvas #trendChart></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Performance</h3></div>
+      <div class="perf-block">
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 120 120" class="gauge">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#eef0f2" stroke-width="10"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#2c3e6b" stroke-width="10"
+                    stroke-dasharray="314" [attr.stroke-dashoffset]="314 - (314 * slaRate / 100)"
+                    stroke-linecap="round" transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="gauge-text">
+            <span class="gauge-num">{{ slaRate }}%</span>
+            <span class="gauge-label">SLA respecté</span>
+          </div>
+        </div>
+        <div class="perf-stats">
+          <div class="perf-item">
+            <span class="perf-val">{{ formatHours(avgResolutionHours) }}</span>
+            <span class="perf-lbl">Temps moyen résolution</span>
+          </div>
+          <div class="perf-item">
+            <span class="perf-val">{{ slaBreachedCount }}</span>
+            <span class="perf-lbl">SLA dépassés</span>
+          </div>
+          <div class="perf-item">
+            <span class="perf-val">{{ slaMetCount }}</span>
+            <span class="perf-lbl">Résolus dans les délais</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" *ngIf="urgentTickets.length > 0 || recentTickets.length > 0">
+    <div class="card" *ngIf="urgentTickets.length > 0">
+      <div class="card-head card-head-alert"><i class="fas fa-exclamation-circle"></i><h3>Tickets urgents</h3></div>
+      <div class="mini-list">
+        <div class="mini-item" *ngFor="let t of urgentTickets" (click)="goToMyTickets()">
+          <div class="mi-left">
+            <span class="mi-id">#{{ t.id }}</span>
+            <span class="mi-title">{{ t.title }}</span>
+          </div>
+          <div class="mi-right">
+            <span class="mi-badge" [ngClass]="getPriorityClass(t.priority)">{{ priorityConfig[t.priority]?.label }}</span>
+            <span class="mi-sla" *ngIf="t.slaStatus === 'BREACHED'"><i class="fas fa-clock"></i> SLA dépassé</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Tickets récents</h3></div>
+      <div class="mini-list">
+        <div class="mini-item" *ngFor="let t of recentTickets">
+          <div class="mi-left">
+            <span class="mi-id">#{{ t.id }}</span>
+            <span class="mi-title">{{ t.title }}</span>
+          </div>
+          <div class="mi-right">
+            <span class="mi-status" [ngClass]="getStatusClass(t.status)">{{ statusLabels[t.status] }}</span>
+            <span class="mi-time">{{ getTimeAgo(t.createdDate) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-dash" *ngIf="totalCount === 0 && !isLoading">
+    <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+    <h3>Aucun ticket</h3>
+    <p>Créez votre premier ticket pour commencer</p>
+    <button class="btn-main" (click)="goToCreateTicket()"><i class="fas fa-plus"></i> Créer un ticket</button>
+  </div>
+</div>

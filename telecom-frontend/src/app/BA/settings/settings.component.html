@@ -1,0 +1,236 @@
+<div class="settings-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1><i class="fas fa-cog"></i> Paramètres</h1>
+      <p>Configurez les règles de gestion des tickets</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+    <button (click)="successMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'sla'" (click)="activeTab = 'sla'">
+      <i class="fas fa-clock"></i> SLA & Délais
+    </button>
+    <button class="tab" [class.active]="activeTab === 'categories'" (click)="activeTab = 'categories'">
+      <i class="fas fa-tags"></i> Catégories
+    </button>
+    <button class="tab" [class.active]="activeTab === 'hours'" (click)="activeTab = 'hours'">
+      <i class="fas fa-calendar-alt"></i> Horaires de travail
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- TAB 1 : SLA                             -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="tab-content" *ngIf="activeTab === 'sla'">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon sla-icon"><i class="fas fa-stopwatch"></i></div>
+        <div>
+          <h2>Configuration SLA</h2>
+          <p>Définissez les délais de résolution et de première réponse par priorité</p>
+        </div>
+      </div>
+
+      <div class="sla-grid">
+        <div class="sla-card" *ngFor="let config of slaConfigs" [ngClass]="'sla-' + config.priorityLevel.toLowerCase()">
+          <div class="sla-header">
+            <i [class]="priorityIcons[config.priorityLevel]"></i>
+            <span class="sla-label">{{ priorityLabels[config.priorityLevel] }}</span>
+          </div>
+
+          <div class="sla-field">
+            <label>Délai de résolution</label>
+            <div class="input-with-unit">
+              <input type="number" min="1" max="720"
+                     [(ngModel)]="slaEdits[config.priorityLevel].resolutionHours" />
+              <span class="unit">heures</span>
+            </div>
+          </div>
+
+          <div class="sla-field">
+            <label>Première réponse</label>
+            <div class="input-with-unit">
+              <input type="number" min="1" max="720"
+                     [(ngModel)]="slaEdits[config.priorityLevel].firstResponseHours" />
+              <span class="unit">heures</span>
+            </div>
+          </div>
+
+          <div class="sla-modified" *ngIf="config.modifiedBy && config.modifiedBy !== 'SYSTEM'">
+            <i class="fas fa-user-edit"></i> Modifié par {{ config.modifiedBy }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn-secondary" (click)="loadSla()"><i class="fas fa-undo"></i> Annuler</button>
+        <button class="btn-primary" (click)="saveSla()" [disabled]="isSavingSla || !hasSlaChanges()">
+          <i class="fas fa-spinner fa-spin" *ngIf="isSavingSla"></i>
+          <i class="fas fa-save" *ngIf="!isSavingSla"></i>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- TAB 2 : CATEGORIES                      -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="tab-content" *ngIf="activeTab === 'categories'">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon cat-icon"><i class="fas fa-tags"></i></div>
+        <div>
+          <h2>Catégories de tickets</h2>
+          <p>Gérez les types de demandes disponibles pour les utilisateurs</p>
+        </div>
+      </div>
+
+      <!-- Liste des catégories -->
+      <div class="cat-list">
+        <div class="cat-item" *ngFor="let cat of categories" [class.disabled]="!cat.enabled">
+
+          <!-- Mode lecture -->
+          <ng-container *ngIf="editingCategoryId !== cat.id">
+            <div class="cat-icon-box"><i [class]="cat.icon"></i></div>
+            <div class="cat-info">
+              <span class="cat-label">{{ cat.label }}</span>
+              <span class="cat-code">{{ cat.code }}</span>
+            </div>
+            <span class="cat-status" [class.active]="cat.enabled">
+              {{ cat.enabled ? 'Actif' : 'Inactif' }}
+            </span>
+            <div class="cat-actions">
+              <button class="btn-sm" (click)="startEditCategory(cat)" title="Modifier"><i class="fas fa-pen"></i></button>
+              <button class="btn-sm" (click)="toggleCategory(cat)" [title]="cat.enabled ? 'Désactiver' : 'Activer'">
+                <i [class]="cat.enabled ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+              <button class="btn-sm btn-sm-danger" (click)="deleteCategory(cat)" title="Supprimer"><i class="fas fa-trash"></i></button>
+            </div>
+          </ng-container>
+
+          <!-- Mode édition -->
+          <ng-container *ngIf="editingCategoryId === cat.id">
+            <div class="cat-edit-form">
+              <div class="edit-row">
+                <label>Label</label>
+                <input type="text" [(ngModel)]="editingCategory.label" class="edit-input" />
+              </div>
+              <div class="edit-row">
+                <label>Icône</label>
+                <div class="icon-picker">
+                  <button *ngFor="let icon of availableIcons" class="icon-option"
+                          [class.selected]="editingCategory.icon === icon"
+                          (click)="editingCategory.icon = icon">
+                    <i [class]="icon"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="edit-actions">
+                <button class="btn-secondary btn-xs" (click)="cancelEditCategory()">Annuler</button>
+                <button class="btn-primary btn-xs" (click)="saveEditCategory()">Sauver</button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Ajouter une catégorie -->
+      <div class="add-cat-section">
+        <h3><i class="fas fa-plus-circle"></i> Ajouter une catégorie</h3>
+        <div class="add-cat-form">
+          <div class="add-field">
+            <label>Code</label>
+            <input type="text" [(ngModel)]="newCategory.code" placeholder="Ex: RESEAU" class="add-input" />
+          </div>
+          <div class="add-field">
+            <label>Label</label>
+            <input type="text" [(ngModel)]="newCategory.label" placeholder="Ex: Réseau" class="add-input" />
+          </div>
+          <div class="add-field">
+            <label>Icône</label>
+            <div class="icon-picker-sm">
+              <button *ngFor="let icon of availableIcons" class="icon-option-sm"
+                      [class.selected]="newCategory.icon === icon"
+                      (click)="newCategory.icon = icon">
+                <i [class]="icon"></i>
+              </button>
+            </div>
+          </div>
+          <button class="btn-primary" (click)="addCategory()" [disabled]="isSavingCategory">
+            <i class="fas fa-plus"></i> Ajouter
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- TAB 3 : HORAIRES DE TRAVAIL             -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="tab-content" *ngIf="activeTab === 'hours'">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon hours-icon"><i class="fas fa-business-time"></i></div>
+        <div>
+          <h2>Horaires de travail</h2>
+          <p>Les SLA sont calculés uniquement sur les heures ouvrables</p>
+        </div>
+      </div>
+
+      <div class="hours-summary">
+        <i class="fas fa-info-circle"></i>
+        Total : <strong>{{ getWorkingHoursPerWeek() | number:'1.0-0' }}h / semaine</strong>
+      </div>
+
+      <div class="hours-list">
+        <div class="hours-row" *ngFor="let wh of workingHours" [class.day-off]="!hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+
+          <div class="day-toggle">
+            <label class="toggle">
+              <input type="checkbox" [(ngModel)]="hoursEdits[wh.dayOfWeek].isWorkingDay" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <span class="day-name" [class.inactive]="!hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+            {{ dayLabels[wh.dayOfWeek] }}
+          </span>
+
+          <div class="hours-inputs" *ngIf="hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+            <input type="time" [(ngModel)]="hoursEdits[wh.dayOfWeek].startTime" class="time-input" />
+            <span class="time-separator">à</span>
+            <input type="time" [(ngModel)]="hoursEdits[wh.dayOfWeek].endTime" class="time-input" />
+          </div>
+
+          <span class="day-off-label" *ngIf="!hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+            Jour non travaillé
+          </span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn-secondary" (click)="loadWorkingHours()"><i class="fas fa-undo"></i> Annuler</button>
+        <button class="btn-primary" (click)="saveWorkingHours()" [disabled]="isSavingHours">
+          <i class="fas fa-spinner fa-spin" *ngIf="isSavingHours"></i>
+          <i class="fas fa-save" *ngIf="!isSavingHours"></i>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

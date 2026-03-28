@@ -11,7 +11,7 @@ public class TicketStatsDTO {
     private long totalTickets;
     private long openTickets;
     private long inProgressTickets;
-    private long onHoldTickets;            // ← NOUVEAU
+    private long onHoldTickets;
     private long resolvedTickets;
     private long closedTickets;
     private long rejectedTickets;
@@ -21,8 +21,7 @@ public class TicketStatsDTO {
     private long highPriority;
     private long criticalPriority;
 
-    // ===== NOUVEAU =====
-    private double averageResolutionTimeHours;
+     private double averageResolutionTimeHours;
     private long ticketsCreatedLast7Days;
     private long ticketsResolvedLast7Days;
     private long ticketsCreatedLast30Days;

@@ -16,6 +16,7 @@ import { CreateTicketComponent } from './Metier/create-ticket/create-ticket.comp
 import { TicketListComponent } from './Metier/ticket-list/ticket-list.component';
 import { BaTicketManagementComponent } from './BA/ba-ticket-management/ba-ticket-management.component';
 import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.component';
+import { BaSettingsComponent } from './BA/settings/settings.component';
 
 const routes: Routes = [
   // Public routes (no layout)
@@ -24,6 +25,8 @@ const routes: Routes = [
   { path: 'validate-account', component: ValidateAccountComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'settings', component: BaSettingsComponent},
+  
 
   // Protected routes (with sidebar + navbar via MainLayoutComponent)
   {
@@ -36,6 +39,8 @@ const routes: Routes = [
       { path: 'business-analyst', component: ItDashboardComponentComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'ticket-calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'metier/calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
+      { path: 'business-analyst/settings', component: BaSettingsComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
+      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
 
 
       {
