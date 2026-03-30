@@ -41,6 +41,8 @@ public class AuthenticationService {
     private final TokenRepository tokenRepository;
     private final Emailservice emailservice;
     private final AuthenticationManager authenticationManager;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
 
     private final jwtService jwtservice;
 
@@ -100,13 +102,13 @@ public class AuthenticationService {
     private String generateActivationCode(int length) {
         String characters = "0123456789";
         StringBuilder codeBuilder = new StringBuilder();
-        SecureRandom secureRandom = new SecureRandom();
         for (int i = 0; i < length; i++) {
-            int randomIndex = secureRandom.nextInt(characters.length());
+            int randomIndex = SECURE_RANDOM.nextInt(characters.length());
             codeBuilder.append(characters.charAt(randomIndex));
         }
         return codeBuilder.toString();
     }
+
 
     public AuthenticationResponse authenticate(@Valid AuthenticationRequest request) {
         var auth = authenticationManager.authenticate(
