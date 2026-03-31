@@ -41,6 +41,8 @@ import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.co
 import { ChatbotComponent } from './chatbot/chatbot.component';
 import { ChatFormatPipe } from './Pipe/chat-format.pipe';
 import { BaSettingsComponent } from './BA/settings/settings.component';
+import { CommonModule } from '@angular/common';
+
 
 @NgModule({
   declarations: [
@@ -69,13 +71,13 @@ import { BaSettingsComponent } from './BA/settings/settings.component';
     
   ],
   imports: [
-    FormsModule,
     BrowserModule,
+    CommonModule,
     BrowserAnimationsModule,
-    AppRoutingModule,
-    HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
+    AppRoutingModule,
+    HttpClientModule,
     DragDropModule,
     FullCalendarModule,
     ToastrModule.forRoot({

@@ -52,12 +52,8 @@ public class ChatbotService {
             List<Document> docs = vectorStore.similaritySearch(
                     SearchRequest.builder().query(query).topK(5).build()
             );
-            if (docs == null || docs.isEmpty()) {  // ← ajout du null check
-                return "";
-            }
-            return docs.stream()
-                    .map(Document::getText)
-                    .collect(Collectors.joining("\n"));
+            return docs.isEmpty() ? ""
+                    : docs.stream().map(Document::getText).collect(Collectors.joining("\n"));
         } catch (Exception e) {
             return "";
         }

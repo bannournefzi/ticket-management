@@ -31,7 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-### Secrets - Ne jamais push sur Git ###
-.env
-src/main/resources/application.yml

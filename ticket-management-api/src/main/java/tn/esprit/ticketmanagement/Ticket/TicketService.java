@@ -37,9 +37,6 @@ public class TicketService {
     // ══════════════════════════════════════════
 
     public TicketDTO createTicket(CreateTicketRequest request, User currentUser) {
-
-        // Si l'utilisateur est un Métier, on force automatiquement SON département
-        // et on annule toute tentative d'assignation directe.
         boolean isMetier = currentUser.isMetier();
 
         Ticket ticket = Ticket.builder()
@@ -48,13 +45,15 @@ public class TicketService {
                 .priority(request.getPriority())
                 .status(TicketStatus.OPEN)
                 .category(request.getCategory())
-                // Forcer le département de l'utilisateur métier
-                .departement(isMetier ? currentUser.getDepartement() : (request.getDepartement() != null ? request.getDepartement() : currentUser.getDepartement()))
+                .departement(isMetier
+                        ? currentUser.getDepartement()
+                        : (request.getDepartement() != null
+                        ? request.getDepartement()
+                        : currentUser.getDepartement()))
                 .creator(currentUser)
                 .tags(request.getTags() != null ? request.getTags() : List.of())
                 .build();
 
-        // Assignation optionnelle dès la création (INTERDIT pour les Métiers)
         if (!isMetier && request.getAssignedToId() != null) {
             User assignee = findAssigneeOrThrow(request.getAssignedToId());
             ticket.setAssignedTo(assignee);
@@ -62,14 +61,11 @@ public class TicketService {
             ticket.setFirstResponseAt(LocalDateTime.now());
         }
 
-
         Ticket saved = ticketRepository.save(ticket);
 
-        // Historique
         recordHistory(saved, null, saved.getStatus(), "status",
                 null, saved.getStatus().name(), "Ticket créé", currentUser);
 
-        // Événement (notification)
         eventPublisher.publishEvent(new TicketEvents.TicketCreatedEvent(this, saved));
         log.info("Ticket #{} créé par {} [{}]",
                 saved.getId(), currentUser.fullName(), saved.getPriority());
@@ -94,33 +90,50 @@ public class TicketService {
     @Transactional(readOnly = true)
     public Page<TicketDTO> getMyTickets(User currentUser, Pageable pageable) {
         if (currentUser.isMetier()) {
+            // Métier sees only their own tickets
             return ticketRepository.findByCreatorId(currentUser.getId(), pageable)
                     .map(this::convertToDTO);
         } else {
+            // BA / Admin / IT see all tickets
             return ticketRepository.findAll(pageable).map(this::convertToDTO);
         }
     }
 
-    // Gardé pour compatibilité avec l'ancien frontend
+    // ══════════════════════════════════════════
+    //  LECTURE — LISTE (frontend kanban)
+    //
+    //  FIX: Business Analyst now sees ALL tickets
+    //  submitted by Métier users (all statuses).
+    //  Métier users still see only their own tickets.
+    //  Admins see everything.
+    // ══════════════════════════════════════════
+
     @Transactional(readOnly = true)
     public List<TicketDTO> getMyTicketsAsList(User currentUser) {
         List<Ticket> tickets;
+
         if (currentUser.isMetier()) {
+            // Métier: only tickets they created
             tickets = ticketRepository.findByCreatorId(currentUser.getId());
+            log.info("Métier {} fetching their own {} tickets",
+                    currentUser.fullName(), tickets.size());
+
         } else if (currentUser.isIT()) {
-            // Le BA voit SES tickets + TOUS les tickets non assignés (ouverts)
-            List<Ticket> myTickets = ticketRepository.findByAssignedToId(currentUser.getId());
-            List<Ticket> unassignedOpenTickets = ticketRepository.findUnassignedOpenTickets();
-            tickets = new java.util.ArrayList<>(myTickets);
-            for (Ticket t : unassignedOpenTickets) {
-                if (!tickets.contains(t)) {
-                    tickets.add(t);
-                }
-            }
-        } else {
+            // ✅ FIX: BA sees ALL tickets from ALL Métier users, all statuses
             tickets = ticketRepository.findAll();
+            log.info("Business Analyst {} fetching all {} tickets",
+                    currentUser.fullName(), tickets.size());
+
+        } else {
+            // Admin / other roles: see everything
+            tickets = ticketRepository.findAll();
+            log.info("Admin/Other {} fetching all {} tickets",
+                    currentUser.fullName(), tickets.size());
         }
-        return tickets.stream().map(this::convertToDTO).collect(Collectors.toList());
+
+        return tickets.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -190,12 +203,10 @@ public class TicketService {
 
         ticket.setAssignedTo(assignee);
 
-        // Première réponse
         if (ticket.getFirstResponseAt() == null) {
             ticket.setFirstResponseAt(LocalDateTime.now());
         }
 
-        // OPEN → IN_PROGRESS automatiquement
         if (ticket.getStatus() == TicketStatus.OPEN) {
             recordHistory(ticket, TicketStatus.OPEN, TicketStatus.IN_PROGRESS,
                     "status", "OPEN", "IN_PROGRESS",
@@ -217,7 +228,6 @@ public class TicketService {
         return convertToDTO(saved);
     }
 
-    // Ancien format conservé pour compatibilité
     public TicketDTO assignTicket(Integer ticketId, Integer assigneeId) {
         Ticket ticket = findTicketOrThrow(ticketId);
         User assignee = findAssigneeOrThrow(assigneeId);
@@ -234,7 +244,7 @@ public class TicketService {
     }
 
     // ══════════════════════════════════════════
-    //  CHANGEMENT DE STATUT (avec validation)
+    //  CHANGEMENT DE STATUT
     // ══════════════════════════════════════════
 
     public TicketDTO updateTicketStatus(Integer ticketId, TicketStatus newStatus,
@@ -242,14 +252,12 @@ public class TicketService {
         Ticket ticket = findTicketOrThrow(ticketId);
         TicketStatus oldStatus = ticket.getStatus();
 
-        // ✅ Validation de la transition
         if (!oldStatus.canTransitionTo(newStatus)) {
             throw new InvalidStatusTransitionException(oldStatus, newStatus);
         }
 
         ticket.setStatus(newStatus);
 
-        // Dates automatiques
         if (newStatus == TicketStatus.RESOLVED) {
             ticket.setResolvedDate(LocalDateTime.now());
         } else if (newStatus == TicketStatus.CLOSED) {
@@ -258,7 +266,6 @@ public class TicketService {
                 ticket.setResolvedDate(LocalDateTime.now());
             }
         } else if (newStatus == TicketStatus.IN_PROGRESS && oldStatus == TicketStatus.RESOLVED) {
-            // Réouverture
             ticket.setResolvedDate(null);
             ticket.setClosedDate(null);
         }
@@ -277,7 +284,6 @@ public class TicketService {
         return convertToDTO(saved);
     }
 
-    // Ancien format conservé pour compatibilité
     public TicketDTO updateTicketStatus(Integer ticketId, TicketStatus newStatus) {
         Ticket ticket = findTicketOrThrow(ticketId);
         TicketStatus oldStatus = ticket.getStatus();
@@ -303,7 +309,6 @@ public class TicketService {
     public TicketDTO updateTicket(Integer ticketId, CreateTicketRequest request, User currentUser) {
         Ticket ticket = findTicketOrThrow(ticketId);
 
-        // Track des changements
         if (!ticket.getTitle().equals(request.getTitle())) {
             recordHistory(ticket, null, null, "title",
                     ticket.getTitle(), request.getTitle(), null, currentUser);
@@ -311,7 +316,6 @@ public class TicketService {
         if (ticket.getPriority() != request.getPriority()) {
             recordHistory(ticket, null, null, "priority",
                     ticket.getPriority().name(), request.getPriority().name(), null, currentUser);
-            // Recalculer le SLA
             ticket.setDueDate(SLAConfig.calculateDueDate(
                     request.getPriority(), ticket.getCreatedDate()));
         }
@@ -331,7 +335,6 @@ public class TicketService {
         return convertToDTO(ticketRepository.save(ticket));
     }
 
-    // Ancien format conservé pour compatibilité
     public TicketDTO updateTicket(Integer ticketId, CreateTicketRequest request) {
         Ticket ticket = findTicketOrThrow(ticketId);
 
@@ -372,7 +375,7 @@ public class TicketService {
     }
 
     // ══════════════════════════════════════════
-    //  STATISTIQUES AVANCÉES
+    //  STATISTIQUES
     // ══════════════════════════════════════════
 
     @Transactional(readOnly = true)
@@ -411,7 +414,6 @@ public class TicketService {
                 .mediumPriority(ticketRepository.countByPriority(TicketPriority.MEDIUM))
                 .highPriority(ticketRepository.countByPriority(TicketPriority.HIGH))
                 .criticalPriority(ticketRepository.countByPriority(TicketPriority.CRITICAL))
-                // Nouvelles stats
                 .averageResolutionTimeHours(avgResolutionHours)
                 .ticketsCreatedLast7Days(ticketRepository.countCreatedSince(last7Days))
                 .ticketsResolvedLast7Days(ticketRepository.countResolvedSince(last7Days))
@@ -503,7 +505,6 @@ public class TicketService {
                 .lastModifiedDate(ticket.getLastModifiedDate())
                 .resolvedDate(ticket.getResolvedDate())
                 .closedDate(ticket.getClosedDate())
-                // Nouvelles données
                 .dueDate(ticket.getDueDate())
                 .slaStatus(ticket.getSLAStatus() != null ? ticket.getSLAStatus().name() : null)
                 .tags(ticket.getTags())

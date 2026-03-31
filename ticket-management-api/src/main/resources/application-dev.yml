@@ -29,15 +29,6 @@ spring:
           timeout: 3000
           writetimeout: 5000
 
-  websocket:
-    allowed-origins: http://localhost:4200
-    endpoint: /ws
-    message-broker:
-      enabled: true
-      simple-broker: /user
-      application-destination-prefix: /app
-      user-destination-prefix: /user
-
   security:
     oauth2:
       resourceserver:
@@ -45,6 +36,21 @@ spring:
           issuer-uri: http://localhost:8088
           jwk-set-uri: http://localhost:8088/.well-known/jwks.json
 
+server:
+  port: 8088
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+
+# ─────────────────────────────────────────────
+# Custom application properties
+# ─────────────────────────────────────────────
 application:
   security:
     jwt:
@@ -61,14 +67,16 @@ application:
     frontend:
       activation-url: http://localhost:4200/activate-account
 
-server:
-  port: 8088
+  websocket:
+    allowed-origins: http://localhost:4200
+    endpoint: /ws
+    message-broker:
+      enabled: true
+      simple-broker: /user
+      application-destination-prefix: /app
+      user-destination-prefix: /user
 
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    operationsSorter: method
-    tagsSorter: alpha
+  mantis:
+    base-url: http://YOUR_MANTIS_URL_HERE
+    api-token: YOUR_API_TOKEN_HERE
+    project-id: 1
