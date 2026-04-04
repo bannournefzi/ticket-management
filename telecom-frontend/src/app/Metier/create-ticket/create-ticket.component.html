@@ -18,15 +18,15 @@
           <span class="mini-label">Mes tickets</span>
         </div>
         <div class="mini-stat mini-open">
-          <span class="mini-value">{{ countByStatus('OPEN') }}</span>
+          <span class="mini-value">{{ countByStatus('NEW') }}</span>
           <span class="mini-label">Ouverts</span>
         </div>
         <div class="mini-stat mini-progress">
-          <span class="mini-value">{{ countByStatus('IN_PROGRESS') }}</span>
+          <span class="mini-value">{{ countByStatus('ASSIGNED') }}</span>
           <span class="mini-label">En cours</span>
         </div>
         <div class="mini-stat mini-hold">
-          <span class="mini-value">{{ countByStatus('ON_HOLD') }}</span>
+          <span class="mini-value">{{ countByStatus('FEEDBACK') }}</span>
           <span class="mini-label">En attente</span>
         </div>
         <div class="mini-stat mini-resolved">
@@ -240,6 +240,19 @@
             <i class="fas fa-info-circle"></i> Appuyez Entrée pour ajouter un tag
           </span>
         </div>
+
+        <div class="attachments-field">
+  <label>Pièces jointes</label>
+  <input type="file" multiple (change)="onFilesSelected($event)" />
+  <small>Maximum size: 2,097 KB par fichier</small>
+
+  <ul>
+    <li *ngFor="let f of selectedFiles; let i = index">
+      {{ f.name }} ({{ (f.size / 1024) | number:'1.0-0' }} KB)
+      <button type="button" (click)="removeFile(i)">Supprimer</button>
+    </li>
+  </ul>
+</div>
 
       </div>
     </div>

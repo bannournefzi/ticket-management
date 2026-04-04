@@ -100,12 +100,12 @@
         <div class="panel-body">
           <div class="stat-row">
             <div class="stat-label"><span class="dot dot-open"></span>Ouvert</div>
-            <div class="stat-bar-track"><div class="stat-bar bar-open" [style.width.%]="ticketStats ? (ticketStats.openTickets / ticketStats.totalTickets * 100) : 0"></div></div>
-            <span class="stat-val">{{ ticketStats?.openTickets ?? 0 }}</span>
+            <div class="stat-bar-track"><div class="stat-bar bar-open" [style.width.%]="ticketStats ? (ticketStats.newTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats?.newTickets ?? 0 }}</span>
           </div>
           <div class="stat-row">
             <div class="stat-label"><span class="dot dot-progress"></span>En cours</div>
-            <div class="stat-bar-track"><div class="stat-bar bar-progress" [style.width.%]="ticketStats ? (ticketStats.inProgressTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <div class="stat-bar-track"><div class="stat-bar bar-progress" [style.width.%]="ticketStats ? (ticketStats.assignedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
             <span class="stat-val">{{ ticketStats?.inProgressTickets ?? 0 }}</span>
           </div>
           <div class="stat-row">
@@ -118,11 +118,11 @@
             <div class="stat-bar-track"><div class="stat-bar bar-closed" [style.width.%]="ticketStats ? (ticketStats.closedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
             <span class="stat-val">{{ ticketStats?.closedTickets ?? 0 }}</span>
           </div>
-          <div class="stat-row">
+          <!-- <div class="stat-row">
             <div class="stat-label"><span class="dot dot-rejected"></span>Rejeté</div>
             <div class="stat-bar-track"><div class="stat-bar bar-rejected" [style.width.%]="ticketStats ? (ticketStats.rejectedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
             <span class="stat-val">{{ ticketStats?.rejectedTickets ?? 0 }}</span>
-          </div>
+          </div> -->
         </div>
       </div>
 

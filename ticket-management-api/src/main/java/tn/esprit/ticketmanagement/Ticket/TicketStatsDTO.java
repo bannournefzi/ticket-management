@@ -9,19 +9,21 @@ import java.util.Map;
 public class TicketStatsDTO {
 
     private long totalTickets;
-    private long openTickets;
-    private long inProgressTickets;
-    private long onHoldTickets;
+
+    private long newTickets;
+    private long feedbackTickets;
+    private long acknowledgedTickets;
+    private long confirmedTickets;
+    private long assignedTickets;
     private long resolvedTickets;
     private long closedTickets;
-    private long rejectedTickets;
 
     private long lowPriority;
     private long mediumPriority;
     private long highPriority;
     private long criticalPriority;
 
-     private double averageResolutionTimeHours;
+    private double averageResolutionTimeHours;
     private long ticketsCreatedLast7Days;
     private long ticketsResolvedLast7Days;
     private long ticketsCreatedLast30Days;

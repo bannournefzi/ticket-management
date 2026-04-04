@@ -77,6 +77,10 @@ application:
       user-destination-prefix: /user
 
   mantis:
-    base-url: http://YOUR_MANTIS_URL_HERE
-    api-token: YOUR_API_TOKEN_HERE
+    base-url: http://localhost:8989
+    api-token: Za83rlw9IhObreJA5CcGYjXfE1zfjDtA
     project-id: 1
+    sync:
+      enabled: true
+      interval-minutes: 5
+      batch-size: 50

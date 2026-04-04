@@ -9,11 +9,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.enums.Departement;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -28,6 +30,15 @@ public class TicketController {
     // ══════════════════════════════════════════
     //  CRÉATION
     // ══════════════════════════════════════════
+
+    @PostMapping(value = "/{ticketId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> uploadAttachments(
+            @PathVariable Integer ticketId,
+            @RequestParam("files") MultipartFile[] files,
+            @AuthenticationPrincipal User currentUser) {
+        ticketService.uploadAttachments(ticketId, files, currentUser);
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping
     @Operation(summary = "Créer un nouveau ticket")
@@ -190,5 +201,14 @@ public class TicketController {
     public ResponseEntity<List<TicketStatus>> getAllowedTransitions(
             @PathVariable Integer ticketId) {
         return ResponseEntity.ok(ticketService.getAllowedTransitions(ticketId));
+    }
+
+
+    @PatchMapping("/{ticketId}/push-to-mantis")
+    @Operation(summary = "Envoyer un ticket local vers Mantis")
+    public ResponseEntity<TicketDTO> pushToMantis(
+            @PathVariable Integer ticketId,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(ticketService.pushToMantis(ticketId, currentUser));
     }
 }

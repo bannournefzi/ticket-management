@@ -166,9 +166,9 @@ export class TicketListComponent implements OnInit {
   //  STATS
   // ══════════════════════════════════════════
 
-  get openCount(): number { return this.allTickets.filter(t => t.status === 'OPEN').length; }
-  get progressCount(): number { return this.allTickets.filter(t => t.status === 'IN_PROGRESS').length; }
-  get onHoldCount(): number { return this.allTickets.filter(t => t.status === 'ON_HOLD').length; }
+  get openCount(): number { return this.allTickets.filter(t =>  t.status === 'NEW').length; }
+  get progressCount(): number { return this.allTickets.filter(t => t.status === 'ASSIGNED').length; }
+  get onHoldCount(): number { return this.allTickets.filter(t => t.status === 'FEEDBACK').length; }
   get resolvedCount(): number { return this.allTickets.filter(t => t.status === 'RESOLVED').length; }
   get closedCount(): number { return this.allTickets.filter(t => t.status === 'CLOSED').length; }
   get slaBreachedCount(): number { return this.allTickets.filter(t => t.slaStatus === 'BREACHED').length; }
@@ -334,7 +334,7 @@ export class TicketListComponent implements OnInit {
   }
 
   canChangePriority(ticket: Ticket): boolean {
-    if (ticket.status === 'CLOSED' || ticket.status === 'REJECTED') return false;
+    if (ticket.status === 'CLOSED' ) return false;
     const key = `priority_changes_${ticket.id}`;
     const raw = localStorage.getItem(key);
     if (!raw) return true;

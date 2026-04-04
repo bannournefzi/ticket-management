@@ -124,7 +124,7 @@
             <span class="mi-title">{{ t.title }}</span>
           </div>
           <div class="mi-right">
-            <span class="mi-badge" [ngClass]="getPriorityClass(t.priority)">{{ priorityConfig[t.priority]?.label }}</span>
+            <span class="mi-badge" [ngClass]="getPriorityClass(t.priority)">{{ priorityConfig[t.priority].label }}</span>
             <span class="mi-sla" *ngIf="t.slaStatus === 'BREACHED'"><i class="fas fa-clock"></i> SLA dépassé</span>
           </div>
         </div>

@@ -28,9 +28,16 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 public class Ticket {
 
-    @Id
+    @Id                                                    // ← must be here
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @Column(name = "mantis_id")
+    private Long mantisId;
+
+    @Column(name = "mantis_project_id")
+    private Long mantisProjectId;
+
 
     @NotBlank(message = "Le titre est obligatoire")
     @Size(min = 5, max = 200)
@@ -50,8 +57,8 @@ public class Ticket {
     private TicketStatus status;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
-    private TicketCategory category;
+    @Column(nullable = false)
+    private String category;
 
     @Enumerated(EnumType.STRING)
     private Departement departement;
@@ -115,7 +122,7 @@ public class Ticket {
 
     @PrePersist
     public void prePersist() {
-        if (this.status == null) this.status = TicketStatus.OPEN;
+        if (this.status == null) this.status = TicketStatus.NEW;
         if (this.priority != null) {
             if (this.dueDate == null) {
                 this.dueDate = SLAConfig.calculateDueDate(this.priority, LocalDateTime.now());

@@ -9,6 +9,9 @@ export interface Ticket {
   category: TicketCategory;
   departement?: string;
 
+  mantisId?: number;
+  mantisProjectId?: number;
+
   // Créateur
   creatorId: number;
   creatorFullName: string;
@@ -25,7 +28,6 @@ export interface Ticket {
   resolvedDate?: string;
   closedDate?: string;
 
-  // ===== NOUVEAU =====
   dueDate?: string;
   slaStatus?: SLAStatus;
   tags?: string[];
@@ -40,24 +42,31 @@ export interface CreateTicketRequest {
   category: TicketCategory;
   departement?: string;
   assignedToId?: number;
-  tags?: string[];              // ← NOUVEAU
+  tags?: string[];
 }
 
 export interface TicketStats {
   totalTickets: number;
-  openTickets: number;
-  inProgressTickets: number;
-  onHoldTickets: number;        // ← NOUVEAU
+
+  newTickets: number;
+  feedbackTickets: number;
+  acknowledgedTickets: number;
+  confirmedTickets: number;
+  assignedTickets: number;
   resolvedTickets: number;
   closedTickets: number;
-  rejectedTickets: number;
+
+  // temporary compatibility fields
+  openTickets?: number;
+  inProgressTickets?: number;
+  onHoldTickets?: number;
+  rejectedTickets?: number;
 
   lowPriority: number;
   mediumPriority: number;
   highPriority: number;
   criticalPriority: number;
 
-  // ===== NOUVEAU =====
   averageResolutionTimeHours: number;
   ticketsCreatedLast7Days: number;
   ticketsResolvedLast7Days: number;
@@ -68,8 +77,6 @@ export interface TicketStats {
   ticketsByDepartement: Record<string, number>;
   ticketsByCategory: Record<string, number>;
 }
-
-// ===== NOUVEAU : Historique =====
 
 export interface TicketHistory {
   id: number;
@@ -82,14 +89,12 @@ export interface TicketHistory {
   changedAt: string;
 }
 
-// ===== NOUVEAU : Page (pour la pagination) =====
-
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
   size: number;
-  number: number;          // numéro de page actuel (0-based)
+  number: number;
   first: boolean;
   last: boolean;
   empty: boolean;
@@ -99,8 +104,21 @@ export interface PageResponse<T> {
 
 export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
-export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
+export type TicketStatus =
+  | 'NEW'
+  | 'FEEDBACK'
+  | 'ACKNOWLEDGED'
+  | 'CONFIRMED'
+  | 'ASSIGNED'
+  | 'RESOLVED'
+  | 'CLOSED';
 
-export type TicketCategory = 'BUG' | 'FEATURE_REQUEST' | 'IMPROVEMENT' | 'SUPPORT' | 'DOCUMENTATION' | 'OTHER';
+export type TicketCategory =
+  | 'BUG'
+  | 'FEATURE_REQUEST'
+  | 'IMPROVEMENT'
+  | 'SUPPORT'
+  | 'DOCUMENTATION'
+  | 'OTHER';
 
 export type SLAStatus = 'ON_TRACK' | 'AT_RISK' | 'BREACHED' | 'MET';

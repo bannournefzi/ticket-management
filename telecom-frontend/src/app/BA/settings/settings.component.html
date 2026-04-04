@@ -197,7 +197,8 @@
       </div>
 
       <div class="hours-list">
-        <div class="hours-row" *ngFor="let wh of workingHours" [class.day-off]="!hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+        <div class="hours-row" *ngFor="let wh of workingHours" [class.day-off]="!hoursEdits[wh.dayOfWeek].isWorkingDay
+">
 
           <div class="day-toggle">
             <label class="toggle">
@@ -206,17 +207,20 @@
             </label>
           </div>
 
-          <span class="day-name" [class.inactive]="!hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+          <span class="day-name" [class.inactive]="!hoursEdits[wh.dayOfWeek].isWorkingDay
+">
             {{ dayLabels[wh.dayOfWeek] }}
           </span>
 
-          <div class="hours-inputs" *ngIf="hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+          <div class="hours-inputs" *ngIf="hoursEdits[wh.dayOfWeek].isWorkingDay
+">
             <input type="time" [(ngModel)]="hoursEdits[wh.dayOfWeek].startTime" class="time-input" />
             <span class="time-separator">à</span>
             <input type="time" [(ngModel)]="hoursEdits[wh.dayOfWeek].endTime" class="time-input" />
           </div>
 
-          <span class="day-off-label" *ngIf="!hoursEdits[wh.dayOfWeek]?.isWorkingDay">
+          <span class="day-off-label" *ngIf="!hoursEdits[wh.dayOfWeek].isWorkingDay
+">
             Jour non travaillé
           </span>
         </div>

@@ -185,7 +185,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   get openRate(): number {
     if (!this.ticketStats || !this.ticketStats.totalTickets) return 0;
-    return Math.round((this.ticketStats.openTickets / this.ticketStats.totalTickets) * 100);
+    return Math.round((this.ticketStats.newTickets / this.ticketStats.totalTickets) * 100);
   }
 
   priorityPercent(value: number): number {

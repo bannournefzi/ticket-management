@@ -80,9 +80,13 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   };
 
   statusLabels: Record<string, string> = {
-    'OPEN': 'Ouvert', 'IN_PROGRESS': 'En cours', 'ON_HOLD': 'En attente',
-    'RESOLVED': 'Résolu', 'CLOSED': 'Fermé', 'REJECTED': 'Rejeté'
-  };
+  'FEEDBACK': 'Retour',
+  'ACKNOWLEDGED': 'Pris en compte',
+  'CONFIRMED': 'Confirmé',
+  'ASSIGNED': 'Assigné',
+  'RESOLVED': 'Résolu',
+  'CLOSED': 'Fermé'
+};
 
   constructor(
     private settingsService: SettingsService,
@@ -218,8 +222,12 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     return { title: '', description: '', priority: 'MEDIUM', category: 'SUPPORT', departement: undefined, assignedToId: undefined, tags: [] };
   }
 
-  resetForm(): void { this.newTicket = this.emptyTicket(); this.tagInput = ''; this.cancelVoice(); }
-
+resetForm(): void {
+  this.newTicket = this.emptyTicket();
+  this.tagInput = '';
+  this.selectedFiles = [];
+  this.cancelVoice();
+}
   addTag(event: Event): void {
     event.preventDefault();
     const tag = this.tagInput.trim();
@@ -267,18 +275,53 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   }
 
   submitTicket(): void {
-    if (!this.newTicket.title?.trim()) { this.showError('Le titre est obligatoire'); return; }
-    if (!this.newTicket.description?.trim()) { this.showError('La description est obligatoire'); return; }
-    this.isLoading = true; this.errorMessage = null;
-    const request: CreateTicketRequest = {
-      ...this.newTicket, title: this.newTicket.title.trim(), description: this.newTicket.description.trim(),
-      departement: this.newTicket.departement || undefined, assignedToId: this.newTicket.assignedToId || undefined
-    };
-    this.ticketService.createTicket(request).subscribe({
-      next: (t) => { this.isLoading = false; this.showSuccess(`Ticket #${t.id} créé avec succès !`); this.resetForm(); this.loadMyTickets(); },
-      error: (e) => { this.isLoading = false; this.showError(e.error?.message || 'Erreur lors de la création'); }
-    });
-  }
+  if (!this.newTicket.title?.trim()) { this.showError('Le titre est obligatoire'); return; }
+  if (!this.newTicket.description?.trim()) { this.showError('La description est obligatoire'); return; }
+
+  this.isLoading = true;
+  this.errorMessage = null;
+
+  const request: CreateTicketRequest = {
+    ...this.newTicket,
+    title: this.newTicket.title.trim(),
+    description: this.newTicket.description.trim(),
+    departement: this.newTicket.departement || undefined,
+    assignedToId: this.newTicket.assignedToId || undefined
+  };
+
+  this.ticketService.createTicket(request).subscribe({
+    next: (t) => {
+      // If no files selected -> finish مباشرة
+      if (!this.selectedFiles || this.selectedFiles.length === 0) {
+        this.isLoading = false;
+        this.showSuccess(`Ticket #${t.id} créé avec succès !`);
+        this.resetForm();
+        this.loadMyTickets();
+        return;
+      }
+
+      // Upload files after ticket creation
+      this.ticketService.uploadAttachments(t.id, this.selectedFiles).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.showSuccess(`Ticket #${t.id} créé avec succès + pièces jointes uploadées !`);
+          this.selectedFiles = [];
+          this.resetForm();
+          this.loadMyTickets();
+        },
+        error: (e) => {
+          this.isLoading = false;
+          this.showError(e.error?.message || 'Ticket créé, mais erreur lors de l’upload des fichiers');
+          this.loadMyTickets();
+        }
+      });
+    },
+    error: (e) => {
+      this.isLoading = false;
+      this.showError(e.error?.message || 'Erreur lors de la création');
+    }
+  });
+}
 
   openViewModal(ticket: Ticket): void {
     this.viewedTicket = ticket; this.isViewModalOpen = true; this.activeTab = 'details';
@@ -333,8 +376,16 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   getSLAShortLabel(s?: string): string { return { 'ON_TRACK': 'OK', 'AT_RISK': 'Risque', 'BREACHED': 'Dépassé', 'MET': 'OK' }[s || ''] || '—'; }
   getSLAIcon(s?: string): string { return { 'ON_TRACK': 'fas fa-check-circle', 'AT_RISK': 'fas fa-exclamation-triangle', 'BREACHED': 'fas fa-times-circle', 'MET': 'fas fa-check-double' }[s || ''] || 'fas fa-minus-circle'; }
   getPriorityClass(p: string): string { return { 'LOW': 'priority-low', 'MEDIUM': 'priority-medium', 'HIGH': 'priority-high', 'CRITICAL': 'priority-critical' }[p] || ''; }
-  getStatusClass(s: string): string { return { 'OPEN': 'status-open', 'IN_PROGRESS': 'status-progress', 'ON_HOLD': 'status-hold', 'RESOLVED': 'status-resolved', 'CLOSED': 'status-closed', 'REJECTED': 'status-rejected' }[s] || ''; }
-
+getStatusClass(s: string): string {
+  return {
+    'FEEDBACK': 'status-feedback',
+    'ACKNOWLEDGED': 'status-ack',
+    'CONFIRMED': 'status-confirmed',
+    'ASSIGNED': 'status-assigned',
+    'RESOLVED': 'status-resolved',
+    'CLOSED': 'status-closed'
+  }[s] || '';
+}
   getTimeAgo(d: string): string {
     const diff = Date.now() - new Date(d).getTime();
     const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), dy = Math.floor(diff / 86400000);
@@ -344,4 +395,27 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
 
   private showSuccess(m: string): void { this.successMessage = m; setTimeout(() => this.successMessage = null, 4000); }
   private showError(m: string): void { this.errorMessage = m; setTimeout(() => this.errorMessage = null, 4000); }
+
+  selectedFiles: File[] = [];
+   readonly MAX_FILE_SIZE = 2097 * 1024;  
+
+onFilesSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  if (!input.files) return;
+
+  for (const file of Array.from(input.files)) {
+    if (file.size > this.MAX_FILE_SIZE) {
+      alert(`Le fichier ${file.name} dépasse 2,097 KB`);
+      continue;
+    }
+    this.selectedFiles.push(file);
+  }
+
+  // allow selecting same file again later
+  input.value = '';
+}
+
+removeFile(index: number): void {
+  this.selectedFiles.splice(index, 1);
+}
 }

@@ -45,9 +45,9 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>,
     List<Ticket> findSLABreachedTickets(@Param("now") LocalDateTime now);
 
     @Query("SELECT t FROM Ticket t WHERE t.assignedTo IS NULL " +
-            "AND t.status = tn.esprit.ticketmanagement.Ticket.TicketStatus.OPEN " +
+            "AND t.status = tn.esprit.ticketmanagement.Ticket.TicketStatus.NEW " +
             "ORDER BY t.createdDate ASC")
-    List<Ticket> findUnassignedOpenTickets();
+    List<Ticket> findUnassignedNewTickets();
 
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.createdDate >= :since")
     long countCreatedSince(@Param("since") LocalDateTime since);

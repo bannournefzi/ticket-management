@@ -24,8 +24,8 @@ public class CreateTicketRequest {
     @NotNull(message = "La priorité est obligatoire")
     private TicketPriority priority;
 
-    @NotNull(message = "La catégorie est obligatoire")
-    private TicketCategory category;
+    @NotBlank
+    private String category;
 
     private Departement departement;
     private Integer assignedToId;

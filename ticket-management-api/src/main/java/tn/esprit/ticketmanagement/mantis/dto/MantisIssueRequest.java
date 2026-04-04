@@ -15,6 +15,7 @@ public class MantisIssueRequest {
     private MantisRef priority;
     private MantisRef severity;
 
+
     @Data
     @Builder
     public static class MantisRef {

@@ -166,4 +166,14 @@ export class TicketService {
   getAllowedTransitions(ticketId: number): Observable<TicketStatus[]> {
     return this.http.get<TicketStatus[]>(`${this.baseUrl}/${ticketId}/transitions`);
   }
+
+  pushToMantis(ticketId: number): Observable<Ticket> {
+  return this.http.patch<Ticket>(`${this.baseUrl}/${ticketId}/push-to-mantis`, {});
+}
+
+uploadAttachments(ticketId: number, files: File[]): Observable<void> {
+  const fd = new FormData();
+  files.forEach(f => fd.append('files', f));
+  return this.http.post<void>(`${this.baseUrl}/${ticketId}/attachments`, fd);
+}
 }

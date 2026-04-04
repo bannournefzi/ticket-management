@@ -4,20 +4,22 @@ import java.util.Map;
 import java.util.Set;
 
 public enum TicketStatus {
-    OPEN,
-    IN_PROGRESS,
-    ON_HOLD,
+    NEW,
+    FEEDBACK,
+    ACKNOWLEDGED,
+    CONFIRMED,
+    ASSIGNED,
     RESOLVED,
-    CLOSED,
-    REJECTED;
+    CLOSED;
 
     private static final Map<TicketStatus, Set<TicketStatus>> ALLOWED_TRANSITIONS = Map.of(
-            OPEN,        Set.of(IN_PROGRESS, ON_HOLD, REJECTED, CLOSED),
-            IN_PROGRESS, Set.of(ON_HOLD, RESOLVED, REJECTED, CLOSED),
-            ON_HOLD,     Set.of(IN_PROGRESS, RESOLVED, CLOSED),
-            RESOLVED,    Set.of(CLOSED, IN_PROGRESS, OPEN),
-            REJECTED,    Set.of(OPEN),
-            CLOSED,      Set.of(OPEN)
+            NEW,          Set.of(FEEDBACK, ACKNOWLEDGED, CONFIRMED, ASSIGNED, RESOLVED, CLOSED),
+            FEEDBACK,     Set.of(NEW, ACKNOWLEDGED, CONFIRMED, ASSIGNED, RESOLVED, CLOSED),
+            ACKNOWLEDGED, Set.of(FEEDBACK, CONFIRMED, ASSIGNED, RESOLVED, CLOSED),
+            CONFIRMED,    Set.of(FEEDBACK, ACKNOWLEDGED, ASSIGNED, RESOLVED, CLOSED),
+            ASSIGNED,     Set.of(FEEDBACK, ACKNOWLEDGED, CONFIRMED, RESOLVED, CLOSED),
+            RESOLVED,     Set.of(FEEDBACK, ACKNOWLEDGED, CONFIRMED, ASSIGNED, CLOSED),
+            CLOSED,       Set.of(FEEDBACK, ACKNOWLEDGED, CONFIRMED, ASSIGNED, RESOLVED)
     );
 
     public boolean canTransitionTo(TicketStatus target) {

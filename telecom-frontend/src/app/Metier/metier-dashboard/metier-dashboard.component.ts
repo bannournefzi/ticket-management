@@ -104,12 +104,11 @@ export class MetierDashboardComponent implements OnInit, AfterViewInit {
   private computeStats(): void {
     const t = this.myTickets;
     this.totalCount = t.length;
-    this.openCount = t.filter(x => x.status === 'OPEN').length;
-    this.inProgressCount = t.filter(x => x.status === 'IN_PROGRESS').length;
-    this.onHoldCount = t.filter(x => x.status === 'ON_HOLD').length;
+    this.openCount = t.filter(x => x.status === 'NEW').length;
+    this.inProgressCount = t.filter(x => x.status === 'ASSIGNED').length;
+    this.onHoldCount = t.filter(x => x.status === 'FEEDBACK').length;
     this.resolvedCount = t.filter(x => x.status === 'RESOLVED').length;
     this.closedCount = t.filter(x => x.status === 'CLOSED').length;
-    this.rejectedCount = t.filter(x => x.status === 'REJECTED').length;
 
     this.lowCount = t.filter(x => x.priority === 'LOW').length;
     this.mediumCount = t.filter(x => x.priority === 'MEDIUM').length;
@@ -134,7 +133,7 @@ export class MetierDashboardComponent implements OnInit, AfterViewInit {
     }
 
     this.urgentTickets = t.filter(x =>
-      x.slaStatus === 'BREACHED' || x.priority === 'CRITICAL' && (x.status === 'OPEN' || x.status === 'IN_PROGRESS')
+      x.slaStatus === 'BREACHED' || x.priority === 'CRITICAL' && (x.status === 'NEW' || x.status === 'ASSIGNED')
     ).slice(0, 5);
 
     this.recentTickets = [...t].sort((a, b) =>

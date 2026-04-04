@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { TicketService } from '../../services/ticket.service';
 import { CommentService } from '../../services/CommentService';
 import { AuthService } from '../../auth/service/auth.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms'; 
 import {
   Ticket,
   TicketHistory,
@@ -10,51 +11,63 @@ import {
 } from '../../models/ticket.model';
 import { TicketComment, CreateCommentRequest } from '../../models/TicketComment';
 
-interface KanbanColumn {
-  id: TicketStatus;
-  label: string;
-  icon: string;
-  color: string;
-  tickets: Ticket[];
-}
-
 @Component({
   selector: 'app-ba-ticket-management',
   templateUrl: './ba-ticket-management.component.html',
   styleUrls: ['./ba-ticket-management.component.scss']
 })
+
 export class BaTicketManagementComponent implements OnInit {
 
-  columns: KanbanColumn[] = [];
   allTickets: Ticket[] = [];
+  filteredTickets: Ticket[] = [];
 
   isLoading = false;
   successMessage: string | null = null;
-  errorMessage: string | null = null;
-  searchQuery = '';
+  errorMessage:   string | null = null;
 
-  // Detail modal
+  searchQuery    = '';
+  filterStatus   = '';
+  filterPriority = '';
+  filterSLA      = '';
+
+  sortColumn    = 'id';
+  sortAscending = true;
+
+  // ── Pagination ────────────────────────────────────────────────────────
+  currentPage = 1;
+  pageSize    = 10;
+  get totalPages(): number { return Math.ceil(this.filteredTickets.length / this.pageSize); }
+ get pagedTickets(): Ticket[] {                                    // ← add this
+  const start = (this.currentPage - 1) * this.pageSize;
+  return this.filteredTickets.slice(start, start + this.pageSize);
+}
+
+  // ── Dropdown ──────────────────────────────────────────────────────────
+  openDropdownId: number | null = null;
+
+  // ── Detail modal ──────────────────────────────────────────────────────
   isDetailModalOpen = false;
   selectedTicket: Ticket | null = null;
   activeTab: 'details' | 'comments' | 'history' = 'details';
 
-  // Commentaires
+  // ── Comments ──────────────────────────────────────────────────────────
   comments: TicketComment[] = [];
   newComment = '';
-  isInternalNote = false;
+  isInternalNote    = false;
   isLoadingComments = false;
-  isSendingComment = false;
+  isSendingComment  = false;
 
-  // Historique
-  ticketHistory: TicketHistory[] = [];
-  isLoadingHistory = false;
+  // ── History ───────────────────────────────────────────────────────────
+  ticketHistory:    TicketHistory[] = [];
+  isLoadingHistory  = false;
 
-  // Reject modal
-  isRejectModalOpen = false;
-  rejectTicket: Ticket | null = null;
-  rejectReason = '';
+  // ── Reject modal ──────────────────────────────────────────────────────
+  // isRejectModalOpen = false;
+  // rejectTicket: Ticket | null = null;
+  // rejectReason = '';
 
-  // Status change with comment modal
+  // ── Status-change-with-comment modal ──────────────────────────────────
   isStatusModalOpen = false;
   statusTicket: Ticket | null = null;
   targetStatus: TicketStatus | null = null;
@@ -62,16 +75,16 @@ export class BaTicketManagementComponent implements OnInit {
 
   currentUserId = 0;
 
-  connectedLists = ['col-OPEN', 'col-IN_PROGRESS', 'col-ON_HOLD', 'col-RESOLVED', 'col-CLOSED', 'col-REJECTED'];
-
-    allowedTransitions: Record<string, TicketStatus[]> = {
-    'OPEN':        ['IN_PROGRESS', 'ON_HOLD', 'REJECTED', 'CLOSED'],
-    'IN_PROGRESS': ['ON_HOLD', 'RESOLVED', 'REJECTED', 'CLOSED'],
-    'ON_HOLD':     ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
-    'RESOLVED':    ['CLOSED', 'IN_PROGRESS', 'OPEN'],
-    'CLOSED':      ['OPEN'],
-    'REJECTED':    ['OPEN']
-  };
+  // ── Config ────────────────────────────────────────────────────────────
+  allowedTransitions: Record<string, TicketStatus[]> = {
+  'NEW':          ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+  'FEEDBACK':     ['NEW', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+  'ACKNOWLEDGED': ['FEEDBACK', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+  'CONFIRMED':    ['FEEDBACK', 'ACKNOWLEDGED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+  'ASSIGNED':     ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'RESOLVED', 'CLOSED'],
+  'RESOLVED':     ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'CLOSED'],
+  'CLOSED':       ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED']
+};
 
   priorityConfig: Record<string, { label: string; icon: string }> = {
     'LOW':      { label: 'Basse',    icon: 'fas fa-arrow-down' },
@@ -90,19 +103,27 @@ export class BaTicketManagementComponent implements OnInit {
   };
 
   statusLabels: Record<string, string> = {
-    'OPEN': 'Ouvert',
-    'IN_PROGRESS': 'En cours',
-    'ON_HOLD': 'En attente',
-    'RESOLVED': 'Résolu',
-    'CLOSED': 'Fermé',
-    'REJECTED': 'Rejeté'
-  };
+  'NEW': 'Nouveau',
+  'FEEDBACK': 'Retour',
+  'ACKNOWLEDGED': 'Pris en compte',
+  'CONFIRMED': 'Confirmé',
+  'ASSIGNED': 'Assigné',
+  'RESOLVED': 'Résolu',
+  'CLOSED': 'Fermé'
+};
 
-  // Stats
-  get totalTickets(): number { return this.allTickets.length; }
-  get slaBreachedCount(): number { return this.allTickets.filter(t => t.slaStatus === 'BREACHED').length; }
-  get criticalCount(): number { return this.allTickets.filter(t => t.priority === 'CRITICAL').length; }
+  statusKeys   = Object.keys(this.statusLabels) as TicketStatus[];
+  priorityKeys = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+
+  // ── Stats ─────────────────────────────────────────────────────────────
+  get totalTickets():    number { return this.allTickets.length; }
+  get slaBreachedCount():number { return this.allTickets.filter(t => t.slaStatus === 'BREACHED').length; }
+  get criticalCount():   number { return this.allTickets.filter(t => t.priority === 'CRITICAL').length; }
   get unassignedCount(): number { return this.allTickets.filter(t => !t.assignedToId).length; }
+
+  // ── Sort order helpers ────────────────────────────────────────────────
+  private readonly priorityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  private readonly slaOrder:      Record<string, number> = { BREACHED: 0, AT_RISK: 1, ON_TRACK: 2, MET: 3 };
 
   constructor(
     private ticketService: TicketService,
@@ -112,115 +133,110 @@ export class BaTicketManagementComponent implements OnInit {
 
   ngOnInit(): void {
     try { this.currentUserId = this.authService.getUserId(); } catch {}
-    this.initColumns();
     this.loadTickets();
   }
 
-  // ══════════════════════════════════════════
-  //  KANBAN
-  // ══════════════════════════════════════════
+  // ── Close dropdown on outside click ───────────────────────────────────
+  @HostListener('document:click')
+  onDocumentClick(): void { this.openDropdownId = null; }
 
-  initColumns(): void {
-    this.columns = [
-      { id: 'OPEN', label: 'Ouvert', icon: 'fas fa-circle', color: '#3b82f6', tickets: [] },
-      { id: 'IN_PROGRESS', label: 'En cours', icon: 'fas fa-play-circle', color: '#f59e0b', tickets: [] },
-      { id: 'ON_HOLD', label: 'En attente', icon: 'fas fa-pause-circle', color: '#8b5cf6', tickets: [] },
-      { id: 'RESOLVED', label: 'Résolu', icon: 'fas fa-check-circle', color: '#10b981', tickets: [] },
-      { id: 'CLOSED', label: 'Fermé', icon: 'fas fa-lock', color: '#6b7280', tickets: [] }
-    ];
+  toggleDropdown(id: number, event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.openDropdownId = this.openDropdownId === id ? null : id;
   }
+
+  // ══════════════════════════════════════════
+  //  LOAD
+  // ══════════════════════════════════════════
 
   loadTickets(): void {
     this.isLoading = true;
     this.ticketService.getMyTickets().subscribe({
       next: (data) => {
         this.allTickets = data;
-        this.distributeTickets();
+        this.applyFilters();
         this.isLoading = false;
       },
       error: () => { this.showError('Erreur lors du chargement'); this.isLoading = false; }
     });
   }
 
-  distributeTickets(): void {
-    const filtered = this.getFilteredTickets();
-    this.columns.forEach(col => {
-      col.tickets = filtered
-        .filter(t => t.status === col.id)
-        .sort((a, b) => {
-          const order: Record<string, number> = { 'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
-          const priorityDiff = (order[a.priority] ?? 4) - (order[b.priority] ?? 4);
-          if (priorityDiff !== 0) return priorityDiff;
-          // SLA breached first
-          if (a.slaStatus === 'BREACHED' && b.slaStatus !== 'BREACHED') return -1;
-          if (b.slaStatus === 'BREACHED' && a.slaStatus !== 'BREACHED') return 1;
-          return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
-        });
-    });
-  }
+  // ══════════════════════════════════════════
+  //  FILTER + SORT
+  // ══════════════════════════════════════════
 
-  getFilteredTickets(): Ticket[] {
-    if (!this.searchQuery) return this.allTickets;
-    const q = this.searchQuery.toLowerCase();
-    return this.allTickets.filter(t =>
+  onSearch(): void { this.applyFilters(); }
+  onFilter(): void { this.applyFilters(); }
+
+  applyFilters(): void {
+  const q = this.searchQuery.toLowerCase();
+  let result = this.allTickets.filter(t => {
+    if (this.filterStatus   && t.status    !== this.filterStatus)   return false;
+    if (this.filterPriority && t.priority  !== this.filterPriority) return false;
+    if (this.filterSLA      && t.slaStatus !== this.filterSLA)      return false;
+    if (q && !(
       t.title.toLowerCase().includes(q) ||
       t.id.toString().includes(q) ||
       (t.creatorFullName && t.creatorFullName.toLowerCase().includes(q)) ||
       (t.tags && t.tags.some(tag => tag.toLowerCase().includes(q)))
-    );
+    )) return false;
+    return true;
+  });
+  this.filteredTickets = result;  
+  this.currentPage = 1;
+}
+
+  sortBy(col: string): void {
+    if (this.sortColumn === col) {
+      this.sortAscending = !this.sortAscending;
+    } else {
+      this.sortColumn = col;
+      this.sortAscending = true;
+    }
+    this.filteredTickets = this.sortTickets([...this.filteredTickets]);
   }
 
-  onSearch(): void { this.distributeTickets(); }
+  private sortTickets(list: Ticket[]): Ticket[] {
+    return list.sort((a, b) => {
+      let av: any = (a as any)[this.sortColumn];
+      let bv: any = (b as any)[this.sortColumn];
 
-  // ══════════════════════════════════════════
-  //  DRAG & DROP
-  // ══════════════════════════════════════════
+      if (this.sortColumn === 'priority') { av = this.priorityOrder[av] ?? 9; bv = this.priorityOrder[bv] ?? 9; }
+      if (this.sortColumn === 'slaStatus') { av = this.slaOrder[av] ?? 9; bv = this.slaOrder[bv] ?? 9; }
 
-  drop(event: CdkDragDrop<Ticket[]>, targetColumn: KanbanColumn): void {
-    if (event.previousContainer === event.container) return;
-
-    const ticket = event.previousContainer.data[event.previousIndex];
-    const fromStatus = ticket.status;
-    const toStatus = targetColumn.id;
-
-    // Utiliser les transitions du backend si disponibles
-    const allowed = ticket.allowedTransitions && ticket.allowedTransitions.length > 0
-      ? ticket.allowedTransitions
-      : (this.allowedTransitions[fromStatus] || []);
-
-    if (!allowed.includes(toStatus)) {
-      this.showError(`${this.statusLabels[fromStatus]} → ${this.statusLabels[toStatus]} non autorisé`);
-      return;
-    }
-
-    if (toStatus === 'REJECTED') {
-      this.rejectTicket = ticket;
-      this.rejectReason = '';
-      this.isRejectModalOpen = true;
-      return;
-    }
-
-    // Pour RESOLVED, demander un commentaire optionnel
-    if (toStatus === 'RESOLVED') {
-      this.statusTicket = ticket;
-      this.targetStatus = toStatus;
-      this.statusComment = '';
-      this.isStatusModalOpen = true;
-      return;
-    }
-
-    transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
-
-    this.ticketService.updateTicketStatus(ticket.id, toStatus).subscribe({
-      next: () => {
-        ticket.status = toStatus;
-        this.showSuccess(`#${ticket.id} → ${this.statusLabels[toStatus]}`);
-      },
-      error: (err) => {
-        this.showError(err.error?.message || 'Erreur lors du changement de statut');
-        this.loadTickets();
+      if (typeof av === 'string' && typeof bv === 'string') {
+        return this.sortAscending ? av.localeCompare(bv) : bv.localeCompare(av);
       }
+      if (av < bv) return this.sortAscending ? -1 : 1;
+      if (av > bv) return this.sortAscending ? 1 : -1;
+      return 0;
     });
+  }
+
+  getSortIcon(col: string): string {
+    if (this.sortColumn !== col) return 'fa-sort';
+    return this.sortAscending ? 'fa-sort-up' : 'fa-sort-down';
+  }
+
+  // ══════════════════════════════════════════
+  //  PAGINATION
+  // ══════════════════════════════════════════
+
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages) return;
+    this.currentPage = p;
+  }
+
+  getPageEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.filteredTickets.length);
+  }
+
+  getPages(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.currentPage - 2);
+    const end   = Math.min(this.totalPages, this.currentPage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
   }
 
   // ══════════════════════════════════════════
@@ -228,32 +244,32 @@ export class BaTicketManagementComponent implements OnInit {
   // ══════════════════════════════════════════
 
   openDetailModal(ticket: Ticket): void {
-    this.selectedTicket = ticket;
+    this.selectedTicket   = ticket;
     this.isDetailModalOpen = true;
-    this.activeTab = 'details';
-    this.comments = [];
-    this.newComment = '';
-    this.isInternalNote = false;
-    this.ticketHistory = [];
+    this.activeTab        = 'details';
+    this.comments         = [];
+    this.newComment       = '';
+    this.isInternalNote   = false;
+    this.ticketHistory    = [];
     this.loadComments(ticket.id);
   }
 
   closeDetailModal(): void {
     this.isDetailModalOpen = false;
-    this.selectedTicket = null;
-    this.comments = [];
-    this.ticketHistory = [];
+    this.selectedTicket    = null;
+    this.comments          = [];
+    this.ticketHistory     = [];
   }
 
   // ══════════════════════════════════════════
-  //  COMMENTAIRES
+  //  COMMENTS
   // ══════════════════════════════════════════
 
   loadComments(ticketId: number): void {
     this.isLoadingComments = true;
     this.commentService.getComments(ticketId).subscribe({
       next: (data) => { this.comments = data; this.isLoadingComments = false; },
-      error: () => { this.isLoadingComments = false; }
+      error: ()     => { this.isLoadingComments = false; }
     });
   }
 
@@ -261,14 +277,14 @@ export class BaTicketManagementComponent implements OnInit {
     if (!this.newComment.trim() || !this.selectedTicket) return;
     this.isSendingComment = true;
     const req: CreateCommentRequest = {
-      content: this.newComment.trim(),
+      content:      this.newComment.trim(),
       internalNote: this.isInternalNote
     };
     this.commentService.addComment(this.selectedTicket.id, req).subscribe({
       next: (c) => {
         this.comments.push(c);
-        this.newComment = '';
-        this.isInternalNote = false;
+        this.newComment       = '';
+        this.isInternalNote   = false;
         this.isSendingComment = false;
       },
       error: () => { this.isSendingComment = false; }
@@ -285,7 +301,7 @@ export class BaTicketManagementComponent implements OnInit {
   canDeleteComment(c: TicketComment): boolean { return c.authorId === this.currentUserId; }
 
   // ══════════════════════════════════════════
-  //  HISTORIQUE
+  //  HISTORY
   // ══════════════════════════════════════════
 
   loadHistory(ticketId: number): void {
@@ -293,43 +309,38 @@ export class BaTicketManagementComponent implements OnInit {
     this.ticketHistory = [];
     this.ticketService.getTicketHistory(ticketId).subscribe({
       next: (data) => { this.ticketHistory = data; this.isLoadingHistory = false; },
-      error: () => { this.isLoadingHistory = false; }
+      error: ()     => { this.isLoadingHistory = false; }
     });
   }
 
   getHistoryFieldLabel(field: string): string {
-    return { 'status': 'Statut', 'priority': 'Priorité', 'assignee': 'Assigné à',
-             'title': 'Titre', 'description': 'Description', 'category': 'Catégorie' }[field] || field;
+    return ({
+      status: 'Statut', priority: 'Priorité', assignee: 'Assigné à',
+      title: 'Titre', description: 'Description', category: 'Catégorie'
+    } as any)[field] || field;
   }
 
   getHistoryDotClass(field: string): string {
-    return { 'status': 'dot-status', 'priority': 'dot-priority', 'assignee': 'dot-assignee' }[field] || 'dot-default';
+    return ({ status: 'dot-status', priority: 'dot-priority', assignee: 'dot-assignee' } as any)[field] || 'dot-default';
   }
 
   // ══════════════════════════════════════════
   //  REJECT
   // ══════════════════════════════════════════
 
-  closeRejectModal(): void {
-    this.isRejectModalOpen = false;
-    this.rejectTicket = null;
-    this.rejectReason = '';
-  }
+  // closeRejectModal(): void {
+  //   this.isRejectModalOpen = false;
+  //   this.rejectTicket      = null;
+  //   this.rejectReason      = '';
+  // }
 
-  confirmReject(): void {
-    if (!this.rejectTicket || !this.rejectReason.trim()) {
-      this.showError('Motif obligatoire');
-      return;
-    }
-    this.ticketService.updateTicketStatus(this.rejectTicket.id, 'REJECTED', this.rejectReason.trim()).subscribe({
-      next: () => {
-        this.showSuccess(`#${this.rejectTicket!.id} rejeté`);
-        this.closeRejectModal();
-        this.loadTickets();
-      },
-      error: (err) => this.showError(err.error?.message || 'Erreur')
-    });
-  }
+  // confirmReject(): void {
+  //   if (!this.rejectTicket || !this.rejectReason.trim()) { this.showError('Motif obligatoire'); return; }
+  //   this.ticketService.updateTicketStatus(this.rejectTicket.id, 'REJECTED', this.rejectReason.trim()).subscribe({
+  //     next: () => { this.showSuccess(`#${this.rejectTicket!.id} rejeté`); this.closeRejectModal(); this.loadTickets(); },
+  //     error: (err) => this.showError(err.error?.message || 'Erreur')
+  //   });
+  // }
 
   // ══════════════════════════════════════════
   //  STATUS CHANGE WITH COMMENT
@@ -337,14 +348,13 @@ export class BaTicketManagementComponent implements OnInit {
 
   closeStatusModal(): void {
     this.isStatusModalOpen = false;
-    this.statusTicket = null;
-    this.targetStatus = null;
-    this.statusComment = '';
+    this.statusTicket      = null;
+    this.targetStatus      = null;
+    this.statusComment     = '';
   }
 
   confirmStatusChange(): void {
     if (!this.statusTicket || !this.targetStatus) return;
-
     const comment = this.statusComment.trim() || undefined;
     this.ticketService.updateTicketStatus(this.statusTicket.id, this.targetStatus, comment).subscribe({
       next: () => {
@@ -357,44 +367,56 @@ export class BaTicketManagementComponent implements OnInit {
   }
 
   // ══════════════════════════════════════════
-  //  QUICK STATUS (from modal)
+  //  QUICK STATUS (from modal or dropdown)
   // ══════════════════════════════════════════
 
   changeStatus(ticket: Ticket, newStatus: TicketStatus): void {
-    if (newStatus === 'REJECTED') {
-      this.rejectTicket = ticket;
-      this.rejectReason = '';
-      this.closeDetailModal();
-      this.isRejectModalOpen = true;
-      return;
-    }
-
+    // if (newStatus === 'REJECTED') {
+    //   this.rejectTicket = ticket;
+    //   this.rejectReason = '';
+    //   this.closeDetailModal();
+    //   this.isRejectModalOpen = true;
+    //   return;
+    // }
     if (newStatus === 'RESOLVED') {
-      this.statusTicket = ticket;
-      this.targetStatus = newStatus;
+      this.statusTicket  = ticket;
+      this.targetStatus  = newStatus;
       this.statusComment = '';
       this.closeDetailModal();
       this.isStatusModalOpen = true;
       return;
     }
-
     this.ticketService.updateTicketStatus(ticket.id, newStatus).subscribe({
       next: () => {
         this.showSuccess(`#${ticket.id} → ${this.statusLabels[newStatus]}`);
         this.loadTickets();
-        if (this.selectedTicket?.id === ticket.id) {
-          this.selectedTicket.status = newStatus;
-        }
+        if (this.selectedTicket?.id === ticket.id) this.selectedTicket.status = newStatus;
       },
       error: (err) => this.showError(err.error?.message || 'Erreur')
     });
   }
 
   getAvailableTransitions(ticket: Ticket): TicketStatus[] {
-    if (ticket.allowedTransitions && ticket.allowedTransitions.length > 0) {
-      return ticket.allowedTransitions;
-    }
+    if (ticket.allowedTransitions && ticket.allowedTransitions.length > 0) return ticket.allowedTransitions;
     return this.allowedTransitions[ticket.status] || [];
+  }
+
+  // ══════════════════════════════════════════
+  //  MANTIS
+  // ══════════════════════════════════════════
+
+  pushSelectedToMantis(): void {
+    if (!this.selectedTicket) return;
+    this.ticketService.pushToMantis(this.selectedTicket.id).subscribe({
+      next: (updated) => {
+        this.selectedTicket = updated;
+        const idx = this.allTickets.findIndex(t => t.id === updated.id);
+        if (idx !== -1) this.allTickets[idx] = updated;
+        this.applyFilters();
+        this.showSuccess(`Ticket #${updated.id} envoyé vers Mantis (#${updated.mantisId})`);
+      },
+      error: (err) => this.showError(err.error?.message || 'Erreur envoi vers Mantis')
+    });
   }
 
   // ══════════════════════════════════════════
@@ -402,18 +424,23 @@ export class BaTicketManagementComponent implements OnInit {
   // ══════════════════════════════════════════
 
   getSLAClass(slaStatus?: string): string {
-    return { 'ON_TRACK': 'sla-on-track', 'AT_RISK': 'sla-at-risk',
-             'BREACHED': 'sla-breached', 'MET': 'sla-met' }[slaStatus || ''] || '';
+    return ({ ON_TRACK: 'sla-on-track', AT_RISK: 'sla-at-risk', BREACHED: 'sla-breached', MET: 'sla-met' } as any)[slaStatus || ''] || '';
+  }
+
+  getSLACellClass(slaStatus?: string): string {
+    return ({ BREACHED: 'cell-breached', AT_RISK: 'cell-at-risk' } as any)[slaStatus || ''] || '';
+  }
+
+  getSLADotClass(slaStatus?: string): string {
+    return ({ ON_TRACK: 'dot-on', AT_RISK: 'dot-risk', BREACHED: 'dot-breach', MET: 'dot-on' } as any)[slaStatus || ''] || '';
   }
 
   getSLALabel(slaStatus?: string): string {
-    return { 'ON_TRACK': '✅ Dans les délais', 'AT_RISK': '⚠️ À risque',
-             'BREACHED': '🔴 SLA dépassé', 'MET': '✅ Résolu à temps' }[slaStatus || ''] || '';
+    return ({ ON_TRACK: 'Dans les délais', AT_RISK: 'À risque', BREACHED: 'SLA dépassé', MET: 'Résolu à temps' } as any)[slaStatus || ''] || '';
   }
 
   getSLAIcon(slaStatus?: string): string {
-    return { 'ON_TRACK': 'fas fa-check-circle', 'AT_RISK': 'fas fa-exclamation-triangle',
-             'BREACHED': 'fas fa-times-circle', 'MET': 'fas fa-check-double' }[slaStatus || ''] || 'fas fa-minus-circle';
+    return ({ ON_TRACK: 'fas fa-check-circle', AT_RISK: 'fas fa-exclamation-triangle', BREACHED: 'fas fa-times-circle', MET: 'fas fa-check-double' } as any)[slaStatus || ''] || 'fas fa-minus-circle';
   }
 
   // ══════════════════════════════════════════
@@ -421,18 +448,25 @@ export class BaTicketManagementComponent implements OnInit {
   // ══════════════════════════════════════════
 
   getPriorityClass(p: string): string {
-    return { 'LOW': 'p-low', 'MEDIUM': 'p-medium', 'HIGH': 'p-high', 'CRITICAL': 'p-critical' }[p] || '';
+    return ({ LOW: 'p-low', MEDIUM: 'p-medium', HIGH: 'p-high', CRITICAL: 'p-critical' } as any)[p] || '';
   }
 
-  getStatusClass(s: string): string {
-    return { 'OPEN': 's-open', 'IN_PROGRESS': 's-progress', 'ON_HOLD': 's-hold',
-             'RESOLVED': 's-resolved', 'CLOSED': 's-closed', 'REJECTED': 's-rejected' }[s] || '';
-  }
+getStatusClass(s: string): string {
+  return ({
+    NEW: 's-new',
+    FEEDBACK: 's-feedback',
+    ACKNOWLEDGED: 's-ack',
+    CONFIRMED: 's-confirmed',
+    ASSIGNED: 's-assigned',
+    RESOLVED: 's-resolved',
+    CLOSED: 's-closed'
+  } as any)[s] || '';
+}
 
   getTimeAgo(d: string): string {
     const diff = Date.now() - new Date(d).getTime();
     const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), dy = Math.floor(diff / 86400000);
-    if (m < 1) return "À l'instant";
+    if (m < 1)  return "À l'instant";
     if (m < 60) return `${m}min`;
     if (h < 24) return `${h}h`;
     if (dy < 7) return `${dy}j`;
@@ -442,9 +476,9 @@ export class BaTicketManagementComponent implements OnInit {
   getInitial(n: string): string { return n ? n.charAt(0).toUpperCase() : '?'; }
 
   getCommentRoleLabel(r: string): string {
-    return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'METIER': 'Métier' }[r] || r;
+    return ({ ADMIN: 'Admin', BUSINESS_ANALYST: 'BA', METIER: 'Métier' } as any)[r] || r;
   }
 
   private showSuccess(msg: string): void { this.successMessage = msg; setTimeout(() => this.successMessage = null, 3000); }
-  private showError(msg: string): void { this.errorMessage = msg; setTimeout(() => this.errorMessage = null, 4000); }
+  private showError(msg: string): void   { this.errorMessage   = msg; setTimeout(() => this.errorMessage   = null, 4000); }
 }

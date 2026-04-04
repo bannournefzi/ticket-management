@@ -6,17 +6,26 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.ticketmanagement.Ticket.exception.InvalidStatusTransitionException;
 import tn.esprit.ticketmanagement.Ticket.exception.TicketNotFoundException;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
+import tn.esprit.ticketmanagement.mantis.MantisProperties;
+import tn.esprit.ticketmanagement.mantis.MantisService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,10 +36,17 @@ import java.util.stream.Collectors;
 @Transactional
 public class TicketService {
 
+    private final TicketAttachmentRepository ticketAttachmentRepository;
+
     private final TicketRepository ticketRepository;
     private final TicketHistoryRepository historyRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final MantisService mantisService;
+    private final MantisProperties mantisProperties;
+    @PersistenceContext
+    private EntityManager em;
+
 
     // ══════════════════════════════════════════
     //  CRÉATION
@@ -43,7 +59,7 @@ public class TicketService {
                 .title(request.getTitle().trim())
                 .description(request.getDescription().trim())
                 .priority(request.getPriority())
-                .status(TicketStatus.OPEN)
+                .status(TicketStatus.NEW)
                 .category(request.getCategory())
                 .departement(isMetier
                         ? currentUser.getDepartement()
@@ -57,22 +73,22 @@ public class TicketService {
         if (!isMetier && request.getAssignedToId() != null) {
             User assignee = findAssigneeOrThrow(request.getAssignedToId());
             ticket.setAssignedTo(assignee);
-            ticket.setStatus(TicketStatus.IN_PROGRESS);
+            ticket.setStatus(TicketStatus.ASSIGNED);
             ticket.setFirstResponseAt(LocalDateTime.now());
         }
 
+        // ✅ Save locally only (NO automatic push to Mantis)
         Ticket saved = ticketRepository.save(ticket);
 
         recordHistory(saved, null, saved.getStatus(), "status",
                 null, saved.getStatus().name(), "Ticket créé", currentUser);
 
         eventPublisher.publishEvent(new TicketEvents.TicketCreatedEvent(this, saved));
-        log.info("Ticket #{} créé par {} [{}]",
+        log.info("Ticket #{} créé par {} [{}] (local only, not pushed to Mantis)",
                 saved.getId(), currentUser.fullName(), saved.getPriority());
 
         return convertToDTO(saved);
     }
-
     // ══════════════════════════════════════════
     //  LECTURE — PAGINÉE
     // ══════════════════════════════════════════
@@ -207,11 +223,11 @@ public class TicketService {
             ticket.setFirstResponseAt(LocalDateTime.now());
         }
 
-        if (ticket.getStatus() == TicketStatus.OPEN) {
-            recordHistory(ticket, TicketStatus.OPEN, TicketStatus.IN_PROGRESS,
+        if (ticket.getStatus() == TicketStatus.NEW) {
+            recordHistory(ticket, TicketStatus.NEW, TicketStatus.ASSIGNED,
                     "status", "OPEN", "IN_PROGRESS",
                     "Auto-transition lors de l'assignation", currentUser);
-            ticket.setStatus(TicketStatus.IN_PROGRESS);
+            ticket.setStatus(TicketStatus.ASSIGNED);
         }
 
         recordHistory(ticket, null, null, "assignee",
@@ -236,8 +252,8 @@ public class TicketService {
         if (ticket.getFirstResponseAt() == null) {
             ticket.setFirstResponseAt(LocalDateTime.now());
         }
-        if (ticket.getStatus() == TicketStatus.OPEN) {
-            ticket.setStatus(TicketStatus.IN_PROGRESS);
+        if (ticket.getStatus() == TicketStatus.NEW) {
+            ticket.setStatus(TicketStatus.ASSIGNED);
         }
 
         return convertToDTO(ticketRepository.save(ticket));
@@ -265,7 +281,7 @@ public class TicketService {
             if (ticket.getResolvedDate() == null) {
                 ticket.setResolvedDate(LocalDateTime.now());
             }
-        } else if (newStatus == TicketStatus.IN_PROGRESS && oldStatus == TicketStatus.RESOLVED) {
+        } else if (newStatus == TicketStatus.ASSIGNED && oldStatus == TicketStatus.RESOLVED) {
             ticket.setResolvedDate(null);
             ticket.setClosedDate(null);
         }
@@ -404,12 +420,13 @@ public class TicketService {
 
         return TicketStatsDTO.builder()
                 .totalTickets(ticketRepository.count())
-                .openTickets(ticketRepository.countByStatus(TicketStatus.OPEN))
-                .inProgressTickets(ticketRepository.countByStatus(TicketStatus.IN_PROGRESS))
-                .onHoldTickets(ticketRepository.countByStatus(TicketStatus.ON_HOLD))
+                .newTickets(ticketRepository.countByStatus(TicketStatus.NEW))
+                .feedbackTickets(ticketRepository.countByStatus(TicketStatus.FEEDBACK))
+                .acknowledgedTickets(ticketRepository.countByStatus(TicketStatus.ACKNOWLEDGED))
+                .confirmedTickets(ticketRepository.countByStatus(TicketStatus.CONFIRMED))
+                .assignedTickets(ticketRepository.countByStatus(TicketStatus.ASSIGNED))
                 .resolvedTickets(ticketRepository.countByStatus(TicketStatus.RESOLVED))
                 .closedTickets(ticketRepository.countByStatus(TicketStatus.CLOSED))
-                .rejectedTickets(ticketRepository.countByStatus(TicketStatus.REJECTED))
                 .lowPriority(ticketRepository.countByPriority(TicketPriority.LOW))
                 .mediumPriority(ticketRepository.countByPriority(TicketPriority.MEDIUM))
                 .highPriority(ticketRepository.countByPriority(TicketPriority.HIGH))
@@ -420,7 +437,7 @@ public class TicketService {
                 .ticketsCreatedLast30Days(ticketRepository.countCreatedSince(last30Days))
                 .ticketsResolvedLast30Days(ticketRepository.countResolvedSince(last30Days))
                 .slaBreachedTickets(slaBreachedCount)
-                .unassignedTickets(ticketRepository.findUnassignedOpenTickets().size())
+                .unassignedTickets(ticketRepository.findUnassignedNewTickets().size())
                 .ticketsByDepartement(departementStats)
                 .ticketsByCategory(categoryStats)
                 .build();
@@ -509,7 +526,9 @@ public class TicketService {
                 .slaStatus(ticket.getSLAStatus() != null ? ticket.getSLAStatus().name() : null)
                 .tags(ticket.getTags())
                 .commentCount(ticket.getComments() != null ? ticket.getComments().size() : 0)
-                .allowedTransitions(ticket.getStatus().getAllowedTransitions().stream().toList());
+                .allowedTransitions(ticket.getStatus().getAllowedTransitions().stream().toList())
+                .mantisId(ticket.getMantisId())
+                .mantisProjectId(ticket.getMantisProjectId());
 
         if (ticket.getAssignedTo() != null) {
             builder.assignedToId(ticket.getAssignedTo().getId())
@@ -533,4 +552,101 @@ public class TicketService {
                 .changedAt(h.getChangedAt())
                 .build();
     }
+
+    public TicketDTO pushToMantis(Integer ticketId, User currentUser) {
+        Ticket ticket = findTicketOrThrow(ticketId);
+
+        Long mantisId = ticket.getMantisId();
+        if (mantisId == null) {
+            mantisId = mantisService.createIssue(ticket.getTitle(), ticket.getDescription());
+            ticket.setMantisId(mantisId);
+            ticket.setMantisProjectId(mantisProperties.getProjectId());
+
+            recordHistory(ticket, null, null, "mantis",
+                    null, String.valueOf(mantisId),
+                    "Ticket envoyé vers Mantis", currentUser);
+        }
+
+        List<TicketAttachment> atts = ticketAttachmentRepository.findByTicketId(ticket.getId());
+        log.info("Mantis push ticket {} -> {} attachments", ticket.getId(), atts.size());
+
+        for (TicketAttachment a : atts) {
+            try {
+                mantisService.uploadIssueAttachment(
+                        mantisId,
+                        a.getFileName(),
+                        a.getContentType(),
+                        a.getFileData()
+                );
+                log.info("Uploaded attachment '{}' to Mantis #{}", a.getFileName(), mantisId);
+            } catch (Exception e) {
+                log.error("Failed upload '{}' to Mantis #{}: {}", a.getFileName(), mantisId, e.getMessage(), e);
+            }
+        }
+
+        Ticket saved = ticketRepository.save(ticket);
+        return convertToDTO(saved);
+    }
+
+    @Transactional
+    public void uploadAttachments(Integer ticketId, MultipartFile[] files, User currentUser) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket introuvable"));
+
+        if (files == null || files.length == 0) return;
+
+        final long MAX_SIZE = 2_147_328L; // 2,097 KB
+
+        List<TicketAttachment> batch = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) continue;
+
+            if (file.getSize() > MAX_SIZE) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Le fichier " + file.getOriginalFilename() + " dépasse 2,097 KB");
+            }
+
+            try {
+                String originalName = file.getOriginalFilename();
+                String safeName = (originalName == null || originalName.trim().isEmpty())
+                        ? "attachment-" + System.currentTimeMillis()
+                        : originalName.trim();
+
+                String safeContentType = (file.getContentType() == null || file.getContentType().isBlank())
+                        ? "application/octet-stream"
+                        : file.getContentType();
+
+                batch.add(TicketAttachment.builder()
+                        .ticket(ticket)
+                        .fileName(safeName)
+                        .contentType(safeContentType)
+                        .sizeBytes(file.getSize())
+                        .fileData(file.getBytes())
+                        .uploadedAt(LocalDateTime.now())
+                        .build());
+
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lecture fichier", e);
+            }
+        }
+
+        try {
+            for (TicketAttachment a : batch) {
+                em.createNativeQuery("""
+        INSERT INTO ticket_attachments
+        (ticket_id, file_name, content_type, size_bytes, file_data, uploaded_at)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    """)
+                        .setParameter(1, ticket.getId())
+                        .setParameter(2, a.getFileName())
+                        .setParameter(3, a.getContentType())
+                        .setParameter(4, a.getSizeBytes())
+                        .setParameter(5, a.getFileData())
+                        .setParameter(6, a.getUploadedAt())
+                        .executeUpdate();
+            }
+        } catch (Exception e) {
+            log.error("Erreur save attachments ticket {}: {}", ticketId, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur sauvegarde pièces jointes", e);
+        }    }
 }

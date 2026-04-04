@@ -214,7 +214,7 @@ public class ChatbotService {
         } else if (currentUser.isIT()) {
             // Le BA voit SES tickets + TOUS les tickets non assignés (ouverts)
             List<Ticket> myTickets = ticketRepository.findByAssignedToId(currentUser.getId());
-            List<Ticket> unassignedOpenTickets = ticketRepository.findUnassignedOpenTickets();
+            List<Ticket> unassignedOpenTickets = ticketRepository.findUnassignedNewTickets();
 
             userTickets = new ArrayList<>(myTickets);
             for (Ticket t : unassignedOpenTickets) {
@@ -227,8 +227,8 @@ public class ChatbotService {
         }
 
         // ── Ticket analytics ─────────────────────────────────────────────────
-        long openCount       = userTickets.stream().filter(t -> t.getStatus() == TicketStatus.OPEN).count();
-        long inProgressCount = userTickets.stream().filter(t -> t.getStatus() == TicketStatus.IN_PROGRESS).count();
+        long openCount       = userTickets.stream().filter(t -> t.getStatus() == TicketStatus.NEW).count();
+        long inProgressCount = userTickets.stream().filter(t -> t.getStatus() == TicketStatus.ASSIGNED).count();
         long resolvedCount   = userTickets.stream().filter(t -> t.getStatus() == TicketStatus.RESOLVED).count();
         long closedCount     = userTickets.stream().filter(t -> t.getStatus() == TicketStatus.CLOSED).count();
         long criticalCount   = userTickets.stream().filter(t -> t.getPriority() == TicketPriority.CRITICAL).count();
@@ -237,7 +237,7 @@ public class ChatbotService {
 
         // Oldest open ticket
         Optional<Ticket> oldestOpen = userTickets.stream()
-                .filter(t -> t.getStatus() == TicketStatus.OPEN && t.getCreatedDate() != null)
+                .filter(t -> t.getStatus() == TicketStatus.NEW && t.getCreatedDate() != null)
                 .min(Comparator.comparing(Ticket::getCreatedDate));
 
         String oldestOpenInfo = oldestOpen.map(t -> String.format(

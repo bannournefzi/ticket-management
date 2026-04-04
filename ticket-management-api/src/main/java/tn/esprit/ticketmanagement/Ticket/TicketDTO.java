@@ -17,7 +17,7 @@ public class TicketDTO {
 
     private TicketPriority priority;
     private TicketStatus status;
-    private TicketCategory category;
+    private String category;
     private Departement departement;
 
     // Créateur
@@ -42,4 +42,7 @@ public class TicketDTO {
     private List<String> tags;
     private int commentCount;
     private List<TicketStatus> allowedTransitions;
+
+    private Long mantisId;
+    private Long mantisProjectId;
 }

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "mantis")
+@ConfigurationProperties(prefix = "application.mantis")
 public class MantisProperties {
     private String baseUrl;
     private String apiToken;

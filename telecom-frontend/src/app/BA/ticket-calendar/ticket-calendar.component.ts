@@ -121,7 +121,7 @@ export class TicketCalendarComponent implements OnInit {
     this.slaViolations = this.allTickets.filter(t => t.slaStatus === 'BREACHED').length;
     this.resolvedTickets = this.allTickets.filter(t => t.status === 'RESOLVED').length;
     this.criticalTickets = this.allTickets.filter(t => t.priority === 'CRITICAL').length;
-    this.onHoldTickets = this.allTickets.filter(t => t.status === 'ON_HOLD').length;
+    this.onHoldTickets = this.allTickets.filter(t => t.status === 'FEEDBACK').length;
   }
 
   loadCalendarEvents(successCallback: Function): void {
