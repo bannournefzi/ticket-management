@@ -58,7 +58,8 @@ public class SecurityConfig {
                                         "/actuator/**",
                                         "/chatbot/**",
                                         "/ai/**",
-                                        "/settings/**"
+                                        "/settings/**",
+                                        "/notifications/**"
 
                                 ).permitAll()
                                 .anyRequest().authenticated()

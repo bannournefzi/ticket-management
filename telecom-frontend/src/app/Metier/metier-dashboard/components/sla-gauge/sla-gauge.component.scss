@@ -1,0 +1,79 @@
+.sla-panel {
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.sla-ring {
+  position: relative;
+  width: 140px;
+  height: 140px;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.sla-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .sla-ring-val {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .sla-ring-label {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+}
+
+.sla-metrics {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sla-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border: none;
+  }
+
+  .sla-metric-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .sla-metric-label {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  &--danger .sla-metric-val { color: #ef4444; }
+  &--success .sla-metric-val { color: #10b981; }
+}

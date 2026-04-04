@@ -1,0 +1,46 @@
+<div class="filter-panel">
+  <div class="filter-bar">
+    <div class="filter-search">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Rechercher un ticket..."
+             [ngModel]="filters.search" (ngModelChange)="onSearch($event)"
+             aria-label="Rechercher des tickets" />
+    </div>
+    <div class="filter-chips">
+      <div class="filter-chip" *ngFor="let opt of dateOptions"
+           [class.filter-chip--active]="filters.dateRange === opt.value"
+           (click)="onDateChange(opt.value)">
+        {{ opt.label }}
+      </div>
+    </div>
+    <button class="filter-toggle" (click)="toggleExpanded()" aria-label="Plus de filtres">
+      <i class="fas fa-sliders-h"></i>
+    </button>
+  </div>
+
+  <div class="filter-advanced" *ngIf="expanded">
+    <div class="filter-group">
+      <label>Statut</label>
+      <div class="filter-options">
+        <span class="filter-opt" *ngFor="let opt of statusOptions"
+              [class.filter-opt--active]="filters.status === opt.value"
+              (click)="onStatusChange(opt.value)">
+          {{ opt.label }}
+        </span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Priorité</label>
+      <div class="filter-options">
+        <span class="filter-opt" *ngFor="let opt of priorityOptions"
+              [class.filter-opt--active]="filters.priority === opt.value"
+              (click)="onPriorityChange(opt.value)">
+          {{ opt.label }}
+        </span>
+      </div>
+    </div>
+    <button class="filter-clear" (click)="clearAll()">
+      <i class="fas fa-times"></i> Réinitialiser
+    </button>
+  </div>
+</div>

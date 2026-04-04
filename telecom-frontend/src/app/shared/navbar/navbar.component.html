@@ -10,43 +10,50 @@
 
     <!-- Notifications -->
     <div class="notification-wrapper">
-      <button class="icon-btn" (click)="toggleNotifications($event)" [class.active]="isNotificationsOpen">
+      <button class="icon-btn" (click)="toggleNotifications($event)" [class.active]="isNotificationsOpen" aria-label="Notifications">
         <i class="fas fa-bell"></i>
-        <span class="dot-badge" *ngIf="notificationCount > 0"></span>
+        <span class="count-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
       </button>
 
       <div class="dropdown-panel notif-panel" *ngIf="isNotificationsOpen" [@dropdownAnimation]>
         <div class="panel-header">
           <span class="panel-title">Notifications</span>
-          <button class="text-btn" (click)="markAllAsRead()">Tout lire</button>
+          <div class="panel-actions">
+            <button class="text-btn" (click)="markAllAsRead()" *ngIf="unreadCount > 0">Tout marquer comme lu</button>
+            <button class="text-btn test-btn" (click)="sendTestNotification()" title="Send test notification">
+              <i class="fas fa-flask"></i> Test
+            </button>
+          </div>
         </div>
-        <div class="notif-list">
-          <div class="notif-item" *ngFor="let notif of notifications" [class.unread]="notif.unread">
-            <div class="notif-icon" [ngClass]="notif.type">
-              <i class="fas" [ngClass]="{
-                'fa-ticket-alt': notif.type === 'ticket',
-                'fa-user-plus': notif.type === 'user',
-                'fa-exclamation-triangle': notif.type === 'alert'
-              }"></i>
+
+        <div class="notif-list" *ngIf="notifications.length > 0; else emptyNotif">
+          <div class="notif-item" *ngFor="let notif of notifications" [class.unread]="!notif.read"
+               (click)="markAsRead(notif.id)">
+            <div class="notif-icon" [style.background]="getNotifBg(notif.type)" [style.color]="getNotifColor(notif.type)">
+              <i class="fas" [ngClass]="getNotifIcon(notif.type)"></i>
             </div>
             <div class="notif-body">
               <span class="notif-title">{{ notif.title }}</span>
               <span class="notif-msg">{{ notif.message }}</span>
-              <span class="notif-time">{{ notif.time }}</span>
+              <span class="notif-time">{{ getTimeAgo(notif.createdAt) }}</span>
             </div>
-            <button class="notif-close" (click)="removeNotification(notif.id)">
+            <button class="notif-close" (click)="removeNotification(notif.id); $event.stopPropagation()">
               <i class="fas fa-times"></i>
             </button>
           </div>
         </div>
-        <div class="panel-footer" *ngIf="notifications.length === 0">
-          <span class="empty-text">Aucune notification</span>
-        </div>
+
+        <ng-template #emptyNotif>
+          <div class="panel-footer">
+            <div class="empty-icon"><i class="far fa-bell"></i></div>
+            <span class="empty-text">Aucune notification</span>
+          </div>
+        </ng-template>
       </div>
     </div>
 
     <!-- Messages -->
-    <button class="icon-btn" (click)="goToChat()">
+    <button class="icon-btn" (click)="goToChat()" aria-label="Messages">
       <i class="fas fa-comment-dots"></i>
     </button>
 

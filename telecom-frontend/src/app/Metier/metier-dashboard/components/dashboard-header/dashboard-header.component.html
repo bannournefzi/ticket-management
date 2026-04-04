@@ -1,0 +1,14 @@
+<header class="dash-header">
+  <div class="dash-header-left">
+    <h1><i class="fas fa-chart-line"></i>{{ title }}</h1>
+    <p *ngIf="subtitle">{{ subtitle }}</p>
+  </div>
+  <div class="dash-header-actions">
+    <button class="btn-pill btn-ghost" (click)="secondaryAction.emit()" aria-label="Mes tickets">
+      <i class="fas fa-list"></i> Mes tickets
+    </button>
+    <button class="btn-pill btn-primary" (click)="primaryAction.emit()" aria-label="Nouveau ticket">
+      <i class="fas fa-plus"></i> Nouveau ticket
+    </button>
+  </div>
+</header>

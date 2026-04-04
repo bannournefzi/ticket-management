@@ -62,11 +62,11 @@ export class TicketListComponent implements OnInit {
   // Config
   priorities: TicketPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
-  priorityConfig: Record<string, { label: string; icon: string }> = {
-    'LOW':      { label: 'Basse',    icon: 'fas fa-arrow-down' },
-    'MEDIUM':   { label: 'Moyenne',  icon: 'fas fa-equals' },
-    'HIGH':     { label: 'Haute',    icon: 'fas fa-arrow-up' },
-    'CRITICAL': { label: 'Critique', icon: 'fas fa-fire' }
+  priorityConfig: Record<string, { label: string; icon: string; color: string }> = {
+    'LOW':      { label: 'Basse',    icon: 'fas fa-arrow-down',    color: 'low' },
+    'MEDIUM':   { label: 'Moyenne',  icon: 'fas fa-equals',        color: 'medium' },
+    'HIGH':     { label: 'Haute',    icon: 'fas fa-arrow-up',      color: 'high' },
+    'CRITICAL': { label: 'Critique', icon: 'fas fa-fire',          color: 'critical' }
   };
 
   categoryConfig: Record<string, { label: string; icon: string }> = {
@@ -78,13 +78,14 @@ export class TicketListComponent implements OnInit {
     'OTHER':           { label: 'Autre',           icon: 'fas fa-ellipsis-h' }
   };
 
-  statusConfig: Record<string, { label: string }> = {
-    'OPEN':        { label: 'Ouvert' },
-    'IN_PROGRESS': { label: 'En cours' },
-    'ON_HOLD':     { label: 'En attente' },
-    'RESOLVED':    { label: 'Résolu' },
-    'CLOSED':      { label: 'Fermé' },
-    'REJECTED':    { label: 'Rejeté' }
+  // ✅ FIX: Keys now match real backend status values
+  statusConfig: Record<string, { label: string; icon: string }> = {
+    'NEW':         { label: 'Nouveau',    icon: 'fas fa-circle' },
+    'ASSIGNED':    { label: 'En cours',   icon: 'fas fa-spinner' },
+    'FEEDBACK':    { label: 'En attente', icon: 'fas fa-clock' },
+    'RESOLVED':    { label: 'Résolu',     icon: 'fas fa-check-circle' },
+    'CLOSED':      { label: 'Fermé',      icon: 'fas fa-lock' },
+    'REJECTED':    { label: 'Rejeté',     icon: 'fas fa-times-circle' }
   };
 
   constructor(
@@ -131,7 +132,7 @@ export class TicketListComponent implements OnInit {
         t.id.toString().includes(q) ||
         (t.assignedToFullName && t.assignedToFullName.toLowerCase().includes(q)) ||
         (t.tags && t.tags.some(tag => tag.toLowerCase().includes(q)));
-      const matchStatus = !this.statusFilter || t.status === this.statusFilter;
+      const matchStatus   = !this.statusFilter   || t.status   === this.statusFilter;
       const matchPriority = !this.priorityFilter || t.priority === this.priorityFilter;
       return matchSearch && matchStatus && matchPriority;
     });
@@ -163,14 +164,14 @@ export class TicketListComponent implements OnInit {
   }
 
   // ══════════════════════════════════════════
-  //  STATS
+  //  STATS — using real backend status values
   // ══════════════════════════════════════════
 
-  get openCount(): number { return this.allTickets.filter(t =>  t.status === 'NEW').length; }
+  get newCount():      number { return this.allTickets.filter(t => t.status === 'NEW').length; }
   get progressCount(): number { return this.allTickets.filter(t => t.status === 'ASSIGNED').length; }
-  get onHoldCount(): number { return this.allTickets.filter(t => t.status === 'FEEDBACK').length; }
+  get feedbackCount(): number { return this.allTickets.filter(t => t.status === 'FEEDBACK').length; }
   get resolvedCount(): number { return this.allTickets.filter(t => t.status === 'RESOLVED').length; }
-  get closedCount(): number { return this.allTickets.filter(t => t.status === 'CLOSED').length; }
+  get closedCount():   number { return this.allTickets.filter(t => t.status === 'CLOSED').length; }
   get slaBreachedCount(): number { return this.allTickets.filter(t => t.slaStatus === 'BREACHED').length; }
 
   // ══════════════════════════════════════════
@@ -238,7 +239,7 @@ export class TicketListComponent implements OnInit {
   }
 
   getCommentRoleLabel(role: string): string {
-    return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'METIER': 'Métier' }[role] || role;
+    return ({ 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'METIER': 'Métier' } as any)[role] || role;
   }
 
   getInitial(name: string): string {
@@ -259,12 +260,12 @@ export class TicketListComponent implements OnInit {
   }
 
   getHistoryFieldLabel(field: string): string {
-    return { 'status': 'Statut', 'priority': 'Priorité', 'assignee': 'Assigné à',
-             'title': 'Titre', 'description': 'Description', 'category': 'Catégorie' }[field] || field;
+    return ({ 'status': 'Statut', 'priority': 'Priorité', 'assignee': 'Assigné à',
+             'title': 'Titre', 'description': 'Description', 'category': 'Catégorie' } as any)[field] || field;
   }
 
   getHistoryDotClass(field: string): string {
-    return { 'status': 'dot-status', 'priority': 'dot-priority', 'assignee': 'dot-assignee' }[field] || 'dot-default';
+    return ({ 'status': 'dot-status', 'priority': 'dot-priority', 'assignee': 'dot-assignee' } as any)[field] || 'dot-default';
   }
 
   // ══════════════════════════════════════════
@@ -272,22 +273,22 @@ export class TicketListComponent implements OnInit {
   // ══════════════════════════════════════════
 
   getSLAClass(slaStatus?: string): string {
-    return { 'ON_TRACK': 'sla-on-track', 'AT_RISK': 'sla-at-risk',
-             'BREACHED': 'sla-breached', 'MET': 'sla-met' }[slaStatus || ''] || '';
+    return ({ 'ON_TRACK': 'sla-on-track', 'AT_RISK': 'sla-at-risk',
+             'BREACHED': 'sla-breached', 'MET': 'sla-met' } as any)[slaStatus || ''] || '';
   }
 
   getSLALabel(slaStatus?: string): string {
-    return { 'ON_TRACK': '✅ Dans les délais', 'AT_RISK': '⚠️ À risque',
-             'BREACHED': '🔴 SLA dépassé', 'MET': '✅ Résolu à temps' }[slaStatus || ''] || '';
+    return ({ 'ON_TRACK': '✅ Dans les délais', 'AT_RISK': '⚠️ À risque',
+             'BREACHED': '🔴 SLA dépassé', 'MET': '✅ Résolu à temps' } as any)[slaStatus || ''] || '';
   }
 
   getSLAShortLabel(slaStatus?: string): string {
-    return { 'ON_TRACK': 'OK', 'AT_RISK': 'Risque', 'BREACHED': 'Dépassé', 'MET': 'OK' }[slaStatus || ''] || '—';
+    return ({ 'ON_TRACK': 'OK', 'AT_RISK': 'Risque', 'BREACHED': 'Dépassé', 'MET': 'OK' } as any)[slaStatus || ''] || '—';
   }
 
   getSLAIcon(slaStatus?: string): string {
-    return { 'ON_TRACK': 'fas fa-check-circle', 'AT_RISK': 'fas fa-exclamation-triangle',
-             'BREACHED': 'fas fa-times-circle', 'MET': 'fas fa-check-double' }[slaStatus || ''] || 'fas fa-minus-circle';
+    return ({ 'ON_TRACK': 'fas fa-check-circle', 'AT_RISK': 'fas fa-exclamation-triangle',
+             'BREACHED': 'fas fa-times-circle', 'MET': 'fas fa-check-double' } as any)[slaStatus || ''] || 'fas fa-minus-circle';
   }
 
   // ══════════════════════════════════════════
@@ -329,12 +330,12 @@ export class TicketListComponent implements OnInit {
         this.closePriorityModal();
         this.loadTickets();
       },
-      error: (err) => { this.showError(err.error?.message || 'Erreur'); }
+      error: (err: any) => { this.showError(err.error?.message || 'Erreur'); }
     });
   }
 
   canChangePriority(ticket: Ticket): boolean {
-    if (ticket.status === 'CLOSED' ) return false;
+    if (ticket.status === 'CLOSED') return false;
     const key = `priority_changes_${ticket.id}`;
     const raw = localStorage.getItem(key);
     if (!raw) return true;
@@ -400,22 +401,24 @@ export class TicketListComponent implements OnInit {
   // ══════════════════════════════════════════
 
   getPriorityClass(priority: string): string {
-    return { 'LOW': 'priority-low', 'MEDIUM': 'priority-medium',
-             'HIGH': 'priority-high', 'CRITICAL': 'priority-critical' }[priority] || '';
+    return ({ 'LOW': 'priority-low', 'MEDIUM': 'priority-medium',
+              'HIGH': 'priority-high', 'CRITICAL': 'priority-critical' } as any)[priority] || '';
   }
 
+  // ✅ FIX: uses real backend status values
   getStatusClass(status: string): string {
-    return { 'OPEN': 'status-open', 'IN_PROGRESS': 'status-progress', 'ON_HOLD': 'status-hold',
-             'RESOLVED': 'status-resolved', 'CLOSED': 'status-closed', 'REJECTED': 'status-rejected' }[status] || '';
+    return ({ 'NEW': 'status-new', 'ASSIGNED': 'status-assigned', 'FEEDBACK': 'status-feedback',
+              'RESOLVED': 'status-resolved', 'CLOSED': 'status-closed',
+              'REJECTED': 'status-rejected' } as any)[status] || '';
   }
 
   getTimeAgo(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
     const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), d = Math.floor(diff / 86400000);
-    if (m < 1) return "À l'instant";
+    if (m < 1)  return "À l'instant";
     if (m < 60) return `${m}min`;
     if (h < 24) return `${h}h`;
-    if (d < 7) return `${d}j`;
+    if (d < 7)  return `${d}j`;
     return new Date(dateStr).toLocaleDateString('fr-FR');
   }
 

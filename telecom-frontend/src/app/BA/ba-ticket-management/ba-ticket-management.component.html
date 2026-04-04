@@ -40,7 +40,8 @@
       </select>
       <select [(ngModel)]="filterPriority" (change)="onFilter()" class="filter-select">
         <option value="">Toutes priorités</option>
-        <option *ngFor="let p of priorityKeys" [value]="p">{{ priorityConfig[p].label }}</option>
+        <!-- FIX #2: use safe accessor getPriorityConfig() -->
+        <option *ngFor="let p of priorityKeys" [value]="p">{{ getPriorityConfig(p).label }}</option>
       </select>
       <select [(ngModel)]="filterSLA" (change)="onFilter()" class="filter-select">
         <option value="">Tous SLA</option>
@@ -130,17 +131,19 @@
               </span>
             </td>
 
+            <!-- FIX #2: replaced direct priorityConfig[ticket.priority] with safe getPriorityConfig() -->
             <td>
               <span class="badge-priority" [ngClass]="getPriorityClass(ticket.priority)"
-                    [title]="priorityConfig[ticket.priority].label">
-                <i [class]="priorityConfig[ticket.priority].icon"></i>
-                {{ priorityConfig[ticket.priority].label }}
+                    [title]="getPriorityConfig(ticket.priority).label">
+                <i [class]="getPriorityConfig(ticket.priority).icon"></i>
+                {{ getPriorityConfig(ticket.priority).label }}
               </span>
             </td>
 
+            <!-- FIX #2: replaced direct categoryConfig[ticket.category] with safe getCategoryConfig() -->
             <td class="td-category">
-              <i [class]="categoryConfig[ticket.category].icon"></i>
-              {{ categoryConfig[ticket.category].label }}
+              <i [class]="getCategoryConfig(ticket.category).icon"></i>
+              {{ getCategoryConfig(ticket.category).label }}
             </td>
 
             <td>
@@ -171,12 +174,16 @@
               <span *ngIf="!ticket.commentCount" class="no-comments">—</span>
             </td>
 
+            <!-- FIX #7: stopPropagation on the td prevents the row click from also firing -->
             <td class="td-actions" (click)="$event.stopPropagation()">
-              <button class="btn-detail" (click)="openDetailModal(ticket)">
+              <!-- FIX #7: eye button no longer also fires openDetailModal (row click handles it);
+                   use stopPropagation + openDetailModal only here so the button still works
+                   when the user clicks exactly on the icon -->
+              <button class="btn-detail" (click)="openDetailModal(ticket); $event.stopPropagation()">
                 <i class="fas fa-eye"></i>
               </button>
               <div class="dropdown-wrap" *ngIf="getAvailableTransitions(ticket).length > 0">
-                <button class="btn-more" (click)="toggleDropdown(ticket.id)">
+                <button class="btn-more" (click)="toggleDropdown(ticket.id, $event)">
                   <i class="fas fa-ellipsis-v"></i>
                 </button>
                 <div class="dropdown-menu" *ngIf="openDropdownId === ticket.id">
@@ -223,10 +230,13 @@
           <i class="fas fa-chevron-right"></i>
         </button>
       </div>
-      <select class="pg-size" [(ngModel)]="pageSize" (change)="currentPage = 1">
-        <option [value]="10">10 / page</option>
-        <option [value]="25">25 / page</option>
-        <option [value]="50">50 / page</option>
+
+      <!-- FIX #3 & #8: use [ngValue] with number literals so pageSize stays a number,
+           and call onPageSizeChange() to properly reset pagination -->
+      <select class="pg-size" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+        <option [ngValue]="10">10 / page</option>
+        <option [ngValue]="25">25 / page</option>
+        <option [ngValue]="50">50 / page</option>
       </select>
     </div>
   </div>
@@ -239,7 +249,7 @@
 </div>
 
 <!-- ════════════════════════════════════════ -->
-<!-- MODAL DÉTAIL (inchangé)                  -->
+<!-- MODAL DÉTAIL                             -->
 <!-- ════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="isDetailModalOpen" (click)="closeDetailModal()">
   <div class="modal-container modal-detail" (click)="$event.stopPropagation()">
@@ -281,13 +291,14 @@
       <div *ngIf="activeTab === 'details'">
         <h3 class="detail-title">{{ selectedTicket.title }}</h3>
         <div class="detail-badges">
+          <!-- FIX #2: safe accessors in modal too -->
           <span class="badge-priority" [ngClass]="getPriorityClass(selectedTicket.priority)">
-            <i [class]="priorityConfig[selectedTicket.priority].icon"></i>
-            {{ priorityConfig[selectedTicket.priority].label }}
+            <i [class]="getPriorityConfig(selectedTicket.priority).icon"></i>
+            {{ getPriorityConfig(selectedTicket.priority).label }}
           </span>
           <span class="badge-category">
-            <i [class]="categoryConfig[selectedTicket.category].icon"></i>
-            {{ categoryConfig[selectedTicket.category].label }}
+            <i [class]="getCategoryConfig(selectedTicket.category).icon"></i>
+            {{ getCategoryConfig(selectedTicket.category).label }}
           </span>
         </div>
         <div class="detail-tags" *ngIf="selectedTicket.tags && selectedTicket.tags.length > 0">
@@ -430,28 +441,6 @@
     </div>
   </div>
 </div>
-
-<!-- ═══ REJECT MODAL ═══ -->
-<!-- <div class="modal-overlay" *ngIf="isRejectModalOpen" (click)="closeRejectModal()">
-  <div class="modal-container modal-small" (click)="$event.stopPropagation()">
-    <div class="modal-header reject-header">
-      <h2><i class="fas fa-ban"></i> Rejeter #{{ rejectTicket?.id }}</h2>
-      <button class="modal-close" (click)="closeRejectModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <p class="modal-context">{{ rejectTicket?.title }}</p>
-      <label class="form-label">Motif du rejet <span class="required">*</span></label>
-      <textarea class="form-textarea" [(ngModel)]="rejectReason" rows="4"
-                placeholder="Expliquez pourquoi ce ticket est rejeté..."></textarea>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" (click)="closeRejectModal()">Annuler</button>
-      <button class="btn-reject" (click)="confirmReject()" [disabled]="!rejectReason.trim()">
-        <i class="fas fa-ban"></i> Confirmer le rejet
-      </button>
-    </div>
-  </div>
-</div> -->
 
 <!-- ═══ STATUS CHANGE WITH COMMENT MODAL ═══ -->
 <div class="modal-overlay" *ngIf="isStatusModalOpen" (click)="closeStatusModal()">

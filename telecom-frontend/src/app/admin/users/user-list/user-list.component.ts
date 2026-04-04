@@ -1,60 +1,66 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { AdminService, UserDTO, UserStatsDTO, CreateUserRequest, UpdateUserRequest } from '../../../services/admin.service';
 import { PhotoService } from 'src/app/services/PhotoService';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-user-list',
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.scss']
 })
-export class UserListComponent implements OnInit {
+export class UserListComponent implements OnInit, OnDestroy {
 
-  userPhotos: Map<number, string> = new Map();
+  // Data
   users: UserDTO[] = [];
   filteredUsers: UserDTO[] = [];
   stats: UserStatsDTO | null = null;
+  userPhotos: Map<number, string> = new Map();
 
+  // Filters
   searchQuery = '';
   selectedRole = '';
   selectedStatus = '';
   selectedDepartement = '';
 
+  // Pagination
   currentPage = 1;
   itemsPerPage = 10;
-  isLoading = false;
 
+  // UI state
+  isLoading = false;
   successMessage: string | null = null;
   errorMessage: string | null = null;
 
-  // ✅ MODALS - TOUS LES ÉTATS
-  isViewModalOpen = false;      // VIEW modal - détails utilisateur
-  isEditModalOpen = false;      // EDIT modal - modification
-  isCreateModalOpen = false;    // CREATE modal - création
-  isDeleteModalOpen = false;    // DELETE modal - confirmation suppression
+  // Modals
+  isViewModalOpen = false;
+  isEditModalOpen = false;
+  isCreateModalOpen = false;
+  isDeleteModalOpen = false;
 
+  viewedUser: UserDTO | null = null;
   selectedUser: UserDTO | null = null;
   editedUser: UserDTO | null = null;
-  viewedUser: UserDTO | null = null;    // ✅ NOUVEAU
-  userToDelete: UserDTO | null = null;  // ✅ NOUVEAU
-
-  newUser: CreateUserRequest = this.emptyUser();
+  userToDelete: UserDTO | null = null;
+  editedRole = '';
   showPassword = false;
 
-  Math = Math;
-  editedRole: string = '';
+  newUser: CreateUserRequest = this.emptyUser();
 
-
-  departements = [
+  // Constants
+  readonly departements = [
     'DME', 'DMFI', 'IT', 'DRC', 'DFR', 'DCF',
     'DMM', 'DRT', 'INFO_CENTRE', 'NOC_DATA',
     'BOM', 'PORTAIL', 'DCWI', 'SERVICE_1200'
   ];
 
-  departementLabels: Record<string, string> = {
+  private readonly departementLabels: Record<string, string> = {
     'INFO_CENTRE': 'INFO CENTRE',
     'NOC_DATA': 'NOC DATA',
     'SERVICE_1200': '1200'
   };
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private adminService: AdminService,
@@ -66,17 +72,16 @@ export class UserListComponent implements OnInit {
     this.loadStats();
   }
 
-  private emptyUser(): CreateUserRequest {
-    return {
-      firstName: '', lastName: '', email: '',
-      password: '', phone: '', dateOfBirth: '',
-      role: 'ROLE_METIER', departement: undefined
-    };
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
+
+  // -- Data Loading --
 
   loadUsers(): void {
     this.isLoading = true;
-    this.adminService.getAllUsers().subscribe({
+    this.adminService.getAllUsers().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.users = data;
         this.applyFilters();
@@ -89,16 +94,26 @@ export class UserListComponent implements OnInit {
       }
     });
   }
-loadAllPhotos(): void {
+
+  loadStats(): void {
+    this.adminService.getUserStats().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => this.stats = data,
+      error: (err) => console.error('Erreur stats:', err)
+    });
+  }
+
+  // Load user photos efficiently
+  private loadAllPhotos(): void {
+    this.userPhotos.clear();
     this.users.forEach(user => {
-      this.photoService.hasPhoto(user.id).subscribe({
+      this.photoService.hasPhoto(user.id).pipe(takeUntil(this.destroy$)).subscribe({
         next: (exists) => {
           if (exists) {
-            this.photoService.getPhotoAsBlob(user.id).subscribe({
+            this.photoService.getPhotoAsBlob(user.id).pipe(takeUntil(this.destroy$)).subscribe({
               next: (blob) => {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                  this.userPhotos.set(user.id, e.target?.result as string);
+                reader.onloadend = () => {
+                  this.userPhotos.set(user.id, reader.result as string);
                 };
                 reader.readAsDataURL(blob);
               },
@@ -110,12 +125,8 @@ loadAllPhotos(): void {
       });
     });
   }
-  loadStats(): void {
-    this.adminService.getUserStats().subscribe({
-      next: (data) => this.stats = data,
-      error: (err) => console.error('Erreur stats:', err)
-    });
-  }
+
+  // -- Filtering --
 
   applyFilters(): void {
     this.filteredUsers = this.users.filter(user => {
@@ -151,7 +162,35 @@ loadAllPhotos(): void {
     return !!(this.searchQuery || this.selectedRole || this.selectedStatus || this.selectedDepartement);
   }
 
-  // ── ✅ VIEW MODAL - AFFICHER DÉTAILS ────────────
+  // -- Pagination --
+
+  get paginatedUsers(): UserDTO[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredUsers.slice(start, start + this.itemsPerPage);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredUsers.length / this.itemsPerPage) || 1;
+  }
+
+  setPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  get pages(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(this.totalPages, start + maxVisible - 1);
+    start = Math.max(1, end - maxVisible + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  // -- View Modal --
+
   openViewModal(user: UserDTO): void {
     this.viewedUser = user;
     this.isViewModalOpen = true;
@@ -162,15 +201,8 @@ loadAllPhotos(): void {
     this.viewedUser = null;
   }
 
-  // ✅ Helper pour transition VIEW → EDIT
-  openViewEditModal(user: UserDTO | null): void {
-    if (user) {
-      this.openEditModal(user);
-      this.closeViewModal();
-    }
-  }
+  // -- Edit Modal --
 
-  // ── EDIT MODAL ──────────────────────────────
   openEditModal(user: UserDTO): void {
     this.selectedUser = user;
     this.editedUser = {
@@ -186,7 +218,7 @@ loadAllPhotos(): void {
       createdDate: user.createdDate,
       departement: user.departement || ''
     };
-    this.editedRole = user.roles[0]; 
+    this.editedRole = user.roles[0] || '';
     this.isEditModalOpen = true;
   }
 
@@ -194,33 +226,41 @@ loadAllPhotos(): void {
     this.isEditModalOpen = false;
     this.selectedUser = null;
     this.editedUser = null;
-    this.editedRole = ''; 
+    this.editedRole = '';
   }
 
- saveUserChanges(): void {
-  if (!this.editedUser) return;
-  const request: UpdateUserRequest = {
-    firstName: this.editedUser.firstName,
-    lastName: this.editedUser.lastName,
-    email: this.editedUser.email,
-    phone: this.editedUser.phone,
-    dateOfBirth: this.editedUser.dateOfBirth,
-    role: this.editedRole,        // ← CHANGED from this.editedUser.roles[0]
-    departement: this.editedUser.departement || undefined
-  };
-  
-    this.adminService.updateUser(this.editedUser.id, request).subscribe({
-      next: (updatedUser) => {
-        const index = this.users.findIndex(u => u.id === updatedUser.id);
-        if (index !== -1) { this.users[index] = updatedUser; this.applyFilters(); this.loadStats(); }
-        this.showSuccess('Utilisateur modifié avec succès');
-        this.closeEditModal();
-      },
-      error: (err) => this.showError(err.error?.message || 'Erreur lors de la modification')
-    });
+  saveUserChanges(): void {
+    if (!this.editedUser) return;
+
+    const request: UpdateUserRequest = {
+      firstName: this.editedUser.firstName,
+      lastName: this.editedUser.lastName,
+      email: this.editedUser.email,
+      phone: this.editedUser.phone,
+      dateOfBirth: this.editedUser.dateOfBirth,
+      role: this.editedRole,
+      departement: this.editedUser.departement || undefined
+    };
+
+    this.adminService.updateUser(this.editedUser.id, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedUser) => {
+          const index = this.users.findIndex(u => u.id === updatedUser.id);
+          if (index !== -1) {
+            this.users[index] = updatedUser;
+            this.applyFilters();
+            this.loadStats();
+          }
+          this.showSuccess('Utilisateur modifié avec succès');
+          this.closeEditModal();
+        },
+        error: (err) => this.showError(err.error?.message || 'Erreur lors de la modification')
+      });
   }
 
-  // ── CREATE MODAL ─────────────────────────────
+  // -- Create Modal --
+
   openCreateModal(): void {
     this.newUser = this.emptyUser();
     this.showPassword = false;
@@ -243,20 +283,23 @@ loadAllPhotos(): void {
       this.showError('Veuillez remplir tous les champs obligatoires');
       return;
     }
-    this.newUser.departement = this.newUser.departement || undefined;
-    this.adminService.createUser(this.newUser).subscribe({
-      next: (createdUser) => {
-        this.users.push(createdUser);
-        this.applyFilters();
-        this.loadStats();
-        this.showSuccess(`Utilisateur créé — email envoyé à ${createdUser.email}`);
-        this.closeCreateModal();
-      },
-      error: (err) => this.showError(err.error?.message || 'Erreur lors de la création')
-    });
+
+    this.adminService.createUser(this.newUser)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (createdUser) => {
+          this.users.push(createdUser);
+          this.applyFilters();
+          this.loadStats();
+          this.showSuccess(`Utilisateur créé — email envoyé à ${createdUser.email}`);
+          this.closeCreateModal();
+        },
+        error: (err) => this.showError(err.error?.message || 'Erreur lors de la création')
+      });
   }
 
-  // ── ✅ DELETE MODAL ──────────────────────────
+  // -- Delete Modal --
+
   openDeleteModal(user: UserDTO): void {
     this.userToDelete = user;
     this.isDeleteModalOpen = true;
@@ -269,35 +312,40 @@ loadAllPhotos(): void {
 
   confirmDelete(): void {
     if (!this.userToDelete) return;
-    this.adminService.deleteUser(this.userToDelete.id).subscribe({
-      next: () => {
-        this.users = this.users.filter(u => u.id !== this.userToDelete!.id);
-        this.applyFilters();
-        this.loadStats();
-        this.showSuccess('Utilisateur supprimé');
-        this.closeDeleteModal();
-      },
-      error: () => this.showError('Erreur lors de la suppression')
-    });
+
+    this.adminService.deleteUser(this.userToDelete.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.users = this.users.filter(u => u.id !== this.userToDelete!.id);
+          this.applyFilters();
+          this.loadStats();
+          this.showSuccess('Utilisateur supprimé');
+          this.closeDeleteModal();
+        },
+        error: () => this.showError('Erreur lors de la suppression')
+      });
   }
 
-  deleteUser(user: UserDTO): void {
-    this.openDeleteModal(user);
-  }
+  // -- Actions --
 
-  // ── TOGGLE STATUS ────────────────────────────
   toggleStatus(user: UserDTO): void {
-    this.adminService.toggleUserStatus(user.id).subscribe({
-      next: (updatedUser) => {
-        const index = this.users.findIndex(u => u.id === user.id);
-        if (index !== -1) { this.users[index] = updatedUser; this.applyFilters(); this.loadStats(); }
-        this.showSuccess(`Utilisateur ${updatedUser.enabled ? 'activé' : 'désactivé'}`);
-      },
-      error: () => this.showError('Erreur lors de la modification du statut')
-    });
+    this.adminService.toggleUserStatus(user.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedUser) => {
+          const index = this.users.findIndex(u => u.id === user.id);
+          if (index !== -1) {
+            this.users[index] = updatedUser;
+            this.applyFilters();
+            this.loadStats();
+          }
+          this.showSuccess(`Utilisateur ${updatedUser.enabled ? 'activé' : 'désactivé'}`);
+        },
+        error: () => this.showError('Erreur lors de la modification du statut')
+      });
   }
 
-  // ── EXPORT CSV ───────────────────────────────
   exportCSV(): void {
     const headers = ['ID', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Date naissance', 'Département', 'Rôle', 'Statut', 'Créé le'];
     const rows = this.filteredUsers.map(u => [
@@ -312,19 +360,13 @@ loadAllPhotos(): void {
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `utilisateurs_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
+    a.href = url;
+    a.download = `utilisateurs_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
-  // ── HELPERS ──────────────────────────────────
-  get paginatedUsers(): UserDTO[] {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    return this.filteredUsers.slice(start, start + this.itemsPerPage);
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.filteredUsers.length / this.itemsPerPage);
-  }
+  // -- Helpers --
 
   getDeptLabel(dept: string): string {
     return this.departementLabels[dept] || dept;
@@ -343,13 +385,28 @@ loadAllPhotos(): void {
     return role.replace('ROLE_', '');
   }
 
-  // ✅ Helper pour formater les rôles dans le template
   getFormattedRoles(roles: string[]): string {
     return roles.map(r => this.getRoleLabel(r)).join(', ');
   }
 
   getInitials(firstName: string, lastName: string): string {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    return `${(firstName || '').charAt(0)}${(lastName || '').charAt(0)}`.toUpperCase();
+  }
+
+  getPhotoUrl(userId: number): string | null {
+    return this.userPhotos.get(userId) || null;
+  }
+
+  trackByUserId(_index: number, user: UserDTO): number {
+    return user.id;
+  }
+
+  private emptyUser(): CreateUserRequest {
+    return {
+      firstName: '', lastName: '', email: '',
+      password: '', phone: '', dateOfBirth: '',
+      role: 'ROLE_METIER', departement: undefined
+    };
   }
 
   private showSuccess(msg: string): void {

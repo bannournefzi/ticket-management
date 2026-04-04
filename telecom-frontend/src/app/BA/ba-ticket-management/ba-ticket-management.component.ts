@@ -3,7 +3,7 @@ import { TicketService } from '../../services/ticket.service';
 import { CommentService } from '../../services/CommentService';
 import { AuthService } from '../../auth/service/auth.service';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 import {
   Ticket,
   TicketHistory,
@@ -16,7 +16,6 @@ import { TicketComment, CreateCommentRequest } from '../../models/TicketComment'
   templateUrl: './ba-ticket-management.component.html',
   styleUrls: ['./ba-ticket-management.component.scss']
 })
-
 export class BaTicketManagementComponent implements OnInit {
 
   allTickets: Ticket[] = [];
@@ -24,7 +23,7 @@ export class BaTicketManagementComponent implements OnInit {
 
   isLoading = false;
   successMessage: string | null = null;
-  errorMessage:   string | null = null;
+  errorMessage: string | null = null;
 
   searchQuery    = '';
   filterStatus   = '';
@@ -36,12 +35,19 @@ export class BaTicketManagementComponent implements OnInit {
 
   // ── Pagination ────────────────────────────────────────────────────────
   currentPage = 1;
-  pageSize    = 10;
-  get totalPages(): number { return Math.ceil(this.filteredTickets.length / this.pageSize); }
- get pagedTickets(): Ticket[] {                                    // ← add this
-  const start = (this.currentPage - 1) * this.pageSize;
-  return this.filteredTickets.slice(start, start + this.pageSize);
-}
+
+  // FIX #3: pageSize is stored as number. The select uses [ngValue] to bind
+  // numbers directly, avoiding the "string from <select>" arithmetic bug.
+  pageSize = 10;
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredTickets.length / this.pageSize));
+  }
+
+  get pagedTickets(): Ticket[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredTickets.slice(start, start + this.pageSize);
+  }
 
   // ── Dropdown ──────────────────────────────────────────────────────────
   openDropdownId: number | null = null;
@@ -59,13 +65,8 @@ export class BaTicketManagementComponent implements OnInit {
   isSendingComment  = false;
 
   // ── History ───────────────────────────────────────────────────────────
-  ticketHistory:    TicketHistory[] = [];
-  isLoadingHistory  = false;
-
-  // ── Reject modal ──────────────────────────────────────────────────────
-  // isRejectModalOpen = false;
-  // rejectTicket: Ticket | null = null;
-  // rejectReason = '';
+  ticketHistory:   TicketHistory[] = [];
+  isLoadingHistory = false;
 
   // ── Status-change-with-comment modal ──────────────────────────────────
   isStatusModalOpen = false;
@@ -77,14 +78,14 @@ export class BaTicketManagementComponent implements OnInit {
 
   // ── Config ────────────────────────────────────────────────────────────
   allowedTransitions: Record<string, TicketStatus[]> = {
-  'NEW':          ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
-  'FEEDBACK':     ['NEW', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
-  'ACKNOWLEDGED': ['FEEDBACK', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
-  'CONFIRMED':    ['FEEDBACK', 'ACKNOWLEDGED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
-  'ASSIGNED':     ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'RESOLVED', 'CLOSED'],
-  'RESOLVED':     ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'CLOSED'],
-  'CLOSED':       ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED']
-};
+    'NEW':          ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+    'FEEDBACK':     ['NEW', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+    'ACKNOWLEDGED': ['FEEDBACK', 'CONFIRMED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+    'CONFIRMED':    ['FEEDBACK', 'ACKNOWLEDGED', 'ASSIGNED', 'RESOLVED', 'CLOSED'],
+    'ASSIGNED':     ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'RESOLVED', 'CLOSED'],
+    'RESOLVED':     ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'CLOSED'],
+    'CLOSED':       ['FEEDBACK', 'ACKNOWLEDGED', 'CONFIRMED', 'ASSIGNED', 'RESOLVED']
+  };
 
   priorityConfig: Record<string, { label: string; icon: string }> = {
     'LOW':      { label: 'Basse',    icon: 'fas fa-arrow-down' },
@@ -103,23 +104,23 @@ export class BaTicketManagementComponent implements OnInit {
   };
 
   statusLabels: Record<string, string> = {
-  'NEW': 'Nouveau',
-  'FEEDBACK': 'Retour',
-  'ACKNOWLEDGED': 'Pris en compte',
-  'CONFIRMED': 'Confirmé',
-  'ASSIGNED': 'Assigné',
-  'RESOLVED': 'Résolu',
-  'CLOSED': 'Fermé'
-};
+    'NEW':          'Nouveau',
+    'FEEDBACK':     'Retour',
+    'ACKNOWLEDGED': 'Pris en compte',
+    'CONFIRMED':    'Confirmé',
+    'ASSIGNED':     'Assigné',
+    'RESOLVED':     'Résolu',
+    'CLOSED':       'Fermé'
+  };
 
   statusKeys   = Object.keys(this.statusLabels) as TicketStatus[];
   priorityKeys = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 
   // ── Stats ─────────────────────────────────────────────────────────────
-  get totalTickets():    number { return this.allTickets.length; }
-  get slaBreachedCount():number { return this.allTickets.filter(t => t.slaStatus === 'BREACHED').length; }
-  get criticalCount():   number { return this.allTickets.filter(t => t.priority === 'CRITICAL').length; }
-  get unassignedCount(): number { return this.allTickets.filter(t => !t.assignedToId).length; }
+  get totalTickets():     number { return this.allTickets.length; }
+  get slaBreachedCount(): number { return this.allTickets.filter(t => t.slaStatus === 'BREACHED').length; }
+  get criticalCount():    number { return this.allTickets.filter(t => t.priority === 'CRITICAL').length; }
+  get unassignedCount():  number { return this.allTickets.filter(t => !t.assignedToId).length; }
 
   // ── Sort order helpers ────────────────────────────────────────────────
   private readonly priorityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
@@ -169,31 +170,39 @@ export class BaTicketManagementComponent implements OnInit {
   onFilter(): void { this.applyFilters(); }
 
   applyFilters(): void {
-  const q = this.searchQuery.toLowerCase();
-  let result = this.allTickets.filter(t => {
-    if (this.filterStatus   && t.status    !== this.filterStatus)   return false;
-    if (this.filterPriority && t.priority  !== this.filterPriority) return false;
-    if (this.filterSLA      && t.slaStatus !== this.filterSLA)      return false;
-    if (q && !(
-      t.title.toLowerCase().includes(q) ||
-      t.id.toString().includes(q) ||
-      (t.creatorFullName && t.creatorFullName.toLowerCase().includes(q)) ||
-      (t.tags && t.tags.some(tag => tag.toLowerCase().includes(q)))
-    )) return false;
-    return true;
-  });
-  this.filteredTickets = result;  
-  this.currentPage = 1;
-}
+    const q = this.searchQuery.toLowerCase();
+
+    const result = this.allTickets.filter(t => {
+      if (this.filterStatus   && t.status   !== this.filterStatus)   return false;
+      if (this.filterPriority && t.priority !== this.filterPriority) return false;
+      if (this.filterSLA      && t.slaStatus !== this.filterSLA)     return false;
+
+      if (q && !(
+        t.title.toLowerCase().includes(q) ||
+        t.id.toString().includes(q) ||
+        (t.creatorFullName && t.creatorFullName.toLowerCase().includes(q)) ||
+        (t.tags && t.tags.some(tag => tag.toLowerCase().includes(q)))
+      )) return false;
+
+      return true;
+    });
+
+    // FIX #4: update filteredTickets first, THEN ensure valid page
+    this.filteredTickets = this.sortTickets(result);
+    this.currentPage = 1;
+    this.ensureValidPage();
+  }
 
   sortBy(col: string): void {
     if (this.sortColumn === col) {
       this.sortAscending = !this.sortAscending;
     } else {
-      this.sortColumn = col;
+      this.sortColumn    = col;
       this.sortAscending = true;
     }
     this.filteredTickets = this.sortTickets([...this.filteredTickets]);
+    this.currentPage = 1;
+    this.ensureValidPage();
   }
 
   private sortTickets(list: Ticket[]): Ticket[] {
@@ -201,14 +210,14 @@ export class BaTicketManagementComponent implements OnInit {
       let av: any = (a as any)[this.sortColumn];
       let bv: any = (b as any)[this.sortColumn];
 
-      if (this.sortColumn === 'priority') { av = this.priorityOrder[av] ?? 9; bv = this.priorityOrder[bv] ?? 9; }
-      if (this.sortColumn === 'slaStatus') { av = this.slaOrder[av] ?? 9; bv = this.slaOrder[bv] ?? 9; }
+      if (this.sortColumn === 'priority')  { av = this.priorityOrder[av] ?? 9; bv = this.priorityOrder[bv] ?? 9; }
+      if (this.sortColumn === 'slaStatus') { av = this.slaOrder[av]      ?? 9; bv = this.slaOrder[bv]      ?? 9; }
 
       if (typeof av === 'string' && typeof bv === 'string') {
         return this.sortAscending ? av.localeCompare(bv) : bv.localeCompare(av);
       }
       if (av < bv) return this.sortAscending ? -1 : 1;
-      if (av > bv) return this.sortAscending ? 1 : -1;
+      if (av > bv) return this.sortAscending ?  1 : -1;
       return 0;
     });
   }
@@ -239,18 +248,24 @@ export class BaTicketManagementComponent implements OnInit {
     return pages;
   }
 
+  // FIX #8: called when pageSize select changes — resets page and reapplies
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.ensureValidPage();
+  }
+
   // ══════════════════════════════════════════
   //  DETAIL MODAL
   // ══════════════════════════════════════════
 
   openDetailModal(ticket: Ticket): void {
-    this.selectedTicket   = ticket;
+    this.selectedTicket    = ticket;
     this.isDetailModalOpen = true;
-    this.activeTab        = 'details';
-    this.comments         = [];
-    this.newComment       = '';
-    this.isInternalNote   = false;
-    this.ticketHistory    = [];
+    this.activeTab         = 'details';
+    this.comments          = [];
+    this.newComment        = '';
+    this.isInternalNote    = false;
+    this.ticketHistory     = [];
     this.loadComments(ticket.id);
   }
 
@@ -292,7 +307,7 @@ export class BaTicketManagementComponent implements OnInit {
   }
 
   deleteComment(c: TicketComment): void {
-    if (!this.selectedTicket || !confirm('Supprimer ?')) return;
+    if (!this.selectedTicket || !confirm('Supprimer ce commentaire ?')) return;
     this.commentService.deleteComment(this.selectedTicket.id, c.id).subscribe({
       next: () => { this.comments = this.comments.filter(x => x.id !== c.id); }
     });
@@ -325,24 +340,6 @@ export class BaTicketManagementComponent implements OnInit {
   }
 
   // ══════════════════════════════════════════
-  //  REJECT
-  // ══════════════════════════════════════════
-
-  // closeRejectModal(): void {
-  //   this.isRejectModalOpen = false;
-  //   this.rejectTicket      = null;
-  //   this.rejectReason      = '';
-  // }
-
-  // confirmReject(): void {
-  //   if (!this.rejectTicket || !this.rejectReason.trim()) { this.showError('Motif obligatoire'); return; }
-  //   this.ticketService.updateTicketStatus(this.rejectTicket.id, 'REJECTED', this.rejectReason.trim()).subscribe({
-  //     next: () => { this.showSuccess(`#${this.rejectTicket!.id} rejeté`); this.closeRejectModal(); this.loadTickets(); },
-  //     error: (err) => this.showError(err.error?.message || 'Erreur')
-  //   });
-  // }
-
-  // ══════════════════════════════════════════
   //  STATUS CHANGE WITH COMMENT
   // ══════════════════════════════════════════
 
@@ -371,18 +368,14 @@ export class BaTicketManagementComponent implements OnInit {
   // ══════════════════════════════════════════
 
   changeStatus(ticket: Ticket, newStatus: TicketStatus): void {
-    // if (newStatus === 'REJECTED') {
-    //   this.rejectTicket = ticket;
-    //   this.rejectReason = '';
-    //   this.closeDetailModal();
-    //   this.isRejectModalOpen = true;
-    //   return;
-    // }
     if (newStatus === 'RESOLVED') {
+      // FIX #1: save a reference to the ticket BEFORE closing the detail modal,
+      // so statusTicket is never null when confirmStatusChange() is called.
       this.statusTicket  = ticket;
       this.targetStatus  = newStatus;
       this.statusComment = '';
-      this.closeDetailModal();
+      // Only close detail modal if it was the one that triggered this action
+      if (this.isDetailModalOpen) this.closeDetailModal();
       this.isStatusModalOpen = true;
       return;
     }
@@ -390,7 +383,10 @@ export class BaTicketManagementComponent implements OnInit {
       next: () => {
         this.showSuccess(`#${ticket.id} → ${this.statusLabels[newStatus]}`);
         this.loadTickets();
-        if (this.selectedTicket?.id === ticket.id) this.selectedTicket.status = newStatus;
+        // Update in-place so the open modal reflects the new status immediately
+        if (this.selectedTicket?.id === ticket.id) {
+          this.selectedTicket = { ...this.selectedTicket, status: newStatus };
+        }
       },
       error: (err) => this.showError(err.error?.message || 'Erreur')
     });
@@ -420,27 +416,39 @@ export class BaTicketManagementComponent implements OnInit {
   }
 
   // ══════════════════════════════════════════
+  //  CONFIG SAFE ACCESSORS (FIX #2 & #5)
+  // ══════════════════════════════════════════
+
+  getPriorityConfig(priority: string): { label: string; icon: string } {
+    return this.priorityConfig[priority] ?? { label: priority, icon: 'fas fa-minus' };
+  }
+
+  getCategoryConfig(category: string): { label: string; icon: string } {
+    return this.categoryConfig[category] ?? { label: category, icon: 'fas fa-tag' };
+  }
+
+  // ══════════════════════════════════════════
   //  SLA
   // ══════════════════════════════════════════
 
   getSLAClass(slaStatus?: string): string {
-    return ({ ON_TRACK: 'sla-on-track', AT_RISK: 'sla-at-risk', BREACHED: 'sla-breached', MET: 'sla-met' } as any)[slaStatus || ''] || '';
+    return ({ ON_TRACK: 'sla-on-track', AT_RISK: 'sla-at-risk', BREACHED: 'sla-breached', MET: 'sla-met' } as any)[slaStatus ?? ''] ?? '';
   }
 
   getSLACellClass(slaStatus?: string): string {
-    return ({ BREACHED: 'cell-breached', AT_RISK: 'cell-at-risk' } as any)[slaStatus || ''] || '';
+    return ({ BREACHED: 'cell-breached', AT_RISK: 'cell-at-risk' } as any)[slaStatus ?? ''] ?? '';
   }
 
   getSLADotClass(slaStatus?: string): string {
-    return ({ ON_TRACK: 'dot-on', AT_RISK: 'dot-risk', BREACHED: 'dot-breach', MET: 'dot-on' } as any)[slaStatus || ''] || '';
+    return ({ ON_TRACK: 'dot-on', AT_RISK: 'dot-risk', BREACHED: 'dot-breach', MET: 'dot-on' } as any)[slaStatus ?? ''] ?? '';
   }
 
   getSLALabel(slaStatus?: string): string {
-    return ({ ON_TRACK: 'Dans les délais', AT_RISK: 'À risque', BREACHED: 'SLA dépassé', MET: 'Résolu à temps' } as any)[slaStatus || ''] || '';
+    return ({ ON_TRACK: 'Dans les délais', AT_RISK: 'À risque', BREACHED: 'SLA dépassé', MET: 'Résolu à temps' } as any)[slaStatus ?? ''] ?? '—';
   }
 
   getSLAIcon(slaStatus?: string): string {
-    return ({ ON_TRACK: 'fas fa-check-circle', AT_RISK: 'fas fa-exclamation-triangle', BREACHED: 'fas fa-times-circle', MET: 'fas fa-check-double' } as any)[slaStatus || ''] || 'fas fa-minus-circle';
+    return ({ ON_TRACK: 'fas fa-check-circle', AT_RISK: 'fas fa-exclamation-triangle', BREACHED: 'fas fa-times-circle', MET: 'fas fa-check-double' } as any)[slaStatus ?? ''] ?? 'fas fa-minus-circle';
   }
 
   // ══════════════════════════════════════════
@@ -448,37 +456,44 @@ export class BaTicketManagementComponent implements OnInit {
   // ══════════════════════════════════════════
 
   getPriorityClass(p: string): string {
-    return ({ LOW: 'p-low', MEDIUM: 'p-medium', HIGH: 'p-high', CRITICAL: 'p-critical' } as any)[p] || '';
+    return ({ LOW: 'p-low', MEDIUM: 'p-medium', HIGH: 'p-high', CRITICAL: 'p-critical' } as any)[p] ?? '';
   }
 
-getStatusClass(s: string): string {
-  return ({
-    NEW: 's-new',
-    FEEDBACK: 's-feedback',
-    ACKNOWLEDGED: 's-ack',
-    CONFIRMED: 's-confirmed',
-    ASSIGNED: 's-assigned',
-    RESOLVED: 's-resolved',
-    CLOSED: 's-closed'
-  } as any)[s] || '';
-}
+  getStatusClass(s: string): string {
+    return ({
+      NEW: 's-new', FEEDBACK: 's-feedback', ACKNOWLEDGED: 's-ack',
+      CONFIRMED: 's-confirmed', ASSIGNED: 's-assigned', RESOLVED: 's-resolved', CLOSED: 's-closed'
+    } as any)[s] ?? '';
+  }
 
-  getTimeAgo(d: string): string {
-    const diff = Date.now() - new Date(d).getTime();
-    const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), dy = Math.floor(diff / 86400000);
-    if (m < 1)  return "À l'instant";
-    if (m < 60) return `${m}min`;
-    if (h < 24) return `${h}h`;
-    if (dy < 7) return `${dy}j`;
-    return new Date(d).toLocaleDateString('fr-FR');
+  // FIX #5: guard against null/undefined date
+  getTimeAgo(d: string | null | undefined): string {
+    if (!d) return '—';
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return '—';
+    const diff = Date.now() - date.getTime();
+    const m  = Math.floor(diff / 60000);
+    const h  = Math.floor(diff / 3600000);
+    const dy = Math.floor(diff / 86400000);
+    if (m  < 1)  return "À l'instant";
+    if (m  < 60) return `${m}min`;
+    if (h  < 24) return `${h}h`;
+    if (dy < 7)  return `${dy}j`;
+    return date.toLocaleDateString('fr-FR');
   }
 
   getInitial(n: string): string { return n ? n.charAt(0).toUpperCase() : '?'; }
 
   getCommentRoleLabel(r: string): string {
-    return ({ ADMIN: 'Admin', BUSINESS_ANALYST: 'BA', METIER: 'Métier' } as any)[r] || r;
+    return ({ ADMIN: 'Admin', BUSINESS_ANALYST: 'BA', METIER: 'Métier' } as any)[r] ?? r;
   }
 
   private showSuccess(msg: string): void { this.successMessage = msg; setTimeout(() => this.successMessage = null, 3000); }
-  private showError(msg: string): void   { this.errorMessage   = msg; setTimeout(() => this.errorMessage   = null, 4000); }
+  private showError(msg: string):   void { this.errorMessage   = msg; setTimeout(() => this.errorMessage   = null, 4000); }
+
+  private ensureValidPage(): void {
+    const total = this.totalPages;  
+    if (this.currentPage > total) this.currentPage = total;
+    if (this.currentPage < 1)     this.currentPage = 1;
+  }
 }

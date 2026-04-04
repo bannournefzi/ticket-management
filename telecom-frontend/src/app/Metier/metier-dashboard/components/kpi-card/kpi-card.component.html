@@ -1,0 +1,16 @@
+<div class="kpi-card" [class.kpi-card--clickable]="clickable" (click)="onClick()"
+     role="button" [attr.tabindex]="clickable ? 0 : null"
+     [attr.aria-label]="'KPI: ' + data.label + ' = ' + data.value">
+  <div class="kpi-icon-wrap" [style.background]="data.bgColor">
+    <i [class]="data.icon" [style.color]="data.color"></i>
+  </div>
+  <div class="kpi-body">
+    <span class="kpi-value">{{ data.value }}</span>
+    <span class="kpi-label">{{ data.label }}</span>
+  </div>
+  <div class="kpi-bar" [style.background]="data.color"></div>
+  <div class="kpi-trend" *ngIf="data.trend" [class.kpi-trend--up]="data.trend.positive">
+    <i [class]="data.trend.positive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+    <span>{{ data.trend.value }}%</span>
+  </div>
+</div>

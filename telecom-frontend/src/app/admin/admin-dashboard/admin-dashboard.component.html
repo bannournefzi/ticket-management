@@ -1,6 +1,6 @@
 <div class="dashboard" [class.is-loading]="loading">
 
-  <!-- ═══════ TOPBAR ═══════ -->
+  <!-- ====== TOPBAR ====== -->
   <header class="topbar">
     <div class="topbar-left">
       <h1 class="page-title">Tableau de bord</h1>
@@ -8,7 +8,7 @@
     </div>
     <div class="topbar-right">
       <span class="refresh-info">
-        <i class="fas fa-sync-alt" (click)="refreshData()" [class.spinning]="loading"></i>
+        <i class="fas fa-sync-alt" (click)="refreshData()" [class.spinning]="loading" role="button" aria-label="Rafraîchir"></i>
         Mis à jour {{ lastRefresh | date:'HH:mm' }}
       </span>
       <div class="admin-badge">
@@ -21,24 +21,27 @@
     </div>
   </header>
 
-  <!-- ═══════ VIEW TABS ═══════ -->
-  <nav class="view-tabs">
-    <button class="tab" [class.active]="activeView === 'overview'" (click)="setView('overview')">
+  <!-- ====== VIEW TABS ====== -->
+  <nav class="view-tabs" role="tablist">
+    <button class="tab" [class.active]="activeView === 'overview'" (click)="setView('overview')"
+            role="tab" [attr.aria-selected]="activeView === 'overview'">
       <i class="fas fa-th-large"></i> Vue d'ensemble
     </button>
-    <button class="tab" [class.active]="activeView === 'tickets'" (click)="setView('tickets')">
+    <button class="tab" [class.active]="activeView === 'tickets'" (click)="setView('tickets')"
+            role="tab" [attr.aria-selected]="activeView === 'tickets'">
       <i class="fas fa-ticket-alt"></i> Tickets
       <span class="tab-count" *ngIf="ticketStats">{{ ticketStats.totalTickets }}</span>
     </button>
-    <button class="tab" [class.active]="activeView === 'users'" (click)="setView('users')">
+    <button class="tab" [class.active]="activeView === 'users'" (click)="setView('users')"
+            role="tab" [attr.aria-selected]="activeView === 'users'">
       <i class="fas fa-users"></i> Utilisateurs
       <span class="tab-count" *ngIf="userStats">{{ userStats.totalUsers }}</span>
     </button>
   </nav>
 
-  <!-- ═══════════════════════════════════════════ -->
+  <!-- ========================================== -->
   <!-- OVERVIEW VIEW                               -->
-  <!-- ═══════════════════════════════════════════ -->
+  <!-- ========================================== -->
   <ng-container *ngIf="activeView === 'overview'">
 
     <!-- KPI ROW -->
@@ -48,7 +51,7 @@
           <span class="kpi-label">Utilisateurs</span>
           <div class="kpi-icon-wrap"><i class="fas fa-users"></i></div>
         </div>
-        <span class="kpi-value">{{ userStats?.totalUsers ?? '—' }}</span>
+        <span class="kpi-value">{{ userStats?.totalUsers ?? '---' }}</span>
         <div class="kpi-meta">
           <span class="meta-pill pill-positive">{{ activePercent }}% actifs</span>
           <span class="meta-text">{{ userStats?.inactiveUsers ?? 0 }} inactifs</span>
@@ -60,7 +63,7 @@
           <span class="kpi-label">Total Tickets</span>
           <div class="kpi-icon-wrap"><i class="fas fa-ticket-alt"></i></div>
         </div>
-        <span class="kpi-value">{{ ticketStats?.totalTickets ?? '—' }}</span>
+        <span class="kpi-value">{{ ticketStats?.totalTickets ?? '---' }}</span>
         <div class="kpi-meta">
           <span class="meta-pill" [class.pill-positive]="resolutionRate >= 50" [class.pill-neutral]="resolutionRate < 50">{{ resolutionRate }}% résolus</span>
         </div>
@@ -71,20 +74,20 @@
           <span class="kpi-label">Tickets Ouverts</span>
           <div class="kpi-icon-wrap"><i class="fas fa-folder-open"></i></div>
         </div>
-        <span class="kpi-value">{{ ticketStats?.openTickets ?? '—' }}</span>
+        <span class="kpi-value">{{ ticketStats?.newTickets ?? '---' }}</span>
         <div class="kpi-meta">
-          <span class="meta-text">{{ ticketStats?.inProgressTickets ?? 0 }} en traitement</span>
+          <span class="meta-text">{{ ticketStats?.assignedTickets ?? 0 }} en traitement</span>
         </div>
       </div>
 
       <div class="kpi">
         <div class="kpi-top">
-          <span class="kpi-label">Taux Ouverture</span>
+          <span class="kpi-label">Taux Résolution</span>
           <div class="kpi-icon-wrap"><i class="fas fa-chart-pie"></i></div>
         </div>
-        <span class="kpi-value">{{ openRate }}%</span>
+        <span class="kpi-value">{{ resolutionRate }}%</span>
         <div class="kpi-meta">
-          <span class="meta-pill pill-neutral">{{ ticketStats?.rejectedTickets ?? 0 }} rejetés</span>
+          <span class="meta-pill pill-neutral">{{ ticketStats?.slaBreachedTickets ?? 0 }} SLA dépassés</span>
         </div>
       </div>
     </section>
@@ -98,31 +101,31 @@
           <h2>Répartition par statut</h2>
         </div>
         <div class="panel-body">
-          <div class="stat-row">
-            <div class="stat-label"><span class="dot dot-open"></span>Ouvert</div>
-            <div class="stat-bar-track"><div class="stat-bar bar-open" [style.width.%]="ticketStats ? (ticketStats.newTickets / ticketStats.totalTickets * 100) : 0"></div></div>
-            <span class="stat-val">{{ ticketStats?.newTickets ?? 0 }}</span>
+          <div class="stat-row" *ngIf="ticketStats">
+            <div class="stat-label"><span class="dot dot-open"></span>Nouveau</div>
+            <div class="stat-bar-track"><div class="stat-bar bar-open" [style.width.%]="ticketStats.totalTickets ? (ticketStats.newTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats.newTickets }}</span>
           </div>
-          <div class="stat-row">
+          <div class="stat-row" *ngIf="ticketStats">
             <div class="stat-label"><span class="dot dot-progress"></span>En cours</div>
-            <div class="stat-bar-track"><div class="stat-bar bar-progress" [style.width.%]="ticketStats ? (ticketStats.assignedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
-            <span class="stat-val">{{ ticketStats?.inProgressTickets ?? 0 }}</span>
+            <div class="stat-bar-track"><div class="stat-bar bar-progress" [style.width.%]="ticketStats.totalTickets ? (ticketStats.assignedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats.assignedTickets }}</span>
           </div>
-          <div class="stat-row">
+          <div class="stat-row" *ngIf="ticketStats">
+            <div class="stat-label"><span class="dot dot-hold"></span>En attente</div>
+            <div class="stat-bar-track"><div class="stat-bar bar-hold" [style.width.%]="ticketStats.totalTickets ? (ticketStats.feedbackTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats.feedbackTickets }}</span>
+          </div>
+          <div class="stat-row" *ngIf="ticketStats">
             <div class="stat-label"><span class="dot dot-resolved"></span>Résolu</div>
-            <div class="stat-bar-track"><div class="stat-bar bar-resolved" [style.width.%]="ticketStats ? (ticketStats.resolvedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
-            <span class="stat-val">{{ ticketStats?.resolvedTickets ?? 0 }}</span>
+            <div class="stat-bar-track"><div class="stat-bar bar-resolved" [style.width.%]="ticketStats.totalTickets ? (ticketStats.resolvedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats.resolvedTickets }}</span>
           </div>
-          <div class="stat-row">
+          <div class="stat-row" *ngIf="ticketStats">
             <div class="stat-label"><span class="dot dot-closed"></span>Fermé</div>
-            <div class="stat-bar-track"><div class="stat-bar bar-closed" [style.width.%]="ticketStats ? (ticketStats.closedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
-            <span class="stat-val">{{ ticketStats?.closedTickets ?? 0 }}</span>
+            <div class="stat-bar-track"><div class="stat-bar bar-closed" [style.width.%]="ticketStats.totalTickets ? (ticketStats.closedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
+            <span class="stat-val">{{ ticketStats.closedTickets }}</span>
           </div>
-          <!-- <div class="stat-row">
-            <div class="stat-label"><span class="dot dot-rejected"></span>Rejeté</div>
-            <div class="stat-bar-track"><div class="stat-bar bar-rejected" [style.width.%]="ticketStats ? (ticketStats.rejectedTickets / ticketStats.totalTickets * 100) : 0"></div></div>
-            <span class="stat-val">{{ ticketStats?.rejectedTickets ?? 0 }}</span>
-          </div> -->
         </div>
       </div>
 
@@ -185,7 +188,7 @@
       </div>
 
       <!-- User Role Distribution -->
-        <div class="panel">
+      <div class="panel">
         <div class="panel-header">
           <h2><i class="fas fa-id-badge"></i> Comptes par rôle</h2>
         </div>
@@ -228,9 +231,9 @@
 
   </ng-container>
 
-  <!-- ═══════════════════════════════════════════ -->
+  <!-- ========================================== -->
   <!-- TICKETS VIEW                                -->
-  <!-- ═══════════════════════════════════════════ -->
+  <!-- ========================================== -->
   <ng-container *ngIf="activeView === 'tickets'">
     <div class="panel">
       <div class="panel-header">
@@ -246,17 +249,17 @@
       <div class="filters-bar">
         <div class="filter-group">
           <i class="fas fa-search"></i>
-          <input type="text" placeholder="Rechercher un ticket..." [(ngModel)]="ticketSearch">
+          <input type="text" placeholder="Rechercher un ticket..." [(ngModel)]="ticketSearch" aria-label="Rechercher un ticket">
         </div>
-        <select [(ngModel)]="ticketStatusFilter">
+        <select [(ngModel)]="ticketStatusFilter" aria-label="Filtrer par statut">
           <option value="ALL">Tous les statuts</option>
-          <option value="OPEN">Ouvert</option>
-          <option value="IN_PROGRESS">En cours</option>
+          <option value="NEW">Nouveau</option>
+          <option value="ASSIGNED">En cours</option>
+          <option value="FEEDBACK">En attente</option>
           <option value="RESOLVED">Résolu</option>
           <option value="CLOSED">Fermé</option>
-          <option value="REJECTED">Rejeté</option>
         </select>
-        <select [(ngModel)]="ticketPriorityFilter">
+        <select [(ngModel)]="ticketPriorityFilter" aria-label="Filtrer par priorité">
           <option value="ALL">Toutes les priorités</option>
           <option value="LOW">Basse</option>
           <option value="MEDIUM">Moyenne</option>
@@ -294,9 +297,9 @@
     </div>
   </ng-container>
 
-  <!-- ═══════════════════════════════════════════ -->
+  <!-- ========================================== -->
   <!-- USERS VIEW                                  -->
-  <!-- ═══════════════════════════════════════════ -->
+  <!-- ========================================== -->
   <ng-container *ngIf="activeView === 'users'">
     <div class="panel">
       <div class="panel-header">
@@ -305,7 +308,7 @@
           <button class="btn-sm" (click)="exportUsersCSV()">
             <i class="fas fa-download"></i> Export CSV
           </button>
-          <a routerLink="/admin/users" class="btn-sm btn-outline">
+          <a class="btn-sm btn-outline" (click)="goToUserManagement()" style="cursor:pointer;">
             <i class="fas fa-external-link-alt"></i> Gestion complète
           </a>
         </div>
@@ -314,8 +317,9 @@
       <div class="filters-bar">
         <div class="filter-group">
           <i class="fas fa-search"></i>
-          <input type="text" placeholder="Rechercher un utilisateur..." [(ngModel)]="userSearch">
+          <input type="text" placeholder="Rechercher un utilisateur..." [(ngModel)]="userSearch" aria-label="Rechercher un utilisateur">
         </div>
+        <span class="filter-count">{{ filteredUsers.length }} résultat(s)</span>
       </div>
 
       <div class="table-wrap">
@@ -330,7 +334,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let user of filteredUsers">
+            <tr *ngFor="let user of filteredUsers; trackBy: trackByUser">
               <td class="cell-user">
                 <div class="avatar">{{ getInitials(user.firstName, user.lastName) }}</div>
                 <span>{{ user.firstName }} {{ user.lastName }}</span>

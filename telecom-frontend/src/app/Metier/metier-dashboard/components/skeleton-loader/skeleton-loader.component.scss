@@ -1,0 +1,56 @@
+$sk-bg: #e8eaed;
+$sk-shine: #f5f6f8;
+
+.skeleton {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.sk {
+  background: $sk-bg;
+  border-radius: 6px;
+
+  &--sm { height: 10px !important; width: 40% !important; }
+  &--lg { height: 24px !important; width: 60% !important; }
+
+  &.sk-circle {
+    width: 40px; height: 40px; border-radius: 8px; margin-bottom: 12px;
+  }
+
+  &.sk-text {
+    height: 14px; margin-bottom: 8px;
+  }
+
+  &.sk-chart {
+    height: 200px; border-radius: 8px; margin-top: 12px;
+  }
+
+  &.sk-line {
+    height: 12px; margin-bottom: 10px;
+    &:last-child { width: 70%; }
+  }
+
+  &.sk-block {
+    height: 120px; border-radius: 8px; margin-top: 12px;
+  }
+}
+
+.skeleton--kpi {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.skeleton--chart,
+.skeleton--card {
+  padding: 20px;
+}
+
+.skeleton--list {
+  padding: 20px;
+}

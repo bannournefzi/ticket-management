@@ -1,0 +1,34 @@
+<div class="sla-panel">
+  <div class="sla-ring">
+    <svg viewBox="0 0 160 160">
+      <circle cx="80" cy="80" r="65" fill="none" stroke="#e8eaed" stroke-width="12"/>
+      <circle cx="80" cy="80" r="65" fill="none" stroke="url(#slaGrad)" stroke-width="12"
+              stroke-dasharray="408" [attr.stroke-dashoffset]="408 - (408 * metrics.rate / 100)"
+              stroke-linecap="round" transform="rotate(-90 80 80)"/>
+      <defs>
+        <linearGradient id="slaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#6366f1"/>
+          <stop offset="100%" stop-color="#8b5cf6"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="sla-ring-text">
+      <span class="sla-ring-val">{{ metrics.rate }}%</span>
+      <span class="sla-ring-label">SLA Compliance</span>
+    </div>
+  </div>
+  <div class="sla-metrics">
+    <div class="sla-metric">
+      <span class="sla-metric-val">{{ formatHours(metrics.avgResolutionHours) }}</span>
+      <span class="sla-metric-label">Avg Resolution Time</span>
+    </div>
+    <div class="sla-metric sla-metric--danger">
+      <span class="sla-metric-val">{{ metrics.breachedCount }}</span>
+      <span class="sla-metric-label">SLA Breached</span>
+    </div>
+    <div class="sla-metric sla-metric--success">
+      <span class="sla-metric-val">{{ metrics.metCount }}</span>
+      <span class="sla-metric-label">Resolved On Time</span>
+    </div>
+  </div>
+</div>

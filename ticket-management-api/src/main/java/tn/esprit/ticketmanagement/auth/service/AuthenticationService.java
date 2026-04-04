@@ -12,6 +12,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import tn.esprit.ticketmanagement.Notification.NotificationType;
+import tn.esprit.ticketmanagement.Notification.PlatformNotificationService;
 import tn.esprit.ticketmanagement.User.entity.Token;
 import tn.esprit.ticketmanagement.User.repository.TokenRepository;
 import tn.esprit.ticketmanagement.User.entity.User;
@@ -43,6 +45,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     private final jwtService jwtservice;
+    private final PlatformNotificationService platformNotificationService;
 
     @Value("${application.mailing.frontend.activation-url}")
     private String activationUrl;
@@ -67,6 +70,13 @@ public class AuthenticationService {
 
         userRepository.save(user);
         sendValidationEmail(user);
+
+        // Notify all admins about new user registration
+        platformNotificationService.createAndPushToRole("ROLE_ADMIN",
+                NotificationType.USER_CREATED,
+                "Nouvel utilisateur",
+                user.fullName() + " s'est inscrit (" + user.getEmail() + ")",
+                user.getId().toString());
     }
 
     private void sendValidationEmail(User user) throws MessagingException {

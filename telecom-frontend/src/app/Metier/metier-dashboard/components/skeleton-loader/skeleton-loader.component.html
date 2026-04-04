@@ -1,0 +1,23 @@
+<ng-container *ngFor="let _ of [].constructor(count)">
+  <div class="skeleton" [ngClass]="'skeleton--' + type">
+    <ng-container [ngSwitch]="type">
+      <ng-container *ngSwitchCase="'kpi'">
+        <div class="sk sk-circle"></div>
+        <div class="sk sk-text sk-text--lg"></div>
+        <div class="sk sk-text"></div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'chart'">
+        <div class="sk sk-text sk-text--sm"></div>
+        <div class="sk sk-chart"></div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'list'">
+        <div class="sk sk-text sk-text--sm"></div>
+        <div class="sk sk-line" *ngFor="let _ of [].constructor(4)"></div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'card'">
+        <div class="sk sk-text sk-text--sm"></div>
+        <div class="sk sk-block"></div>
+      </ng-container>
+    </ng-container>
+  </div>
+</ng-container>

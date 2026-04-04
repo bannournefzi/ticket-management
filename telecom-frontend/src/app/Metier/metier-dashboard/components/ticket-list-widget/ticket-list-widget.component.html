@@ -1,0 +1,35 @@
+<div class="ticket-widget" [class.ticket-widget--urgent]="variant === 'urgent'">
+  <div class="ticket-widget-header" [class.ticket-widget-header--alert]="variant === 'urgent'">
+    <h3><i [class]="icon"></i>{{ title }}</h3>
+    <span class="ticket-count" *ngIf="tickets.length">{{ tickets.length }}</span>
+  </div>
+  <ul class="ticket-list" role="list">
+    <li class="ticket-item" *ngFor="let t of tickets; trackBy: trackById"
+        (click)="onTicketClick(t)" role="button" tabindex="0"
+        [attr.aria-label]="'Ticket #' + t.id + ': ' + t.title"
+        (keydown.enter)="onTicketClick(t)">
+      <div class="ticket-main">
+        <span class="ticket-id">#{{ t.id }}</span>
+        <span class="ticket-title">{{ t.title }}</span>
+      </div>
+      <div class="ticket-meta">
+        <ng-container *ngIf="variant === 'urgent'">
+          <span class="priority-tag" [class]="priorityConfig[t.priority]?.class">
+            {{ priorityConfig[t.priority]?.label }}
+          </span>
+          <span class="sla-tag" *ngIf="t.slaStatus === 'BREACHED'">
+            <i class="fas fa-clock"></i> SLA dépassé
+          </span>
+        </ng-container>
+        <ng-container *ngIf="variant === 'default'">
+          <span class="status-dot" [class]="statusConfig[t.status]?.class"></span>
+          <span class="ticket-time">{{ getTimeAgo(t.createdDate) }}</span>
+        </ng-container>
+      </div>
+    </li>
+  </ul>
+  <div class="ticket-empty" *ngIf="tickets.length === 0">
+    <i class="fas fa-check-circle"></i>
+    <span>Aucun ticket</span>
+  </div>
+</div>

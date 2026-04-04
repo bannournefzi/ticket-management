@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.ticketmanagement.Notification.NotificationType;
+import tn.esprit.ticketmanagement.Notification.PlatformNotificationService;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.chat.dto.MessageRequest;
@@ -33,6 +35,7 @@ public class MessageService {
     private final UserRepository userRepository;
     private final MessageMapper mapper;
     private final NotificationService notificationService;
+    private final PlatformNotificationService platformNotificationService;
     private final FileService fileService;
 
     @Transactional
@@ -73,6 +76,16 @@ public class MessageService {
                 messageRequest.getContent(),
                 senderId,
                 conversation.getTargetChatName(senderId)
+        );
+
+        // Platform notification for new message
+        log.info("📩 Sending platform notification to receiver {} (id={})", receiver.fullName(), receiverIdInt);
+        platformNotificationService.createAndPush(
+                receiverIdInt,
+                NotificationType.NEW_MESSAGE,
+                "Nouveau message de " + currentUser.fullName(),
+                messageRequest.getContent(),
+                message.getId().toString()
         );
     }
 

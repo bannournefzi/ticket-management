@@ -25,4 +25,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     long countByDepartement(Departement departement);
 
     List<User> findByDepartementIsNull();
+
+    List<User> findByRoles_Name(String roleName);
+
 }

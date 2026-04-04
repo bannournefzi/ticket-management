@@ -33,6 +33,7 @@ import { UserListComponent } from './admin/users/user-list/user-list.component';
 import { MetierDashboardComponent } from './Metier/metier-dashboard/metier-dashboard.component';
 import { CreateTicketComponent } from './Metier/create-ticket/create-ticket.component';
 import { TicketListComponent } from './Metier/ticket-list/ticket-list.component';
+import { DashboardModule } from './Metier/metier-dashboard/dashboard.module';
 
 // BA
 import { ItDashboardComponentComponent } from './BA/it-dashboard-component/it-dashboard-component.component';
@@ -80,6 +81,7 @@ import { CommonModule } from '@angular/common';
     HttpClientModule,
     DragDropModule,
     FullCalendarModule,
+    DashboardModule,
     ToastrModule.forRoot({
       timeOut: 5000,
       positionClass: 'toast-top-right',

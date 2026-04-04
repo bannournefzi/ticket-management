@@ -1,10 +1,39 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Router } from '@angular/router';
 import { AdminService, UserDTO, UserStatsDTO } from '../../services/admin.service';
 import { TicketService } from '../../services/ticket.service';
-import { Ticket, TicketStats } from '../../models/ticket.model';
+import { Ticket, TicketStats, TicketStatus } from '../../models/ticket.model';
 import { AuthService } from '../../auth/service/auth.service';
-import { interval, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { combineLatest, interval, of, Subject } from 'rxjs';
+import { catchError, takeUntil, tap } from 'rxjs/operators';
+
+type AdminView = 'overview' | 'tickets' | 'users';
+type TicketFilterValue = 'ALL' | TicketStatus;
+
+interface ActivityItem {
+  type: 'created' | 'progress' | 'resolved' | 'closed' | 'default';
+  message: string;
+  detail: string;
+  time: string;
+  icon: string;
+}
+
+const STATUS_LABELS: Record<TicketStatus, string> = {
+  'NEW': 'Nouveau', 'FEEDBACK': 'Feedback', 'ACKNOWLEDGED': 'Reconnu',
+  'CONFIRMED': 'Confirmé', 'ASSIGNED': 'Assigné', 'RESOLVED': 'Résolu', 'CLOSED': 'Fermé'
+};
+
+const STATUS_ICONS: Record<string, string> = {
+  'NEW': 'fa-plus-circle', 'FEEDBACK': 'fa-comment', 'ACKNOWLEDGED': 'fa-check',
+  'CONFIRMED': 'fa-clipboard-check', 'ASSIGNED': 'fa-user-check', 'RESOLVED': 'fa-check-circle',
+  'CLOSED': 'fa-archive'
+};
+
+const STATUS_TYPES: Record<string, ActivityItem['type']> = {
+  'NEW': 'created', 'FEEDBACK': 'progress', 'ACKNOWLEDGED': 'progress',
+  'CONFIRMED': 'progress', 'ASSIGNED': 'progress', 'RESOLVED': 'resolved',
+  'CLOSED': 'closed'
+};
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -13,48 +42,37 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
 
-  // Stats
+  // Data
   userStats: UserStatsDTO | null = null;
   ticketStats: TicketStats | null = null;
-
-  // Data
   recentUsers: UserDTO[] = [];
-  recentTickets: Ticket[] = [];
   allTickets: Ticket[] = [];
+  activityFeed: ActivityItem[] = [];
 
   // Filters
-  ticketStatusFilter = 'ALL';
+  ticketStatusFilter: TicketFilterValue = 'ALL';
   ticketPriorityFilter = 'ALL';
   ticketSearch = '';
   userSearch = '';
 
-  // UI
+  // UI state
   adminName = 'Admin';
-  today = new Date();
-  loading = true;
   lastRefresh = new Date();
-  activeView: 'overview' | 'tickets' | 'users' = 'overview';
-
-  // Activity feed
-  activityFeed: ActivityItem[] = [];
-
-  // Auto-refresh
+  loading = true;
+  activeView: AdminView = 'overview';
   private destroy$ = new Subject<void>();
 
   constructor(
     private adminService: AdminService,
     private ticketService: TicketService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.adminName = this.authService.getUserFullName();
     this.loadData();
-
-    // Auto-refresh every 30 seconds
-    interval(30000)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.refreshData());
+    this.setupAutoRefresh();
   }
 
   ngOnDestroy(): void {
@@ -62,84 +80,67 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadData(): void {
+  // -- Data Loading --
+
+  private loadData(): void {
     this.loading = true;
+    this.lastRefresh = new Date();
 
-    this.adminService.getUserStats().subscribe({
-      next: (stats) => this.userStats = stats,
-      error: () => {}
-    });
-
-    this.ticketService.getTicketStats().subscribe({
-      next: (stats) => this.ticketStats = stats,
-      error: () => {}
-    });
-
-    this.adminService.getAllUsers().subscribe({
-      next: (users) => {
-        this.recentUsers = users
-          .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime())
-          .slice(0, 8);
+    combineLatest([
+      this.adminService.getUserStats().pipe(catchError(() => of(null))),
+      this.ticketService.getTicketStats().pipe(catchError(() => of(null))),
+      this.adminService.getAllUsers().pipe(catchError(() => of([]))),
+      this.ticketService.getAllTickets().pipe(catchError(() => of([])))
+    ]).pipe(
+      tap(([users, stats, allUsers, allTickets]) => {
+        this.userStats = users;
+        this.ticketStats = stats;
+        this.recentUsers = this.sortByDateDesc(allUsers).slice(0, 8);
+        this.allTickets = this.sortTicketsByDate(allTickets);
+        this.activityFeed = this.buildActivityFeed(this.allTickets.slice(0, 8));
         this.loading = false;
-      },
-      error: () => this.loading = false
-    });
-
-    this.ticketService.getAllTickets().subscribe({
-      next: (tickets) => {
-        this.allTickets = tickets
-          .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
-        this.recentTickets = this.allTickets.slice(0, 8);
-        this.buildActivityFeed(tickets);
-      },
-      error: () => {}
-    });
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe();
   }
 
   refreshData(): void {
-    this.lastRefresh = new Date();
     this.loadData();
   }
 
-  // ── View Toggle ──
-  setView(view: 'overview' | 'tickets' | 'users'): void {
+  private setupAutoRefresh(): void {
+    interval(60000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.activeView === 'overview') this.loadData();
+      });
+  }
+
+  // -- View Management --
+
+  setView(view: AdminView): void {
     this.activeView = view;
   }
 
-  // ── Activity Feed ──
-  buildActivityFeed(tickets: Ticket[]): void {
-    this.activityFeed = tickets.slice(0, 6).map(t => ({
-      type: this.getActivityType(t.status),
-      message: `${t.creatorFullName} — ${t.title}`,
-      detail: this.getStatusLabel(t.status),
-      time: t.createdDate,
-      icon: this.getActivityIcon(t.status)
-    }));
+  // -- Computed Values --
+
+  get activePercent(): number {
+    if (!this.userStats?.totalUsers) return 0;
+    return Math.round((this.userStats.activeUsers / this.userStats.totalUsers) * 100);
   }
 
-  getActivityType(status: string): string {
-    switch (status) {
-      case 'OPEN': return 'created';
-      case 'IN_PROGRESS': return 'progress';
-      case 'RESOLVED': return 'resolved';
-      case 'CLOSED': return 'closed';
-      case 'REJECTED': return 'rejected';
-      default: return 'default';
-    }
+  get resolutionRate(): number {
+    if (!this.ticketStats?.totalTickets) return 0;
+    return Math.round(
+      ((this.ticketStats.resolvedTickets + this.ticketStats.closedTickets) / this.ticketStats.totalTickets) * 100
+    );
   }
 
-  getActivityIcon(status: string): string {
-    switch (status) {
-      case 'OPEN': return 'fa-plus-circle';
-      case 'IN_PROGRESS': return 'fa-spinner';
-      case 'RESOLVED': return 'fa-check-circle';
-      case 'CLOSED': return 'fa-archive';
-      case 'REJECTED': return 'fa-times-circle';
-      default: return 'fa-circle';
-    }
+  rolePercent(count: number): number {
+    if (!this.userStats?.totalUsers) return 0;
+    return Math.round((count / this.userStats.totalUsers) * 100);
   }
 
-  // ── Filtered Tickets ──
   get filteredTickets(): Ticket[] {
     return this.allTickets.filter(t => {
       const matchStatus = this.ticketStatusFilter === 'ALL' || t.status === this.ticketStatusFilter;
@@ -151,80 +152,60 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Filtered Users ──
   get filteredUsers(): UserDTO[] {
     if (!this.userSearch) return this.recentUsers;
+    const q = this.userSearch.toLowerCase();
     return this.recentUsers.filter(u =>
-      `${u.firstName} ${u.lastName}`.toLowerCase().includes(this.userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(this.userSearch.toLowerCase())
+      `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q)
     );
   }
 
-  // ── Computed values ──
-  get activePercent(): number {
-    if (!this.userStats || !this.userStats.totalUsers) return 0;
-    return Math.round((this.userStats.activeUsers / this.userStats.totalUsers) * 100);
+  // -- Activity Feed --
+
+  private buildActivityFeed(tickets: Ticket[]): ActivityItem[] {
+    return tickets.map(t => ({
+      type: STATUS_TYPES[t.status] || 'default',
+      message: `${t.creatorFullName} — ${t.title}`,
+      detail: STATUS_LABELS[t.status] || t.status,
+      time: t.createdDate,
+      icon: STATUS_ICONS[t.status] || 'fa-circle'
+    }));
   }
 
-  get resolutionRate(): number {
-    if (!this.ticketStats || !this.ticketStats.totalTickets) return 0;
-    return Math.round(
-      ((this.ticketStats.resolvedTickets + this.ticketStats.closedTickets) / this.ticketStats.totalTickets) * 100
-    );
-  }
+  // -- CSV Export --
 
-  get totalPriority(): number {
-    if (!this.ticketStats) return 1;
-    return (
-      this.ticketStats.lowPriority +
-      this.ticketStats.mediumPriority +
-      this.ticketStats.highPriority +
-      this.ticketStats.criticalPriority
-    ) || 1;
-  }
-
-  get openRate(): number {
-    if (!this.ticketStats || !this.ticketStats.totalTickets) return 0;
-    return Math.round((this.ticketStats.newTickets / this.ticketStats.totalTickets) * 100);
-  }
-
-  priorityPercent(value: number): number {
-    return Math.round((value / this.totalPriority) * 100);
-  }
-
-  rolePercent(count: number): number {
-    if (!this.userStats || !this.userStats.totalUsers) return 0;
-    return Math.round((count / this.userStats.totalUsers) * 100);
-  }
-
-  // ── Export ──
   exportTicketsCSV(): void {
-    const headers = 'Titre,Créateur,Priorité,Statut,Date\n';
-    const rows = this.filteredTickets.map(t =>
-      `"${t.title}","${t.creatorFullName}","${t.priority}","${t.status}","${t.createdDate}"`
-    ).join('\n');
-
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `tickets_export_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
+    const headers = ['Titre', 'Créateur', 'Priorité', 'Statut', 'Date'];
+    const rows = this.filteredTickets.map(t => [
+      t.title, t.creatorFullName, this.getPriorityLabel(t.priority),
+      STATUS_LABELS[t.status] || t.status, t.createdDate
+    ]);
+    this.downloadCSV([headers, ...rows], 'tickets_export');
   }
 
   exportUsersCSV(): void {
-    const headers = 'Nom,Prénom,Email,Rôle,Statut,Date\n';
-    const rows = this.filteredUsers.map(u =>
-      `"${u.lastName}","${u.firstName}","${u.email}","${this.getRoleBadge(u.roles)}","${u.enabled ? 'Actif' : 'Inactif'}","${u.createdDate}"`
-    ).join('\n');
-
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `users_export_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
+    const headers = ['Nom', 'Prénom', 'Email', 'Rôle', 'Statut', 'Date'];
+    const rows = this.filteredUsers.map(u => [
+      u.lastName, u.firstName, u.email,
+      this.getRoleBadge(u.roles), u.enabled ? 'Actif' : 'Inactif',
+      u.createdDate
+    ]);
+    this.downloadCSV([headers, ...rows], 'users_export');
   }
 
-  // ── Helpers ──
+  private downloadCSV(data: string[][], filename: string): void {
+    const csv = data.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  // -- Helpers --
+
   getRoleBadge(roles: string[]): string {
     if (roles.includes('ROLE_ADMIN')) return 'Admin';
     if (roles.includes('ROLE_BUSINESS_ANALYST')) return 'Business Analyst';
@@ -240,49 +221,31 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   getStatusClass(status: string): string {
-    switch (status) {
-      case 'OPEN': return 'status-open';
-      case 'IN_PROGRESS': return 'status-progress';
-      case 'RESOLVED': return 'status-resolved';
-      case 'CLOSED': return 'status-closed';
-      case 'REJECTED': return 'status-rejected';
-      default: return '';
-    }
+    const map: Record<string, string> = {
+      'NEW': 'status-open', 'FEEDBACK': 'status-hold', 'ACKNOWLEDGED': 'status-progress',
+      'CONFIRMED': 'status-progress', 'ASSIGNED': 'status-progress', 'RESOLVED': 'status-resolved',
+      'CLOSED': 'status-closed'
+    };
+    return map[status] || '';
   }
 
   getStatusLabel(status: string): string {
-    switch (status) {
-      case 'OPEN': return 'Ouvert';
-      case 'IN_PROGRESS': return 'En cours';
-      case 'RESOLVED': return 'Résolu';
-      case 'CLOSED': return 'Fermé';
-      case 'REJECTED': return 'Rejeté';
-      default: return status;
-    }
+    return STATUS_LABELS[status as TicketStatus] || status;
   }
 
   getPriorityClass(priority: string): string {
-    switch (priority) {
-      case 'LOW': return 'priority-low';
-      case 'MEDIUM': return 'priority-medium';
-      case 'HIGH': return 'priority-high';
-      case 'CRITICAL': return 'priority-critical';
-      default: return '';
-    }
+    const map: Record<string, string> = {
+      'LOW': 'priority-low', 'MEDIUM': 'priority-medium',
+      'HIGH': 'priority-high', 'CRITICAL': 'priority-critical'
+    };
+    return map[priority] || '';
   }
 
-  trackByTicketId(index: number, ticket: Ticket): number {
-  return ticket.id;
-}
-
   getPriorityLabel(priority: string): string {
-    switch (priority) {
-      case 'LOW': return 'Basse';
-      case 'MEDIUM': return 'Moyenne';
-      case 'HIGH': return 'Haute';
-      case 'CRITICAL': return 'Critique';
-      default: return priority;
-    }
+    const map: Record<string, string> = {
+      'LOW': 'Basse', 'MEDIUM': 'Moyenne', 'HIGH': 'Haute', 'CRITICAL': 'Critique'
+    };
+    return map[priority] || priority;
   }
 
   getInitials(firstName: string, lastName: string): string {
@@ -290,22 +253,35 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   getTimeAgo(date: string): string {
-    const now = new Date();
-    const d = new Date(date);
-    const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
-
-    if (diff < 60) return 'À l\'instant';
+    const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (diff < 60) return "À l'instant";
     if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
     if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)}h`;
     if (diff < 604800) return `Il y a ${Math.floor(diff / 86400)}j`;
-    return d.toLocaleDateString('fr-FR');
+    return new Date(date).toLocaleDateString('fr-FR');
   }
-}
 
-export interface ActivityItem {
-  type: string;
-  message: string;
-  detail: string;
-  time: string;
-  icon: string;
+  trackByTicketId(_index: number, ticket: Ticket): number {
+    return ticket.id;
+  }
+
+  trackByUser(_index: number, user: UserDTO): number {
+    return user.id;
+  }
+
+  private sortByDateDesc(items: UserDTO[]): UserDTO[] {
+    return [...items].sort((a, b) =>
+      new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+    );
+  }
+
+  private sortTicketsByDate(tickets: Ticket[]): Ticket[] {
+    return [...tickets].sort((a, b) =>
+      new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+    );
+  }
+
+  goToUserManagement(): void {
+    this.router.navigate(['/admin/users']);
+  }
 }

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import tn.esprit.ticketmanagement.Admin.dto.CreateUserRequest;
 import tn.esprit.ticketmanagement.Admin.dto.UserDTO;
 import tn.esprit.ticketmanagement.Admin.dto.UserStatsDTO;
+import tn.esprit.ticketmanagement.Notification.NotificationType;
+import tn.esprit.ticketmanagement.Notification.PlatformNotificationService;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
@@ -28,6 +30,7 @@ public class AdminService {
     private final RoleRepository roleRepository;
 
     private final PasswordEncoder passwordEncoder;
+    private final PlatformNotificationService platformNotificationService;
     private final Emailservice emailService;
 
 
@@ -114,6 +117,14 @@ public class AdminService {
         }
 
         User updatedUser = userRepository.save(user);
+
+        // Notify the user about the profile update
+        platformNotificationService.createAndPush(user.getId(),
+                NotificationType.USER_UPDATED,
+                "Profil mis à jour",
+                "Votre profil a été modifié par un administrateur",
+                user.getId().toString());
+
         return convertToDTO(updatedUser);
     }
 
@@ -129,6 +140,14 @@ public class AdminService {
         user.setRoles(roles);
 
         User updatedUser = userRepository.save(user);
+
+        // Notify the user about role change
+        platformNotificationService.createAndPush(user.getId(),
+                NotificationType.USER_UPDATED,
+                "Rôle modifié",
+                "Votre rôle a été changé en " + roleName.replace("ROLE_", ""),
+                user.getId().toString());
+
         return convertToDTO(updatedUser);
     }
 

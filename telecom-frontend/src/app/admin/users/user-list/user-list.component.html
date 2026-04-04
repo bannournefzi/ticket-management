@@ -1,925 +1,463 @@
 <div class="user-management-container">
-  
-  <!-- ✅ Header Ultra-Compact -->
-  <div class="page-header-simple">
-    <div class="header-content">
-      <div class="title-section">
-        <h1 class="page-title">Gestion des Utilisateurs</h1>
-        <p class="breadcrumb">
-          <i class="fas fa-home"></i>
-          <span>Admin</span>
-          <i class="fas fa-chevron-right"></i>
-          <span>Utilisateurs</span>
-        </p>
-      </div>
 
-      <!-- Mini Stats -->
-      <div class="mini-stats" *ngIf="stats">
-        <div class="mini-stat">
-          <span class="mini-value">{{ stats.totalUsers }}</span>
-          <span class="mini-label">Total</span>
-        </div>
-        <div class="mini-stat">
-          <span class="mini-value">{{ stats.activeUsers }}</span>
-          <span class="mini-label">Actifs</span>
-        </div>
-        <div class="mini-stat">
-          <span class="mini-value">{{ stats.inactiveUsers }}</span>
-          <span class="mini-label">Inactifs</span>
-        </div>
-        <div class="stat-separator"></div>
-        <div class="mini-stat mini-admin">
-          <span class="mini-value">{{ stats.adminCount }}</span>
-          <span class="mini-label">Admin</span>
-        </div>
-        <div class="mini-stat mini-it">
-          <span class="mini-value">{{ stats.itCount }}</span>
-          <span class="mini-label">IT</span>
-        </div>
-        <div class="mini-stat mini-metier">
-          <span class="mini-value">{{ stats.metierCount }}</span>
-          <span class="mini-label">Métier</span>
-        </div>
+  <!-- ====== HEADER ====== -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Gestion des Utilisateurs</h1>
+      <p class="breadcrumb">
+        <i class="fas fa-home"></i>
+        <span>Admin</span>
+        <i class="fas fa-chevron-right"></i>
+        <span>Utilisateurs</span>
+      </p>
+    </div>
+    <div class="header-stats" *ngIf="stats">
+      <div class="header-stat">
+        <span class="stat-val">{{ stats.totalUsers }}</span>
+        <span class="stat-lbl">Total</span>
+      </div>
+      <div class="header-stat stat-active">
+        <span class="stat-val">{{ stats.activeUsers }}</span>
+        <span class="stat-lbl">Actifs</span>
+      </div>
+      <div class="header-stat stat-inactive">
+        <span class="stat-val">{{ stats.inactiveUsers }}</span>
+        <span class="stat-lbl">Inactifs</span>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="header-stat stat-admin">
+        <span class="stat-val">{{ stats.adminCount }}</span>
+        <span class="stat-lbl">Admin</span>
+      </div>
+      <div class="header-stat stat-it">
+        <span class="stat-val">{{ stats.itCount }}</span>
+        <span class="stat-lbl">IT</span>
+      </div>
+      <div class="header-stat stat-metier">
+        <span class="stat-val">{{ stats.metierCount }}</span>
+        <span class="stat-lbl">Métier</span>
       </div>
     </div>
   </div>
 
-  <!-- Alertes -->
+  <!-- ====== ALERTS ====== -->
   <div class="alert alert-success" *ngIf="successMessage">
     <i class="fas fa-check-circle"></i>
     <span>{{ successMessage }}</span>
-    <button class="alert-close" (click)="successMessage = null">
-      <i class="fas fa-times"></i>
-    </button>
+    <button class="alert-close" (click)="successMessage = null"><i class="fas fa-times"></i></button>
   </div>
-
   <div class="alert alert-error" *ngIf="errorMessage">
     <i class="fas fa-exclamation-circle"></i>
     <span>{{ errorMessage }}</span>
-    <button class="alert-close" (click)="errorMessage = null">
-      <i class="fas fa-times"></i>
-    </button>
+    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
   </div>
 
-  <!-- Carte Principale -->
+  <!-- ====== MAIN CARD ====== -->
   <div class="main-card">
-    
+
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-left">
         <div class="search-box">
           <i class="fas fa-search"></i>
-          <input 
-            type="text" 
-            class="search-input" 
-            placeholder="Rechercher par nom, prénom, email..."
-            [(ngModel)]="searchQuery"
-            (input)="applyFilters()"
-          />
+          <input type="text" class="search-input" placeholder="Rechercher par nom, email..."
+                 [(ngModel)]="searchQuery" (input)="applyFilters()" aria-label="Rechercher" />
           <button class="search-clear" *ngIf="searchQuery" (click)="searchQuery = ''; applyFilters()">
             <i class="fas fa-times"></i>
           </button>
         </div>
       </div>
-
       <div class="toolbar-right">
-        <!-- ✅ NOUVEAU : Bouton Créer -->
-        <button class="btn-create" (click)="openCreateModal()">
-          <i class="fas fa-user-plus"></i>
-          Nouveau
-        </button>
-
-        <select 
-          class="compact-select"
-          [(ngModel)]="selectedRole"
-          (change)="applyFilters()"
-        >
+        <select class="filter-select" [(ngModel)]="selectedRole" (change)="applyFilters()" aria-label="Filtrer par rôle">
           <option value="">Tous les rôles</option>
           <option value="ROLE_ADMIN">Admin</option>
           <option value="ROLE_BUSINESS_ANALYST">Business Analyst</option>
           <option value="ROLE_METIER">Métier</option>
         </select>
-
-        <select 
-          class="compact-select"
-          [(ngModel)]="selectedStatus"
-          (change)="applyFilters()"
-        >
+        <select class="filter-select" [(ngModel)]="selectedStatus" (change)="applyFilters()" aria-label="Filtrer par statut">
           <option value="">Tous les statuts</option>
           <option value="active">Actifs</option>
           <option value="inactive">Inactifs</option>
         </select>
-
-        <button class="btn-icon" (click)="loadUsers()" title="Actualiser">
+        <select class="filter-select" [(ngModel)]="selectedDepartement" (change)="applyFilters()" aria-label="Filtrer par département">
+          <option value="">Tous les départements</option>
+          <option *ngFor="let dept of departements" [value]="dept">{{ getDeptLabel(dept) }}</option>
+        </select>
+        <button class="btn-icon" (click)="loadUsers()" title="Actualiser" *ngIf="hasActiveFilters" aria-label="Réinitialiser les filtres">
+          <i class="fas fa-undo"></i>
+        </button>
+        <button class="btn-icon" (click)="loadUsers()" title="Actualiser" aria-label="Rafraîchir">
           <i class="fas fa-sync-alt"></i>
+        </button>
+        <button class="btn-export" (click)="exportCSV()" title="Exporter CSV" aria-label="Exporter en CSV">
+          <i class="fas fa-download"></i>
+        </button>
+        <button class="btn-create" (click)="openCreateModal()">
+          <i class="fas fa-user-plus"></i> Nouveau
         </button>
       </div>
     </div>
 
-    <!-- Tableau -->
+    <!-- Table -->
     <div class="table-container">
-  <table class="modern-table">
-    <thead>
-      <tr>
-        <th class="th-id">ID</th>
-        <th>Utilisateur</th>
-        <th>Email</th>
-        <th>Téléphone</th>
-        <th>Date naissance</th>
-        <th class="th-center">Département</th>
-        <th class="th-center">Rôle</th>
-        <th class="th-center">Statut</th>
-        <th>Créé le</th>
-        <th class="th-center">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let user of paginatedUsers" class="table-row">
-        
-        <!-- ID -->
-        <td class="td-id">#{{ user.id }}</td>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-id">ID</th>
+            <th>Utilisateur</th>
+            <th>Email</th>
+            <th class="col-phone">Téléphone</th>
+            <th class="col-dept">Département</th>
+            <th class="col-center">Rôle</th>
+            <th class="col-center">Statut</th>
+            <th class="col-date">Créé le</th>
+            <th class="col-center col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of paginatedUsers; trackBy: trackByUserId">
+            <td class="col-id">#{{ user.id }}</td>
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar" [ngClass]="{
+                  'avatar-admin': user.roles.includes('ROLE_ADMIN'),
+                  'avatar-it': user.roles.includes('ROLE_BUSINESS_ANALYST'),
+                  'avatar-metier': user.roles.includes('ROLE_METIER')
+                }">
+                  <img *ngIf="getPhotoUrl(user.id)" [src]="getPhotoUrl(user.id)" class="avatar-photo" alt="" />
+                  <span *ngIf="!getPhotoUrl(user.id)">{{ getInitials(user.firstName, user.lastName) }}</span>
+                </div>
+                <div class="user-details">
+                  <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="col-email">{{ user.email }}</td>
+            <td>{{ user.phone || '—' }}</td>
+            <td>
+              <span class="dept-badge" *ngIf="user.departement">
+                <i class="fas fa-building"></i> {{ getDeptLabel(user.departement) }}
+              </span>
+              <span *ngIf="!user.departement" class="text-muted">—</span>
+            </td>
+            <td class="col-center">
+              <span class="role-badge" [ngClass]="getRoleBadgeClass(user.roles[0])">
+                {{ getRoleLabel(user.roles[0]) }}
+              </span>
+            </td>
+            <td class="col-center">
+              <span class="status-pill" [class.status-active]="user.enabled" [class.status-inactive]="!user.enabled">
+                <span class="status-dot"></span>
+                {{ user.enabled ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+            <td class="col-date">{{ user.createdDate | date:'dd/MM/yyyy' }}</td>
+            <td class="col-center">
+              <div class="action-group">
+                <button class="btn-action btn-view" (click)="openViewModal(user)" title="Voir">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn-action btn-edit" (click)="openEditModal(user)" title="Modifier">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-action btn-toggle" (click)="toggleStatus(user)"
+                        [title]="user.enabled ? 'Désactiver' : 'Activer'">
+                  <i [class]="user.enabled ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>
+                </button>
+                <button class="btn-action btn-delete" (click)="openDeleteModal(user)" title="Supprimer">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <!-- Utilisateur -->
-        <td>
-  <div class="user-cell">
+      <div class="empty-state" *ngIf="filteredUsers.length === 0 && !isLoading">
+        <div class="empty-icon"><i class="fas fa-user-slash"></i></div>
+        <h3>Aucun utilisateur trouvé</h3>
+        <p>Essayez de modifier vos filtres de recherche</p>
+      </div>
 
-    <!-- ✅ Show photo if exists, otherwise show initials -->
-    <div class="user-avatar" [ngClass]="{
-      'avatar-admin': user.roles.includes('ROLE_ADMIN'),
-      'avatar-it': user.roles.includes('ROLE_BUSINESS_ANALYST'),
-      'avatar-metier': user.roles.includes('ROLE_METIER')
-    }">
-      <img 
-        *ngIf="userPhotos.get(user.id)" 
-        [src]="userPhotos.get(user.id)" 
-        class="avatar-photo" 
-        [alt]="getInitials(user.firstName, user.lastName)"
-      />
-      <span *ngIf="!userPhotos.get(user.id)">
-        {{ getInitials(user.firstName, user.lastName) }}
-      </span>
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="loader"></div>
+        <p>Chargement des utilisateurs...</p>
+      </div>
     </div>
-
-    <div class="user-details">
-      <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
-    </div>
-  </div>
-</td>
-
-        <!-- Email -->
-        <td class="td-email">{{ user.email }}</td>
-
-        <!-- Téléphone -->
-        <td>
-          <span *ngIf="user.phone">
-            <i class="fas fa-phone fa-xs"></i> {{ user.phone }}
-          </span>
-          <span *ngIf="!user.phone" class="text-muted">—</span>
-        </td>
-
-        <!-- Date de naissance -->
-        <td>
-          <span *ngIf="user.dateOfBirth">
-            {{ user.dateOfBirth | date:'dd/MM/yyyy' }}
-          </span>
-          <span *ngIf="!user.dateOfBirth" class="text-muted">—</span>
-        </td>
-
-        <!-- Département -->
-        <td class="td-center">
-          <span class="dept-badge" *ngIf="user.departement">
-            <i class="fas fa-building fa-xs"></i>
-            {{ user.departement }}
-          </span>
-          <span *ngIf="!user.departement" class="text-muted">—</span>
-        </td>
-
-        <!-- Rôle -->
-        <td class="td-center">
-          <span 
-            *ngFor="let role of user.roles" 
-            class="badge-modern" 
-            [ngClass]="getRoleBadgeClass(role)"
-          >
-            <i class="fas" [ngClass]="{
-              'fa-shield-alt': role === 'ROLE_ADMIN',
-              'fa-laptop-code': role === 'ROLE_BUSINESS_ANALYST',
-              'fa-briefcase': role === 'ROLE_METIER'
-            }"></i>
-            {{ getRoleLabel(role) }}
-          </span>
-        </td>
-
-        <!-- Statut -->
-        <td class="td-center">
-          <span 
-            class="status-pill" 
-            [ngClass]="user.enabled ? 'status-active' : 'status-inactive'"
-          >
-            <span class="status-dot"></span>
-            {{ user.enabled ? 'Actif' : 'Inactif' }}
-          </span>
-        </td>
-
-        <!-- Créé le -->
-        <td class="td-date">{{ user.createdDate | date:'dd/MM/yyyy' }}</td>
-
-        <!-- Actions -->
-        <td class="td-center">
-          <div class="action-group">
-            <button 
-              class="btn-table btn-edit" 
-              (click)="openEditModal(user)"
-              title="Modifier"
-            >
-              <i class="fas fa-edit"></i>
-            </button>
-            
-            <button 
-              class="btn-table" 
-              [class.btn-active]="user.enabled"
-              (click)="toggleStatus(user)"
-              [title]="user.enabled ? 'Désactiver' : 'Activer'"
-            >
-              <i [class]="user.enabled ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>
-            </button>
-            
-            <button 
-              class="btn-table btn-danger" 
-              (click)="deleteUser(user)"
-              title="Supprimer"
-            >
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          </div>
-        </td>
-
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="empty-state" *ngIf="filteredUsers.length === 0 && !isLoading">
-    <div class="empty-icon">
-      <i class="fas fa-user-slash"></i>
-    </div>
-    <h3>Aucun utilisateur trouvé</h3>
-    <p>Essayez de modifier vos filtres de recherche</p>
-  </div>
-
-  <div class="loading-state" *ngIf="isLoading">
-    <div class="loader"></div>
-    <p>Chargement des utilisateurs...</p>
-  </div>
-</div>
 
     <!-- Pagination -->
     <div class="table-footer" *ngIf="filteredUsers.length > 0">
       <div class="footer-info">
-        Affichage de {{ (currentPage - 1) * itemsPerPage + 1 }} à 
-        {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }} 
-        sur {{ filteredUsers.length }} utilisateurs
+        {{ (currentPage - 1) * itemsPerPage + 1 }}–{{ currentPage * itemsPerPage > filteredUsers.length ? filteredUsers.length : currentPage * itemsPerPage }} sur {{ filteredUsers.length }}
       </div>
-
-      <div class="pagination-modern" *ngIf="totalPages > 1">
-        <button 
-          class="page-btn" 
-          [disabled]="currentPage === 1"
-          (click)="currentPage = 1"
-        >
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="setPage(1)" aria-label="Première page">
           <i class="fas fa-angle-double-left"></i>
         </button>
-
-        <button 
-          class="page-btn" 
-          [disabled]="currentPage === 1"
-          (click)="currentPage = currentPage - 1"
-        >
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)" aria-label="Page précédente">
           <i class="fas fa-chevron-left"></i>
         </button>
-
-        <div class="page-numbers">
-          <span class="page-current">{{ currentPage }}</span>
-          <span class="page-separator">/</span>
-          <span class="page-total">{{ totalPages }}</span>
-        </div>
-
-        <button 
-          class="page-btn" 
-          [disabled]="currentPage === totalPages"
-          (click)="currentPage = currentPage + 1"
-        >
+        <ng-container *ngFor="let p of pages">
+          <button class="page-num" [class.active]="p === currentPage" (click)="setPage(p)">{{ p }}</button>
+        </ng-container>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)" aria-label="Page suivante">
           <i class="fas fa-chevron-right"></i>
         </button>
-
-        <button 
-          class="page-btn" 
-          [disabled]="currentPage === totalPages"
-          (click)="currentPage = totalPages"
-        >
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="setPage(totalPages)" aria-label="Dernière page">
           <i class="fas fa-angle-double-right"></i>
         </button>
       </div>
     </div>
 
   </div>
-
 </div>
 
 <!-- ============================================ -->
-<!-- MODAL VIEW - DÉTAILS UTILISATEUR -->
+<!-- VIEW MODAL -->
 <!-- ============================================ -->
 <div class="modal-overlay" *ngIf="isViewModalOpen" (click)="closeViewModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
-    
-    <!-- Header -->
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-label="Détails utilisateur">
     <div class="modal-header">
-      <div class="modal-title">
-        <i class="fas fa-user-circle"></i>
-        <h2>Détails utilisateur</h2>
-      </div>
-      <button class="modal-close" (click)="closeViewModal()">
-        <i class="fas fa-times"></i>
-      </button>
+      <div class="modal-title"><i class="fas fa-user-circle"></i><h2>Détails utilisateur</h2></div>
+      <button class="modal-close" (click)="closeViewModal()"><i class="fas fa-times"></i></button>
     </div>
-
-    <!-- Body -->
     <div class="modal-body" *ngIf="viewedUser">
-      
-      <!-- Avatar -->
-      <div class="modal-user-avatar" [ngClass]="{
+      <div class="modal-avatar" [ngClass]="{
         'avatar-admin': viewedUser.roles.includes('ROLE_ADMIN'),
         'avatar-it': viewedUser.roles.includes('ROLE_BUSINESS_ANALYST'),
         'avatar-metier': viewedUser.roles.includes('ROLE_METIER')
       }">
         {{ getInitials(viewedUser.firstName, viewedUser.lastName) }}
       </div>
-
-      <!-- Informations -->
-      <div class="view-info-grid">
-        
-        <!-- Nom Complet -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-user"></i>
-            Nom complet
-          </label>
-          <p class="view-info-value">{{ viewedUser.firstName }} {{ viewedUser.lastName }}</p>
+      <div class="info-grid">
+        <div class="info-block">
+          <label><i class="fas fa-user"></i> Nom complet</label>
+          <p>{{ viewedUser.firstName }} {{ viewedUser.lastName }}</p>
         </div>
-
-        <!-- Email -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-envelope"></i>
-            Email
-          </label>
-          <p class="view-info-value">{{ viewedUser.email }}</p>
+        <div class="info-block">
+          <label><i class="fas fa-envelope"></i> Email</label>
+          <p>{{ viewedUser.email }}</p>
         </div>
-
-        <!-- Téléphone -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-phone"></i>
-            Téléphone
-          </label>
-          <p class="view-info-value" *ngIf="viewedUser.phone">{{ viewedUser.phone }}</p>
-          <p class="view-info-value text-muted" *ngIf="!viewedUser.phone">Non renseigné</p>
+        <div class="info-block">
+          <label><i class="fas fa-phone"></i> Téléphone</label>
+          <p>{{ viewedUser.phone || 'Non renseigné' }}</p>
         </div>
-
-        <!-- Date de naissance -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-birthday-cake"></i>
-            Date de naissance
-          </label>
-          <p class="view-info-value" *ngIf="viewedUser.dateOfBirth">
-            {{ viewedUser.dateOfBirth | date:'dd/MM/yyyy' }}
-          </p>
-          <p class="view-info-value text-muted" *ngIf="!viewedUser.dateOfBirth">Non renseignée</p>
+        <div class="info-block">
+          <label><i class="fas fa-birthday-cake"></i> Date de naissance</label>
+          <p>{{ viewedUser.dateOfBirth ? (viewedUser.dateOfBirth | date:'dd/MM/yyyy') : 'Non renseignée' }}</p>
         </div>
-
-        <!-- Département -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-building"></i>
-            Département
-          </label>
-          <p class="view-info-value" *ngIf="viewedUser.departement">{{ viewedUser.departement }}</p>
-          <p class="view-info-value text-muted" *ngIf="!viewedUser.departement">Non assigné</p>
+        <div class="info-block">
+          <label><i class="fas fa-building"></i> Département</label>
+          <p>{{ viewedUser.departement ? getDeptLabel(viewedUser.departement) : 'Non assigné' }}</p>
         </div>
-
-        <!-- Rôle -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-user-shield"></i>
-            Rôle
-          </label>
-          <div class="view-info-badges">
-            <span 
-              *ngFor="let role of viewedUser.roles" 
-              class="badge-modern" 
-              [ngClass]="getRoleBadgeClass(role)"
-            >
-              <i class="fas" [ngClass]="{
-                'fa-shield-alt': role === 'ROLE_ADMIN',
-                'fa-laptop-code': role === 'ROLE_BUSINESS_ANALYST',
-                'fa-briefcase': role === 'ROLE_METIER'
-              }"></i>
+        <div class="info-block">
+          <label><i class="fas fa-user-shield"></i> Rôle</label>
+          <div class="role-badges">
+            <span class="role-badge" *ngFor="let role of viewedUser.roles" [ngClass]="getRoleBadgeClass(role)">
               {{ getRoleLabel(role) }}
             </span>
           </div>
         </div>
-
-        <!-- Statut -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-toggle-on"></i>
-            Statut
-          </label>
-          <span 
-            class="status-pill" 
-            [ngClass]="viewedUser.enabled ? 'status-active' : 'status-inactive'"
-          >
-            <span class="status-dot"></span>
-            {{ viewedUser.enabled ? 'Actif' : 'Inactif' }}
+        <div class="info-block">
+          <label><i class="fas fa-toggle-on"></i> Statut</label>
+          <span class="status-pill" [class.status-active]="viewedUser.enabled" [class.status-inactive]="!viewedUser.enabled">
+            <span class="status-dot"></span> {{ viewedUser.enabled ? 'Actif' : 'Inactif' }}
           </span>
         </div>
-
-        <!-- Compte verrouillé -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-lock"></i>
-            Compte
-          </label>
-          <span class="status-pill" [ngClass]="viewedUser.accountLocked ? 'status-inactive' : 'status-active'">
-            <span class="status-dot"></span>
-            {{ viewedUser.accountLocked ? 'Verrouillé' : 'Déverrouillé' }}
+        <div class="info-block">
+          <label><i class="fas fa-lock"></i> Compte</label>
+          <span class="status-pill" [class.status-active]="!viewedUser.accountLocked" [class.status-inactive]="viewedUser.accountLocked">
+            <span class="status-dot"></span> {{ viewedUser.accountLocked ? 'Verrouillé' : 'Déverrouillé' }}
           </span>
         </div>
-
-        <!-- Date de création -->
-        <div class="view-info-block">
-          <label class="view-info-label">
-            <i class="fas fa-calendar"></i>
-            Créé le
-          </label>
-          <p class="view-info-value">{{ viewedUser.createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        <div class="info-block">
+          <label><i class="fas fa-calendar"></i> Créé le</label>
+          <p>{{ viewedUser.createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
         </div>
-
       </div>
-
     </div>
-
-    <!-- Footer -->
     <div class="modal-footer">
-      <button class="btn-cancel" (click)="closeViewModal()">
-        <i class="fas fa-times"></i>
-        Fermer
-      </button>
-      <button class="btn-save" (click)="openViewEditModal(viewedUser)">
-        <i class="fas fa-edit"></i>
-        Modifier
-      </button>
+      <button class="btn-cancel" (click)="closeViewModal()"><i class="fas fa-times"></i> Fermer</button>
+      <button class="btn-save" (click)="viewedUser && openEditModal(viewedUser); closeViewModal()"><i class="fas fa-edit"></i> Modifier</button>
     </div>
-
   </div>
 </div>
 
 <!-- ============================================ -->
-<!-- MODAL DE MODIFICATION -->
+<!-- EDIT MODAL -->
 <!-- ============================================ -->
 <div class="modal-overlay" *ngIf="isEditModalOpen" (click)="closeEditModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
-    
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-label="Modifier utilisateur">
     <div class="modal-header">
-      <div class="modal-title">
-        <i class="fas fa-user-edit"></i>
-        <h2>Modifier l'utilisateur</h2>
-      </div>
-      <button class="modal-close" (click)="closeEditModal()">
-        <i class="fas fa-times"></i>
-      </button>
+      <div class="modal-title"><i class="fas fa-user-edit"></i><h2>Modifier l'utilisateur</h2></div>
+      <button class="modal-close" (click)="closeEditModal()"><i class="fas fa-times"></i></button>
     </div>
-
     <div class="modal-body" *ngIf="editedUser">
-      
-      <div class="modal-user-avatar" [ngClass]="{
-  'avatar-admin': editedUser.roles.includes('ROLE_ADMIN'),
-  'avatar-it': editedUser.roles.includes('ROLE_BUSINESS_ANALYST'),
-  'avatar-metier': editedUser.roles.includes('ROLE_METIER')
-}">
-  <img 
-    *ngIf="userPhotos.get(editedUser.id)" 
-    [src]="userPhotos.get(editedUser.id)" 
-    class="avatar-photo" 
-    [alt]="getInitials(editedUser.firstName, editedUser.lastName)"
-  />
-  <span *ngIf="!userPhotos.get(editedUser.id)">
-    {{ getInitials(editedUser.firstName, editedUser.lastName) }}
-  </span>
-</div>
-
+      <div class="modal-avatar" [ngClass]="{
+        'avatar-admin': editedUser.roles.includes('ROLE_ADMIN'),
+        'avatar-it': editedUser.roles.includes('ROLE_BUSINESS_ANALYST'),
+        'avatar-metier': editedUser.roles.includes('ROLE_METIER')
+      }">
+        <img *ngIf="getPhotoUrl(editedUser.id)" [src]="getPhotoUrl(editedUser.id)" class="avatar-photo" alt="" />
+        <span *ngIf="!getPhotoUrl(editedUser.id)">{{ getInitials(editedUser.firstName, editedUser.lastName) }}</span>
+      </div>
       <div class="form-grid">
-        
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-user"></i>
-            Prénom
-          </label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="editedUser.firstName"
-            placeholder="Prénom"
-          />
+          <label>Prénom</label>
+          <input type="text" class="form-input" [(ngModel)]="editedUser.firstName" placeholder="Prénom" />
         </div>
-
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-user"></i>
-            Nom
-          </label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="editedUser.lastName"
-            placeholder="Nom"
-          />
+          <label>Nom</label>
+          <input type="text" class="form-input" [(ngModel)]="editedUser.lastName" placeholder="Nom" />
         </div>
-
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-envelope"></i>
-            Email
-          </label>
-          <input 
-            type="email" 
-            class="form-input"
-            [(ngModel)]="editedUser.email"
-            placeholder="email@example.com"
-          />
+          <label>Email</label>
+          <input type="email" class="form-input" [(ngModel)]="editedUser.email" placeholder="email@example.com" />
         </div>
-
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-phone"></i>
-            Téléphone
-          </label>
-          <input 
-            type="tel" 
-            class="form-input"
-            [(ngModel)]="editedUser.phone"
-            placeholder="+216 XX XXX XXX"
-          />
+          <label>Téléphone</label>
+          <input type="tel" class="form-input" [(ngModel)]="editedUser.phone" placeholder="+216 XX XXX XXX" />
         </div>
-
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-birthday-cake"></i>
-            Date de naissance
-          </label>
-          <input 
-            type="date" 
-            class="form-input"
-            [(ngModel)]="editedUser.dateOfBirth"
-          />
+          <label>Date de naissance</label>
+          <input type="date" class="form-input" [(ngModel)]="editedUser.dateOfBirth" />
         </div>
-
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-building"></i>
-            Département
-          </label>
+          <label>Département</label>
           <select class="form-input" [(ngModel)]="editedUser.departement">
             <option value="">-- Sélectionner --</option>
-            <option value="DME">DME</option>
-            <option value="DMFI">DMFI</option>
-            <option value="IT">IT</option>
-            <option value="DRC">DRC</option>
-            <option value="DFR">DFR</option>
-            <option value="DCF">DCF</option>
-            <option value="DMM">DMM</option>
-            <option value="DRT">DRT</option>
-            <option value="INFO_CENTRE">INFO CENTRE</option>
-            <option value="NOC_DATA">NOC DATA</option>
-            <option value="BOM">BOM</option>
-            <option value="PORTAIL">PORTAIL</option>
-            <option value="DCWI">DCWI</option>
-            <option value="SERVICE_1200">1200</option>
+            <option *ngFor="let dept of departements" [value]="dept">{{ getDeptLabel(dept) }}</option>
           </select>
         </div>
-
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-user-shield"></i>
-            Rôle
-          </label>
+          <label>Rôle</label>
           <div class="role-selector">
             <label class="role-option" [class.selected]="editedRole === 'ROLE_ADMIN'">
-  <input type="radio" name="role" value="ROLE_ADMIN" [(ngModel)]="editedRole" />
-              <div class="role-card role-admin">
-                <i class="fas fa-crown"></i>
-                <span>Admin</span>
-              </div>
+              <input type="radio" name="editRole" value="ROLE_ADMIN" [(ngModel)]="editedRole" />
+              <div class="role-card role-admin"><i class="fas fa-crown"></i><span>Admin</span></div>
             </label>
-
             <label class="role-option" [class.selected]="editedRole === 'ROLE_BUSINESS_ANALYST'">
-  <input type="radio" name="role" value="ROLE_BUSINESS_ANALYST" [(ngModel)]="editedRole" />
-              <div class="role-card role-it">
-                <i class="fas fa-tools"></i>
-                <span>Business Analyst</span>
-              </div>
+              <input type="radio" name="editRole" value="ROLE_BUSINESS_ANALYST" [(ngModel)]="editedRole" />
+              <div class="role-card role-it"><i class="fas fa-tools"></i><span>Business Analyst</span></div>
             </label>
-
-           <label class="role-option" [class.selected]="editedRole === 'ROLE_METIER'">
-  <input type="radio" name="role" value="ROLE_METIER" [(ngModel)]="editedRole" />
-              <div class="role-card role-metier">
-                <i class="fas fa-briefcase"></i>
-                <span>Métier</span>
-              </div>
+            <label class="role-option" [class.selected]="editedRole === 'ROLE_METIER'">
+              <input type="radio" name="editRole" value="ROLE_METIER" [(ngModel)]="editedRole" />
+              <div class="role-card role-metier"><i class="fas fa-briefcase"></i><span>Métier</span></div>
             </label>
           </div>
         </div>
-
       </div>
     </div>
-
     <div class="modal-footer">
-      <button class="btn-cancel" (click)="closeEditModal()">
-        <i class="fas fa-times"></i>
-        Annuler
-      </button>
-      <button class="btn-save" (click)="saveUserChanges()">
-        <i class="fas fa-check"></i>
-        Enregistrer
-      </button>
+      <button class="btn-cancel" (click)="closeEditModal()"><i class="fas fa-times"></i> Annuler</button>
+      <button class="btn-save" (click)="saveUserChanges()"><i class="fas fa-check"></i> Enregistrer</button>
     </div>
-
   </div>
 </div>
 
 <!-- ============================================ -->
-<!-- MODAL DE CRÉATION -->
+<!-- CREATE MODAL -->
 <!-- ============================================ -->
 <div class="modal-overlay" *ngIf="isCreateModalOpen" (click)="closeCreateModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
-    
-    <!-- Header -->
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-label="Créer utilisateur">
     <div class="modal-header modal-header-create">
-      <div class="modal-title">
-        <i class="fas fa-user-plus"></i>
-        <h2>Créer un utilisateur</h2>
-      </div>
-      <button class="modal-close" (click)="closeCreateModal()">
-        <i class="fas fa-times"></i>
-      </button>
+      <div class="modal-title"><i class="fas fa-user-plus"></i><h2>Créer un utilisateur</h2></div>
+      <button class="modal-close" (click)="closeCreateModal()"><i class="fas fa-times"></i></button>
     </div>
-
-    <!-- Body -->
     <div class="modal-body">
-      
-      <!-- Icône -->
-      <div class="create-icon">
-        <i class="fas fa-user-plus"></i>
-      </div>
-
       <div class="form-grid">
-        
-        <!-- Prénom -->
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-user"></i>
-            Prénom
-          </label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="newUser.firstName"
-            placeholder="Prénom"
-          />
+          <label>Prénom *</label>
+          <input type="text" class="form-input" [(ngModel)]="newUser.firstName" placeholder="Prénom" />
         </div>
-
-        <!-- Nom -->
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-user"></i>
-            Nom
-          </label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="newUser.lastName"
-            placeholder="Nom"
-          />
+          <label>Nom *</label>
+          <input type="text" class="form-input" [(ngModel)]="newUser.lastName" placeholder="Nom" />
         </div>
-
-        <!-- Email -->
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-envelope"></i>
-            Email
-          </label>
-          <input 
-            type="email" 
-            class="form-input"
-            [(ngModel)]="newUser.email"
-            placeholder="email@example.com"
-          />
+          <label>Email *</label>
+          <input type="email" class="form-input" [(ngModel)]="newUser.email" placeholder="email@example.com" />
         </div>
-
-        <!-- Mot de passe -->
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-lock"></i>
-            Mot de passe
-          </label>
+          <label>Mot de passe *</label>
           <div class="password-field">
-            <input 
-              [type]="showPassword ? 'text' : 'password'" 
-              class="form-input password-input"
-              [(ngModel)]="newUser.password"
-              placeholder="Mot de passe"
-            />
-            <button type="button" class="btn-toggle-password" (click)="showPassword = !showPassword">
+            <input [type]="showPassword ? 'text' : 'password'" class="form-input password-input"
+                   [(ngModel)]="newUser.password" placeholder="Mot de passe" />
+            <button type="button" class="btn-pw-toggle" (click)="showPassword = !showPassword" aria-label="Afficher/masquer">
               <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
-            <button type="button" class="btn-generate" (click)="generatePassword()" title="Générer un mot de passe">
+            <button type="button" class="btn-pw-gen" (click)="generatePassword()" title="Générer" aria-label="Générer mot de passe">
               <i class="fas fa-magic"></i>
             </button>
           </div>
         </div>
-
-        <!-- Téléphone -->
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-phone"></i>
-            Téléphone
-          </label>
-          <input 
-            type="tel" 
-            class="form-input"
-            [(ngModel)]="newUser.phone"
-            placeholder="+216 XX XXX XXX"
-          />
+          <label>Téléphone</label>
+          <input type="tel" class="form-input" [(ngModel)]="newUser.phone" placeholder="+216 XX XXX XXX" />
         </div>
-
-        <!-- Date de naissance -->
         <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-birthday-cake"></i>
-            Date de naissance
-          </label>
-          <input 
-            type="date" 
-            class="form-input"
-            [(ngModel)]="newUser.dateOfBirth"
-          />
+          <label>Date de naissance</label>
+          <input type="date" class="form-input" [(ngModel)]="newUser.dateOfBirth" />
         </div>
-
-        <!-- Département -->
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-building"></i>
-            Département
-          </label>
+          <label>Département</label>
           <select class="form-input" [(ngModel)]="newUser.departement">
             <option value="">-- Sélectionner --</option>
-            <option value="DME">DME</option>
-            <option value="DMFI">DMFI</option>
-            <option value="IT">IT</option>
-            <option value="DRC">DRC</option>
-            <option value="DFR">DFR</option>
-            <option value="DCF">DCF</option>
-            <option value="DMM">DMM</option>
-            <option value="DRT">DRT</option>
-            <option value="INFO_CENTRE">INFO CENTRE</option>
-            <option value="NOC_DATA">NOC DATA</option>
-            <option value="BOM">BOM</option>
-            <option value="PORTAIL">PORTAIL</option>
-            <option value="DCWI">DCWI</option>
-            <option value="SERVICE_1200">1200</option>
+            <option *ngFor="let dept of departements" [value]="dept">{{ getDeptLabel(dept) }}</option>
           </select>
         </div>
-
-        <!-- Rôle -->
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-user-shield"></i>
-            Rôle
-          </label>
+          <label>Rôle</label>
           <div class="role-selector">
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_ADMIN'">
               <input type="radio" name="newRole" value="ROLE_ADMIN" [(ngModel)]="newUser.role" />
-              <div class="role-card role-admin">
-                <i class="fas fa-crown"></i>
-                <span>Admin</span>
-              </div>
+              <div class="role-card role-admin"><i class="fas fa-crown"></i><span>Admin</span></div>
             </label>
-
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_BUSINESS_ANALYST'">
               <input type="radio" name="newRole" value="ROLE_BUSINESS_ANALYST" [(ngModel)]="newUser.role" />
-              <div class="role-card role-it">
-                <i class="fas fa-tools"></i>
-                <span>Business Analyst</span>
-              </div>
+              <div class="role-card role-it"><i class="fas fa-tools"></i><span>Business Analyst</span></div>
             </label>
-
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_METIER'">
               <input type="radio" name="newRole" value="ROLE_METIER" [(ngModel)]="newUser.role" />
-              <div class="role-card role-metier">
-                <i class="fas fa-briefcase"></i>
-                <span>Métier</span>
-              </div>
+              <div class="role-card role-metier"><i class="fas fa-briefcase"></i><span>Métier</span></div>
             </label>
           </div>
         </div>
-
       </div>
-
-      <!-- Info Email -->
-      <div class="email-info">
+      <div class="email-notice">
         <i class="fas fa-info-circle"></i>
         <span>Un email avec les identifiants sera envoyé automatiquement à l'utilisateur.</span>
       </div>
-
     </div>
-
-    <!-- Footer -->
     <div class="modal-footer">
-      <button class="btn-cancel" (click)="closeCreateModal()">
-        <i class="fas fa-times"></i>
-        Annuler
-      </button>
-      <button class="btn-save" (click)="createUser()">
-        <i class="fas fa-paper-plane"></i>
-        Créer et Envoyer
-      </button>
+      <button class="btn-cancel" (click)="closeCreateModal()"><i class="fas fa-times"></i> Annuler</button>
+      <button class="btn-save" (click)="createUser()"><i class="fas fa-paper-plane"></i> Créer et Envoyer</button>
     </div>
-
   </div>
 </div>
 
 <!-- ============================================ -->
-<!-- MODAL DELETE - CONFIRMATION SUPPRESSION -->
+<!-- DELETE MODAL -->
 <!-- ============================================ -->
 <div class="modal-overlay" *ngIf="isDeleteModalOpen" (click)="closeDeleteModal()">
-  <div class="modal-container modal-delete" (click)="$event.stopPropagation()">
-    
-    <!-- Header -->
+  <div class="modal-container modal-sm" (click)="$event.stopPropagation()" role="dialog" aria-label="Confirmer suppression">
     <div class="modal-header modal-header-delete">
-      <div class="modal-title">
-        <i class="fas fa-exclamation-triangle"></i>
-        <h2>Confirmer la suppression</h2>
-      </div>
-      <button class="modal-close" (click)="closeDeleteModal()">
-        <i class="fas fa-times"></i>
-      </button>
+      <div class="modal-title"><i class="fas fa-exclamation-triangle"></i><h2>Confirmer la suppression</h2></div>
+      <button class="modal-close" (click)="closeDeleteModal()"><i class="fas fa-times"></i></button>
     </div>
-
-    <!-- Body -->
     <div class="modal-body modal-body-delete" *ngIf="userToDelete">
-      
-      <!-- Icône d'alerte -->
-      <div class="delete-icon">
-        <i class="fas fa-user-times"></i>
-      </div>
-
-      <!-- Message -->
+      <div class="delete-icon"><i class="fas fa-user-times"></i></div>
       <h3 class="delete-title">Supprimer {{ userToDelete.firstName }} {{ userToDelete.lastName }} ?</h3>
-      
-      <p class="delete-message">
-        Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est <strong>irréversible</strong>.
-      </p>
-
-      <!-- Infos utilisateur -->
-      <div class="delete-user-info">
-        <div class="info-row">
-          <span class="info-label">Email</span>
-          <span class="info-value">{{ userToDelete.email }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Département</span>
-          <span class="info-value" *ngIf="userToDelete.departement">{{ userToDelete.departement }}</span>
-          <span class="info-value text-muted" *ngIf="!userToDelete.departement">Non assigné</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Rôle</span>
-          <span class="info-value">{{ getFormattedRoles(userToDelete.roles) }}</span>
-        </div>
+      <p class="delete-msg">Cette action est <strong>irréversible</strong>.</p>
+      <div class="delete-info">
+        <div class="delete-row"><span class="delete-label">Email</span><span>{{ userToDelete.email }}</span></div>
+        <div class="delete-row"><span class="delete-label">Département</span><span>{{ userToDelete.departement ? getDeptLabel(userToDelete.departement) : 'Non assigné' }}</span></div>
+        <div class="delete-row"><span class="delete-label">Rôle</span><span>{{ getFormattedRoles(userToDelete.roles) }}</span></div>
       </div>
-
     </div>
-
-    <!-- Footer -->
     <div class="modal-footer modal-footer-delete">
-      <button class="btn-cancel" (click)="closeDeleteModal()">
-        <i class="fas fa-times"></i>
-        Annuler
-      </button>
-      <button class="btn-delete" (click)="confirmDelete()">
-        <i class="fas fa-trash-alt"></i>
-        Supprimer
-      </button>
+      <button class="btn-cancel" (click)="closeDeleteModal()"><i class="fas fa-times"></i> Annuler</button>
+      <button class="btn-delete" (click)="confirmDelete()"><i class="fas fa-trash-alt"></i> Supprimer</button>
     </div>
-
   </div>
 </div>

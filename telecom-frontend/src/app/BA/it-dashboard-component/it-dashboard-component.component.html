@@ -1,1 +1,117 @@
-<p>it-dashboard-component works!</p>
+<div class="ba-dashboard" *ngIf="state$ | async as state">
+
+  <app-dashboard-header
+    title="Business Analyst Dashboard"
+    subtitle="Global overview of all tickets across teams"
+    (primaryAction)="goToTicketManagement()"
+    (secondaryAction)="goToCalendar()">
+  </app-dashboard-header>
+
+  <app-filter-panel
+    *ngIf="filters$ | async as filters"
+    [filters]="filters"
+    (filterChange)="onFilterChange($event)">
+  </app-filter-panel>
+
+  <div class="loading-shimmer" *ngIf="state.isLoading"></div>
+
+  <div class="sla-alert" *ngIf="state.slaMetrics.breachedCount > 0 && !state.isLoading">
+    <div class="sla-alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="sla-alert-text">
+      <strong>SLA Breach Alert</strong>
+      <span>{{ state.slaMetrics.breachedCount }} ticket{{ state.slaMetrics.breachedCount > 1 ? 's' : '' }} exceeded SLA targets</span>
+    </div>
+    <button class="sla-alert-btn" (click)="goToTicketManagement()">Review</button>
+  </div>
+
+  <ng-container *ngIf="state.isLoading; else contentLoaded">
+    <div class="stat-grid">
+      <app-skeleton-loader type="kpi" [count]="6"></app-skeleton-loader>
+    </div>
+    <div class="ba-row">
+      <app-skeleton-loader type="chart" [count]="2"></app-skeleton-loader>
+    </div>
+    <div class="ba-row ba-row--asym">
+      <app-skeleton-loader type="chart"></app-skeleton-loader>
+      <app-skeleton-loader type="card"></app-skeleton-loader>
+    </div>
+  </ng-container>
+
+  <ng-template #contentLoaded>
+    <div class="stat-grid">
+      <app-kpi-card *ngFor="let kpi of kpiCards; trackBy: trackByLabel"
+        [data]="kpi">
+      </app-kpi-card>
+    </div>
+
+    <div class="ba-row">
+      <div class="ba-card">
+        <app-chart-widget
+          type="doughnut"
+          title="Status Distribution"
+          [labels]="getStatusLabels()"
+          [data]="getStatusChartData(state)"
+          [colors]="statusColors"
+          [showLegend]="true">
+        </app-chart-widget>
+      </div>
+      <div class="ba-card">
+        <app-chart-widget
+          type="bar"
+          title="Priority Breakdown"
+          [labels]="getPriorityLabels()"
+          [data]="getPriorityChartData(state)"
+          [colors]="priorityColors"
+          [showLegend]="false">
+        </app-chart-widget>
+      </div>
+    </div>
+
+    <div class="ba-row ba-row--asym">
+      <div class="ba-card ba-card--wide">
+        <app-chart-widget
+          type="line"
+          title="Weekly Ticket Trend"
+          subtitle="Last 8 weeks"
+          [labels]="state.trendData.labels"
+          [data]="state.trendData.values"
+          [colors]="trendColors"
+          [showLegend]="false">
+        </app-chart-widget>
+      </div>
+      <div class="ba-card">
+        <div class="ba-card-head">
+          <h3><i class="fas fa-tachometer-alt"></i> SLA Performance</h3>
+        </div>
+        <app-sla-gauge [metrics]="state.slaMetrics"></app-sla-gauge>
+      </div>
+    </div>
+
+    <div class="ba-row ba-row--dual" *ngIf="state.urgentTickets.length > 0 || state.recentTickets.length > 0">
+      <app-ticket-list-widget
+        *ngIf="state.urgentTickets.length > 0"
+        [tickets]="state.urgentTickets"
+        title="Urgent Tickets"
+        icon="fas fa-fire"
+        variant="urgent"
+        (ticketClick)="goToTicketManagement()">
+      </app-ticket-list-widget>
+
+      <app-ticket-list-widget
+        [tickets]="state.recentTickets"
+        title="Recent Activity"
+        icon="fas fa-clock"
+        variant="default">
+      </app-ticket-list-widget>
+    </div>
+
+    <div class="ba-empty" *ngIf="state.totalTickets === 0">
+      <div class="ba-empty-icon"><i class="fas fa-folder-open"></i></div>
+      <h3>No tickets yet</h3>
+      <p>Tickets will appear here once created by your team</p>
+      <button class="btn-pill btn-primary" (click)="goToTicketManagement()">
+        <i class="fas fa-clipboard-list"></i> View All Tickets
+      </button>
+    </div>
+  </ng-template>
+</div>

@@ -1,16 +1,11 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/service/auth.service';
+import { NotificationService } from '../../services/notification.service';
+import { Notification, NOTIFICATION_CONFIG, NotificationType } from '../../models/notification.model';
 import { trigger, transition, style, animate } from '@angular/animations';
-
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  time: string;
-  type: 'ticket' | 'user' | 'alert';
-  unread: boolean;
-}
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-navbar',
@@ -28,7 +23,7 @@ interface Notification {
     ])
   ]
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
 
   userName = '';
   isAdmin = false;
@@ -38,15 +33,15 @@ export class NavbarComponent implements OnInit {
   isNotificationsOpen = false;
   avatarPhoto: string | null = null;
 
-  notificationCount = 3;
-  notifications: Notification[] = [
-    { id: 1, title: 'Nouveau ticket assigné', message: 'Le ticket #1234 vous a été assigné', time: 'Il y a 5 min', type: 'ticket', unread: true },
-    { id: 2, title: 'Nouvel utilisateur', message: 'Un nouvel utilisateur s\'est inscrit', time: 'Il y a 15 min', type: 'user', unread: true },
-    { id: 3, title: 'Alerte système', message: 'Mise à jour disponible', time: 'Il y a 1h', type: 'alert', unread: true }
-  ];
+  notifications: Notification[] = [];
+  unreadCount = 0;
+  notifConfig = NOTIFICATION_CONFIG;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private authService: AuthService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
@@ -56,18 +51,79 @@ export class NavbarComponent implements OnInit {
     this.isIT = this.authService.isBusinessAnalyst();
     this.isMetier = this.authService.isMetier();
     this.loadAvatar();
+    this.initNotifications();
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // -- Notifications --
+
+  private initNotifications(): void {
+    this.notificationService.loadAll();
+    this.notificationService.loadUnreadCount();
+
+    this.notificationService.getNotifications$().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data) => { this.notifications = data; }
+    });
+
+    this.notificationService.getUnreadCount$().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (count) => { this.unreadCount = count; }
+    });
+  }
+
+  markAllAsRead(): void {
+    this.notificationService.markAllAsRead();
+  }
+
+  removeNotification(id: number): void {
+    this.notificationService.delete(id);
+  }
+
+  markAsRead(id: number): void {
+    this.notificationService.markAsRead(id);
+  }
+
+  getNotifIcon(type: NotificationType): string {
+    return this.notifConfig[type]?.icon || 'fa-bell';
+  }
+
+  getNotifColor(type: NotificationType): string {
+    return this.notifConfig[type]?.color || '#6b7280';
+  }
+
+  getNotifBg(type: NotificationType): string {
+    return this.notifConfig[type]?.bg || '#f3f4f6';
+  }
+
+  getTimeAgo(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(diff / 3600000);
+    const d = Math.floor(diff / 86400000);
+    if (m < 1) return "À l'instant";
+    if (m < 60) return `${m} min`;
+    if (h < 24) return `${h}h`;
+    if (d < 7) return `${d}j`;
+    return new Date(dateStr).toLocaleDateString('fr-FR');
+  }
+
+  // -- Avatar --
 
   loadAvatar(): void {
     try {
       const userId = this.authService.getUserId();
-      // Photo depuis l'API
       this.avatarPhoto = `http://localhost:8088/api/v1/users/${userId}/photo`;
     } catch {}
   }
 
   onAvatarError(): void {
-    // Si pas de photo en base, on cache l'image
     this.avatarPhoto = null;
   }
 
@@ -97,6 +153,8 @@ export class NavbarComponent implements OnInit {
     return '';
   }
 
+  // -- Dropdowns --
+
   toggleDropdown(event: Event): void {
     event.stopPropagation();
     this.isDropdownOpen = !this.isDropdownOpen;
@@ -113,16 +171,6 @@ export class NavbarComponent implements OnInit {
   closeNotifications(): void { this.isNotificationsOpen = false; }
   closeAll(): void { this.isDropdownOpen = false; this.isNotificationsOpen = false; }
 
-  markAllAsRead(): void {
-    this.notifications.forEach(n => n.unread = false);
-    this.notificationCount = 0;
-  }
-
-  removeNotification(id: number): void {
-    this.notifications = this.notifications.filter(n => n.id !== id);
-    this.notificationCount = this.notifications.filter(n => n.unread).length;
-  }
-
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
@@ -130,6 +178,8 @@ export class NavbarComponent implements OnInit {
       this.closeAll();
     }
   }
+
+  // -- Navigation --
 
   logout(): void {
     this.authService.logout();
@@ -141,5 +191,9 @@ export class NavbarComponent implements OnInit {
   goToProfile(): void {
     this.closeDropdown();
     this.router.navigate(['/profile']);
+  }
+
+  sendTestNotification(): void {
+    this.notificationService.sendTest();
   }
 }
