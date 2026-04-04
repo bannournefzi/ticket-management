@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT Ticket Management Platform — Tunisie Telecom</title>
+
+  <!-- Reveal.js (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme" />
+  <!-- Syntax highlighting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+
+  <style>
+    /* ── Global overrides ───────────────────────────────────────── */
+    :root {
+      --tt-blue:   #003f8a;
+      --tt-cyan:   #00aacc;
+      --tt-orange: #f47920;
+      --tt-light:  #f0f6ff;
+    }
+
+    .reveal { font-family: 'Segoe UI', Arial, sans-serif; }
+
+    /* Section headings */
+    .reveal h1, .reveal h2 { color: var(--tt-blue); }
+    .reveal h3 { color: var(--tt-cyan); }
+
+    /* Accent band used on most slides */
+    .accent-bar {
+      display: block;
+      width: 80px; height: 5px;
+      background: var(--tt-orange);
+      margin: 0 auto 0.6em;
+      border-radius: 3px;
+    }
+
+    /* ── Title slide ────────────────────────────────────────────── */
+    #slide-title { background: linear-gradient(135deg, var(--tt-blue) 0%, #0062cc 100%); }
+    #slide-title h1 { color: #fff; font-size: 1.9em; margin-bottom: 0.2em; }
+    #slide-title h3 { color: var(--tt-orange); font-size: 1em; }
+    #slide-title p  { color: #c9d8f0; font-size: 0.75em; margin: 0.2em 0; }
+    #slide-title .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 20px;
+      padding: 4px 16px;
+      color: #fff;
+      font-size: 0.7em;
+      margin-top: 1em;
+    }
+
+    /* ── Common slide background ────────────────────────────────── */
+    .reveal section { background: #fff; }
+    .reveal section.dark-section { background: var(--tt-blue); color: #fff; }
+    .reveal section.dark-section h2 { color: #fff; }
+    .reveal section.dark-section h3 { color: var(--tt-orange); }
+
+    /* ── Two-column layout ──────────────────────────────────────── */
+    .cols { display: flex; gap: 1.5em; align-items: flex-start; }
+    .col  { flex: 1; }
+
+    /* ── Pill badges ────────────────────────────────────────────── */
+    .pill {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.7em;
+      font-weight: 600;
+      margin: 3px 4px;
+    }
+    .pill-blue   { background: var(--tt-blue);   color: #fff; }
+    .pill-cyan   { background: var(--tt-cyan);   color: #fff; }
+    .pill-orange { background: var(--tt-orange); color: #fff; }
+    .pill-green  { background: #28a745; color: #fff; }
+
+    /* ── Feature cards ──────────────────────────────────────────── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.7em;
+      margin-top: 0.5em;
+    }
+    .card {
+      border: 1px solid #dce6f7;
+      border-radius: 10px;
+      padding: 0.7em 0.8em;
+      background: var(--tt-light);
+      font-size: 0.68em;
+      text-align: left;
+    }
+    .card h4 { color: var(--tt-blue); margin: 0 0 0.3em; font-size: 1em; }
+
+    /* ── Role table ─────────────────────────────────────────────── */
+    .role-table { width: 100%; border-collapse: collapse; font-size: 0.72em; }
+    .role-table th { background: var(--tt-blue); color: #fff; padding: 8px 10px; text-align: left; }
+    .role-table td { padding: 7px 10px; border-bottom: 1px solid #dce6f7; }
+    .role-table tr:nth-child(even) td { background: var(--tt-light); }
+    .role-table .role-name { font-weight: 700; color: var(--tt-blue); }
+
+    /* ── SLA table ──────────────────────────────────────────────── */
+    .sla-table { width: 100%; border-collapse: collapse; font-size: 0.72em; }
+    .sla-table th { background: var(--tt-orange); color: #fff; padding: 7px 12px; }
+    .sla-table td { padding: 7px 12px; border-bottom: 1px solid #ffe0c0; text-align: center; }
+    .sla-table tr:nth-child(even) td { background: #fff5ec; }
+    .sla-badge { display: inline-block; border-radius: 6px; padding: 2px 8px; font-size: 0.85em; font-weight: 700; }
+    .sla-on    { background: #d4edda; color: #155724; }
+    .sla-risk  { background: #fff3cd; color: #856404; }
+    .sla-breach{ background: #f8d7da; color: #721c24; }
+    .sla-met   { background: #cce5ff; color: #004085; }
+
+    /* ── Architecture box ───────────────────────────────────────── */
+    .arch-box {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 0.8em 1.2em;
+      font-family: 'Courier New', monospace;
+      font-size: 0.68em;
+      line-height: 1.8;
+      text-align: center;
+      color: #333;
+    }
+    .arch-box .layer {
+      background: var(--tt-blue);
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 14px;
+      display: inline-block;
+      margin: 4px 0;
+      font-weight: 600;
+    }
+    .arch-box .layer.fe  { background: #0062cc; }
+    .arch-box .layer.ai  { background: #6f42c1; }
+    .arch-box .arrow { color: var(--tt-orange); font-size: 1.3em; display: block; }
+
+    /* ── Lifecycle flow ─────────────────────────────────────────── */
+    .flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0;
+      font-size: 0.68em;
+      margin: 0.6em 0;
+    }
+    .flow-step {
+      background: var(--tt-blue);
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .flow-arrow { color: var(--tt-orange); font-size: 1.4em; padding: 0 4px; }
+    .flow-fb {
+      background: var(--tt-orange);
+      color: #fff;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-weight: 600;
+      font-size: 0.9em;
+      margin-top: 0.4em;
+    }
+
+    /* ── Challenge table ────────────────────────────────────────── */
+    .ch-table { width: 100%; border-collapse: collapse; font-size: 0.65em; }
+    .ch-table th { background: var(--tt-blue); color: #fff; padding: 7px 10px; text-align: left; }
+    .ch-table td { padding: 7px 10px; border-bottom: 1px solid #dce6f7; vertical-align: top; }
+    .ch-table tr:nth-child(even) td { background: var(--tt-light); }
+
+    /* ── DB schema ──────────────────────────────────────────────── */
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6em;
+      font-size: 0.65em;
+    }
+    .schema-entity {
+      background: var(--tt-light);
+      border: 1px solid #c3d6f0;
+      border-radius: 8px;
+      padding: 0.5em 0.7em;
+    }
+    .schema-entity h4 { color: var(--tt-blue); font-size: 1em; margin: 0 0 0.3em; }
+    .schema-entity ul { margin: 0; padding-left: 1em; color: #444; }
+
+    /* ── Future items ───────────────────────────────────────────── */
+    .future-list { list-style: none; padding: 0; font-size: 0.72em; }
+    .future-list li {
+      display: flex; align-items: flex-start; gap: 0.5em;
+      padding: 0.35em 0.5em;
+      border-bottom: 1px dashed #dce6f7;
+    }
+    .future-list li::before {
+      content: "🔮";
+      flex-shrink: 0;
+    }
+
+    /* ── Conclusion bullets ─────────────────────────────────────── */
+    .concl-list { list-style: none; padding: 0; font-size: 0.78em; }
+    .concl-list li {
+      padding: 0.4em 0.6em;
+      border-left: 4px solid var(--tt-orange);
+      margin-bottom: 0.5em;
+      background: var(--tt-light);
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* ── Slide number override ──────────────────────────────────── */
+    .reveal .slide-number { color: var(--tt-blue); }
+
+    /* ── Learned list ───────────────────────────────────────────── */
+    .learn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6em;
+      font-size: 0.7em;
+    }
+    .learn-item {
+      background: var(--tt-light);
+      border-left: 4px solid var(--tt-cyan);
+      border-radius: 0 8px 8px 0;
+      padding: 0.4em 0.7em;
+    }
+
+    /* ── Screenshot placeholder ─────────────────────────────────── */
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6em;
+      font-size: 0.65em;
+    }
+    .screenshot-box {
+      border: 2px dashed #aac4e8;
+      border-radius: 10px;
+      padding: 1.2em 0.5em;
+      text-align: center;
+      background: var(--tt-light);
+      color: #555;
+    }
+    .screenshot-box .icon { font-size: 2em; display: block; margin-bottom: 0.2em; }
+
+    /* ── AI feature box ─────────────────────────────────────────── */
+    .ai-box {
+      border: 2px solid var(--tt-cyan);
+      border-radius: 12px;
+      padding: 0.7em 1em;
+      margin-bottom: 0.7em;
+      background: #f0fbff;
+      font-size: 0.7em;
+      text-align: left;
+    }
+    .ai-box h4 { color: var(--tt-blue); margin: 0 0 0.3em; font-size: 1.1em; }
+    .ai-box .flow-inline {
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 0.3em; font-size: 0.9em; margin-top: 0.4em;
+    }
+    .ai-box .step {
+      background: var(--tt-blue); color: #fff;
+      border-radius: 5px; padding: 3px 8px;
+    }
+    .ai-box .arr { color: var(--tt-orange); font-weight: 700; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 1 — Title
+  ═══════════════════════════════════════════════════════════════ -->
+  <section id="slide-title" data-transition="zoom">
+    <h1>🎫 IT Ticket Management Platform</h1>
+    <h3>Tunisie Telecom</h3>
+    <hr style="border-color:rgba(255,255,255,0.3);margin:0.6em auto;width:60%"/>
+    <p><strong style="color:#ffd580">Internship Project Presentation</strong></p>
+    <p style="margin-top:1em">
+      <span style="color:#c9d8f0">Intern:</span> <strong style="color:#fff">[Your Name]</strong>
+    </p>
+    <p>
+      <span style="color:#c9d8f0">Institution:</span> <strong style="color:#fff">[Your University]</strong>
+    </p>
+    <p>
+      <span style="color:#c9d8f0">Period:</span> <strong style="color:#fff">[Start Date] – [End Date]</strong>
+    </p>
+    <p>
+      <span style="color:#c9d8f0">Supervisor:</span> <strong style="color:#fff">[Supervisor Name]</strong>
+    </p>
+    <span class="badge">🏢 Tunisie Telecom — IT Department</span>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 2 — Context & Problem Statement
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Context &amp; Problem Statement</h2>
+    <div class="cols" style="margin-top:0.8em">
+      <div class="col">
+        <h3 style="font-size:0.85em">⚠️ Before</h3>
+        <ul style="font-size:0.72em">
+          <li>IT support requests handled by <strong>email &amp; phone</strong></li>
+          <li>No centralised tracking — tickets were <strong>lost or forgotten</strong></li>
+          <li>No visibility on response times or <strong>SLA compliance</strong></li>
+          <li>Manual assignment leads to <strong>uneven workloads</strong></li>
+          <li>No audit trail of changes or resolutions</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3 style="font-size:0.85em">✅ Goal</h3>
+        <ul style="font-size:0.72em">
+          <li>Build a <strong>full-stack web application</strong> to digitize ticket management</li>
+          <li>Provide <strong>role-based access</strong> for end users, analysts, and admins</li>
+          <li>Enforce <strong>SLA deadlines</strong> automatically</li>
+          <li>Offer <strong>dashboards and audit trails</strong> for full transparency</li>
+          <li>Innovate with <strong>AI-powered</strong> ticket creation and search</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 3 — Objectives
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Objectives</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h4>👤 Métier Users</h4>
+        Submit IT support tickets, track their own requests, add comments and file attachments.
+      </div>
+      <div class="card">
+        <h4>📊 Business Analysts</h4>
+        Triage, assign, and resolve tickets. Configure settings and monitor SLA compliance.
+      </div>
+      <div class="card">
+        <h4>🛡️ Administrators</h4>
+        Manage users and roles. View platform-wide statistics and export reports.
+      </div>
+      <div class="card">
+        <h4>⏱️ SLA Tracking</h4>
+        Automatic deadline calculation per priority. Real-time breach detection and alerts.
+      </div>
+      <div class="card">
+        <h4>📈 Dashboards</h4>
+        KPI cards, Chart.js charts (status, priority, trends), and calendar views.
+      </div>
+      <div class="card">
+        <h4>🔍 Audit Trails</h4>
+        Full history of every ticket change: who, what, when, old value → new value.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 4 — Technical Stack
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Technical Stack</h2>
+    <div class="cols">
+      <div class="col">
+        <h3 style="font-size:0.85em">⚙️ Backend</h3>
+        <p>
+          <span class="pill pill-blue">Java 17</span>
+          <span class="pill pill-blue">Spring Boot 3.3</span>
+          <span class="pill pill-blue">Spring Security</span>
+          <span class="pill pill-blue">JWT</span>
+          <span class="pill pill-blue">PostgreSQL</span>
+          <span class="pill pill-blue">JPA / Hibernate</span>
+          <span class="pill pill-blue">Spring AI</span>
+          <span class="pill pill-blue">Ollama</span>
+          <span class="pill pill-blue">WebSocket / STOMP</span>
+          <span class="pill pill-blue">Spring Mail</span>
+          <span class="pill pill-blue">Thymeleaf</span>
+          <span class="pill pill-blue">pgvector</span>
+        </p>
+      </div>
+      <div class="col">
+        <h3 style="font-size:0.85em">🖥️ Frontend</h3>
+        <p>
+          <span class="pill pill-cyan">Angular 16</span>
+          <span class="pill pill-cyan">TypeScript</span>
+          <span class="pill pill-cyan">Bootstrap 5</span>
+          <span class="pill pill-cyan">SCSS</span>
+          <span class="pill pill-cyan">Chart.js</span>
+          <span class="pill pill-cyan">FullCalendar</span>
+          <span class="pill pill-cyan">CDK Drag&amp;Drop</span>
+          <span class="pill pill-cyan">RxJS</span>
+          <span class="pill pill-cyan">SockJS</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 5 — Architecture Overview
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Architecture Overview</h2>
+    <div class="arch-box">
+      <span class="layer fe">Angular 16 SPA — port 4200</span>
+      <span class="arrow">↕ REST / API (JWT) &nbsp;+&nbsp; WebSocket (STOMP)</span>
+      <span class="layer">Spring Boot API — port 8088 &nbsp;/api/v1</span>
+      <span class="arrow">↕ JPA / Hibernate</span>
+      <span class="layer">PostgreSQL — port 5432 &nbsp;(DB: Telecom)</span>
+      <br/>
+      <span style="color:#888;font-size:0.9em">+</span><br/>
+      <span class="layer ai">Ollama AI (llama3.2:3b) — port 11434</span>
+    </div>
+    <ul style="font-size:0.68em;margin-top:0.7em">
+      <li><strong>Stateless backend</strong> — JWT only, no server-side sessions</li>
+      <li><strong>RoleGuard</strong> on Angular routes enforces access before API calls</li>
+      <li><strong>HTTP Interceptor</strong> attaches Bearer token to every request automatically</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 6 — User Roles & Access Control
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>User Roles &amp; Access Control</h2>
+    <table class="role-table">
+      <thead>
+        <tr><th>Role</th><th>Key Capabilities</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="role-name">ROLE_METIER</span></td>
+          <td>Create tickets · View <em>own</em> tickets · Add comments · Upload attachments</td>
+        </tr>
+        <tr>
+          <td><span class="role-name">ROLE_BUSINESS_ANALYST</span></td>
+          <td>View <em>all</em> tickets · Assign &amp; change status · Internal notes · Configure settings &amp; SLA</td>
+        </tr>
+        <tr>
+          <td><span class="role-name">ROLE_ADMIN</span></td>
+          <td>Full user management · View all tickets · Platform-wide stats · Export CSV</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:0.8em;font-size:0.68em">
+      <p>🔑 Roles are <strong>seeded automatically</strong> at startup via <code>DataInitializer</code></p>
+      <p>📧 Registration uses <strong>OTP email activation</strong> before first login is allowed</p>
+      <p>🔒 Backend enforces permissions server-side via <code>@PreAuthorize</code> and custom <code>JwtFilter</code></p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 7 — Ticket Lifecycle
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Core Feature: Ticket Lifecycle</h2>
+
+    <div class="flow">
+      <span class="flow-step">NEW</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">ACKNOWLEDGED</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">CONFIRMED</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">ASSIGNED</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">RESOLVED</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">CLOSED</span>
+    </div>
+    <div style="text-align:center;font-size:0.68em;margin:0.3em 0 0.6em">
+      ↕ any open state can transition to
+      <span class="flow-fb">FEEDBACK</span>
+      and back
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <h4>🔒 Server-side Validation</h4>
+        Each transition is verified in the backend — invalid transitions are rejected with a 400 error.
+      </div>
+      <div class="card">
+        <h4>📜 Audit History</h4>
+        Every change logged: field name, old value, new value, actor, timestamp. Tamper-proof record.
+      </div>
+      <div class="card">
+        <h4>👁️ Visibility Rules</h4>
+        Métier sees only their own tickets. BA and Admin see the full ticket table across all users.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 8 — SLA Tracking
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Core Feature: SLA Tracking</h2>
+    <table class="sla-table">
+      <thead>
+        <tr>
+          <th>Priority</th>
+          <th>First Response</th>
+          <th>Resolution Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>🔴 CRITICAL</strong></td><td>30 minutes</td><td>4 hours</td></tr>
+        <tr><td><strong>🟠 HIGH</strong></td><td>1 hour</td><td>8 hours</td></tr>
+        <tr><td><strong>🟡 MEDIUM</strong></td><td>4 hours</td><td>24 hours</td></tr>
+        <tr><td><strong>🟢 LOW</strong></td><td>12 hours</td><td>72 hours</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:0.7em;text-align:center">
+      <span class="sla-badge sla-on">ON_TRACK</span> &nbsp;
+      <span class="sla-badge sla-risk">AT_RISK</span> &nbsp;
+      <span class="sla-badge sla-breach">BREACHED</span> &nbsp;
+      <span class="sla-badge sla-met">MET</span>
+    </div>
+    <ul style="font-size:0.68em;margin-top:0.6em">
+      <li>Deadlines computed via <code>@PrePersist</code> based on ticket priority at creation time</li>
+      <li>SLA status re-evaluated at DTO mapping level — no cron job needed</li>
+      <li>Calendar view shows <strong>colour-coded events</strong> (red = breached, amber = at risk)</li>
+      <li>Real-time <strong>toast alerts</strong> when a deadline is approaching or already missed</li>
+      <li>Configurable SLA hours in the <strong>Settings Panel</strong></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 9 — Key Features Overview
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Key Features Overview</h2>
+    <div class="screenshot-grid">
+      <div class="screenshot-box">
+        <span class="icon">📊</span>
+        <strong>Métier Dashboard</strong><br/>
+        KPI cards · Status donut · Priority bar · Weekly trend
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">🎫</span>
+        <strong>Create Ticket Form</strong><br/>
+        Title · Description · Priority · Tags · File upload · AI voice
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">🗂️</span>
+        <strong>BA Ticket Table</strong><br/>
+        Sort · Filter · Assign · Status change · SLA badge
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">📅</span>
+        <strong>Ticket Calendar</strong><br/>
+        FullCalendar · SLA colour-coded events
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">🛡️</span>
+        <strong>Admin Dashboard</strong><br/>
+        User stats · Ticket metrics · CSV export
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">💬</span>
+        <strong>Comment System</strong><br/>
+        Threaded comments · Internal BA notes
+      </div>
+    </div>
+    <p style="font-size:0.55em;color:#888;margin-top:0.5em">
+      ➡️ Replace placeholder boxes with real screenshots from the running application
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 10 — AI Features
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>AI Features <span style="color:var(--tt-orange)">— Innovation Highlight</span></h2>
+
+    <div class="ai-box">
+      <h4>🎤 Voice-to-Ticket (AI)</h4>
+      <div class="flow-inline">
+        <span class="step">Microphone</span><span class="arr">→</span>
+        <span class="step">Web Speech API</span><span class="arr">→</span>
+        <span class="step">Transcription</span><span class="arr">→</span>
+        <span class="step">Ollama llama3.2:3b</span><span class="arr">→</span>
+        <span class="step">Structured JSON</span><span class="arr">→</span>
+        <span class="step">Form Auto-fill</span>
+      </div>
+      <p style="margin:0.4em 0 0;font-size:0.9em">
+        Fills: <strong>title · description · priority · category · tags</strong>.
+        Confidence score displayed. Sanitized fallback on parse failure.
+      </p>
+    </div>
+
+    <div class="ai-box">
+      <h4>🤖 AI Chatbot — RAG (Retrieval-Augmented Generation)</h4>
+      <div class="flow-inline">
+        <span class="step">User Question</span><span class="arr">→</span>
+        <span class="step">pgvector Search</span><span class="arr">→</span>
+        <span class="step">Relevant Tickets</span><span class="arr">→</span>
+        <span class="step">Ollama LLM</span><span class="arr">→</span>
+        <span class="step">Natural Language Answer</span>
+      </div>
+      <p style="margin:0.4em 0 0;font-size:0.9em">
+        Tickets are <strong>indexed as vector embeddings</strong> in PostgreSQL (pgvector).
+        The chatbot finds semantically similar tickets before generating its answer.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 11 — Additional Features
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Additional Features</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h4>💬 Real-time Chat</h4>
+        WebSocket / STOMP messaging between users. Supports image and file sharing.
+      </div>
+      <div class="card">
+        <h4>📧 Email Notifications</h4>
+        Account activation OTP · Welcome email · Password reset via Thymeleaf templates.
+      </div>
+      <div class="card">
+        <h4>🐛 Mantis BT Integration</h4>
+        One-click push of any ticket to an external Mantis bug tracker via REST API.
+      </div>
+      <div class="card">
+        <h4>⚙️ Settings Panel</h4>
+        Admins/BAs configure SLA hours, ticket categories, and working hours from the UI.
+      </div>
+      <div class="card">
+        <h4>📎 File Attachments</h4>
+        Binary files uploaded via multipart form and stored as <code>bytea</code> in PostgreSQL.
+      </div>
+      <div class="card">
+        <h4>🏷️ Tags</h4>
+        Freeform labels on tickets. Filterable in the BA table and on dashboards.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 12 — Database Schema
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Database Schema <span style="font-size:0.6em;color:#888">(simplified)</span></h2>
+    <div class="schema-grid">
+      <div class="schema-entity">
+        <h4>👤 users ↔ roles</h4>
+        <ul>
+          <li>id, email, password</li>
+          <li>firstName, lastName</li>
+          <li>activationCode, locked</li>
+          <li><em>ManyToMany roles</em></li>
+        </ul>
+      </div>
+      <div class="schema-entity">
+        <h4>🎫 tickets</h4>
+        <ul>
+          <li>id, title, description</li>
+          <li>priority, status, category</li>
+          <li>creator → users</li>
+          <li>assignedTo → users</li>
+          <li>slaDeadline, slaStatus</li>
+        </ul>
+      </div>
+      <div class="schema-entity">
+        <h4>📜 ticket_history</h4>
+        <ul>
+          <li>ticket → tickets</li>
+          <li>changedBy → users</li>
+          <li>fieldName</li>
+          <li>oldValue, newValue</li>
+          <li>changedAt</li>
+        </ul>
+      </div>
+      <div class="schema-entity">
+        <h4>💬 ticket_comments</h4>
+        <ul>
+          <li>ticket → tickets</li>
+          <li>author → users</li>
+          <li>content, isInternal</li>
+          <li>createdAt</li>
+        </ul>
+      </div>
+      <div class="schema-entity">
+        <h4>⚙️ config tables</h4>
+        <ul>
+          <li>sla_config</li>
+          <li>ticket_category_config</li>
+          <li>working_hours_config</li>
+        </ul>
+      </div>
+      <div class="schema-entity">
+        <h4>💬 conversation / message</h4>
+        <ul>
+          <li>conversation: participants</li>
+          <li>message: sender, content</li>
+          <li>type: TEXT / IMAGE / FILE</li>
+          <li>timestamp</li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:0.58em;color:#888;margin-top:0.5em">
+      Schema auto-generated by Hibernate DDL-auto; PostgreSQL backend on port 5432.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 13 — Challenges & Solutions
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Challenges &amp; Solutions</h2>
+    <table class="ch-table">
+      <thead>
+        <tr><th>Challenge</th><th>Solution</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Role-based access for 3 distinct user types</td>
+          <td>JWT claims carry roles; Angular <code>RoleGuard</code> + backend <code>@PreAuthorize</code> checks</td>
+        </tr>
+        <tr>
+          <td>SLA breach detection in real time</td>
+          <td><code>@PrePersist</code> calculates deadlines; status computed at DTO level; calendar polling</td>
+        </tr>
+        <tr>
+          <td>AI voice input reliability</td>
+          <td>Web Speech API + Ollama parsing with sanitized JSON fallback responses</td>
+        </tr>
+        <tr>
+          <td>Integrating external Mantis system</td>
+          <td>REST client with configurable token/URL; manual push to avoid accidental sync</td>
+        </tr>
+        <tr>
+          <td>File storage without a dedicated file server</td>
+          <td>Binary data stored as <code>bytea</code> in PostgreSQL for simplicity and atomicity</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 14 — What I Learned
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>What I Learned</h2>
+    <div class="learn-grid">
+      <div class="learn-item">🚀 Full-stack development with <strong>Spring Boot 3 + Angular 16</strong></div>
+      <div class="learn-item">🔐 Stateless JWT authentication and role-based access control</div>
+      <div class="learn-item">🗄️ JPA / Hibernate ORM, Specifications for dynamic filtering</div>
+      <div class="learn-item">🤖 Spring AI integration — Ollama, pgvector, RAG pattern</div>
+      <div class="learn-item">📡 WebSocket real-time communication (STOMP / SockJS)</div>
+      <div class="learn-item">🖥️ Angular reactive services, route guards, HTTP interceptors</div>
+      <div class="learn-item">📅 Agile development — iterative feature delivery</div>
+      <div class="learn-item">📧 Transactional email with Thymeleaf templates</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 15 — Future Improvements
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Future Improvements</h2>
+    <ul class="future-list">
+      <li>Implement <strong>Kanban board</strong> (drag-and-drop columns per status) — CDK infrastructure already in place</li>
+      <li>Connect configurable <strong>SLA settings</strong> to actual deadline calculation in real time</li>
+      <li>Add <strong>real-time ticket event notifications</strong> via WebSocket (status changes push to all open clients)</li>
+      <li>Introduce <strong>Flyway / Liquibase</strong> database migration versioning</li>
+      <li>Add comprehensive <strong>unit and integration tests</strong> (JUnit 5, Mockito, Cypress)</li>
+      <li>Deploy with <strong>Docker Compose</strong> — backend + frontend + PostgreSQL + Ollama in one command</li>
+      <li>Tighten <strong>admin endpoints</strong> with consistent <code>@PreAuthorize</code> role checks throughout</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 16 — Demo / Screenshots
+  ═══════════════════════════════════════════════════════════════ -->
+  <section>
+    <span class="accent-bar"></span>
+    <h2>Demo &amp; Live Screenshots</h2>
+    <div class="screenshot-grid">
+      <div class="screenshot-box">
+        <span class="icon">🔑</span>
+        <strong>Login Page</strong><br/>
+        OTP email activation · JWT-based login
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">🎤</span>
+        <strong>Create Ticket</strong><br/>
+        AI voice button · Auto-filled form fields
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">🗂️</span>
+        <strong>BA Ticket Table</strong><br/>
+        SLA badges · Assign dropdown · Status chip
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">📜</span>
+        <strong>Ticket History</strong><br/>
+        Audit trail timeline · Field diff view
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">📊</span>
+        <strong>Admin Dashboard</strong><br/>
+        User stats · Ticket metrics · CSV export
+      </div>
+      <div class="screenshot-box">
+        <span class="icon">⚙️</span>
+        <strong>Settings Page</strong><br/>
+        SLA config · Categories · Working hours
+      </div>
+    </div>
+    <p style="font-size:0.55em;color:#888;margin-top:0.4em">
+      ➡️ Replace placeholders with actual screenshots. Live demo: create ticket via voice → BA assigns → status change → view history.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE 17 — Conclusion
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="dark-section">
+    <span class="accent-bar" style="background:#fff"></span>
+    <h2>Conclusion</h2>
+    <ul class="concl-list" style="margin-top:0.8em">
+      <li>Built a <strong>complete, production-oriented</strong> IT ticket management platform from scratch</li>
+      <li>Covers the full lifecycle: <strong>submission → triage → assignment → resolution → audit</strong></li>
+      <li>Incorporates modern <strong>AI features</strong>: voice input and RAG chatbot powered by Ollama</li>
+      <li>Platform is <strong>live, functional, and extensible</strong> — ready for real deployment</li>
+    </ul>
+    <div style="margin-top:1.2em;text-align:center">
+      <p style="font-size:1.1em;color:var(--tt-orange);font-weight:700">
+        🙏 Thank you — Questions?
+      </p>
+      <p style="font-size:0.7em;color:#c9d8f0;margin-top:0.5em">
+        [Your Name] · [Your Email] · [LinkedIn / GitHub]
+      </p>
+    </div>
+  </section>
+
+</div><!-- /.slides -->
+</div><!-- /.reveal -->
+
+<!-- Reveal.js scripts (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    transitionSpeed: 'fast',
+    controls: true,
+    progress: true,
+    center: true,
+    plugins: [ RevealNotes, RevealHighlight ],
+    // keyboard shortcuts shown in speaker notes
+    keyboard: {
+      78: () => Reveal.next(),   // N = next
+      80: () => Reveal.prev(),   // P = prev
+    }
+  });
+</script>
+</body>
+</html>
