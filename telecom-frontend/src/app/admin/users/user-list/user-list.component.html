@@ -366,6 +366,14 @@
     </div>
     <div class="modal-body">
       <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Nom d'utilisateur (MantisBT) *</label>
+          <select class="form-input" [(ngModel)]="newUser.username" (change)="onUsernameChange()">
+            <option value="">-- Sélectionner un utilisateur --</option>
+            <option *ngFor="let user of mantisUsers" [value]="user">{{ user }}</option>
+          </select>
+          <small class="form-hint">Sélectionnez un utilisateur de MantisBT</small>
+        </div>
         <div class="form-group">
           <label>Prénom *</label>
           <input type="text" class="form-input" [(ngModel)]="newUser.firstName" placeholder="Prénom" />

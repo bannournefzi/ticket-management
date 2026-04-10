@@ -2,6 +2,7 @@ package tn.esprit.ticketmanagement.Admin;
 
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminService {
 
 
@@ -47,7 +49,11 @@ public class AdminService {
         return convertToDTO(user);
     }
     public UserDTO createUser(CreateUserRequest request) {
-         userRepository.findByEmail(request.getEmail())
+        if (request.getUsername() == null || request.getUsername().isBlank()) {
+            throw new IllegalArgumentException("Le nom d'utilisateur est obligatoire");
+        }
+
+        userRepository.findByEmail(request.getEmail())
                 .ifPresent(u -> {
                     throw new RuntimeException("Cet email est déjà utilisé");
                 });
@@ -56,6 +62,7 @@ public class AdminService {
                 .orElseThrow(() -> new IllegalArgumentException("Role not found: " + request.getRole()));
 
         User user = User.builder()
+                .username(request.getUsername())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
@@ -230,6 +237,7 @@ public class AdminService {
                         .collect(Collectors.toList()))
                 .createdDate(user.getCreatedDate())
                 .departement(user.getDepartement())
+                .username(user.getUsername())
                 .build();
     }
 

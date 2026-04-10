@@ -9,10 +9,11 @@ import java.time.LocalDate;
 public class CreateUserRequest {
     private String firstName;
     private String lastName;
+    private String username;
     private String email;
     private String password;
     private String role;
-    private String phone;              // ✅ NOUVEAU
+    private String phone;
     private LocalDate dateOfBirth;
     private Departement departement;
 }

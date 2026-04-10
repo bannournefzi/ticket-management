@@ -16,6 +16,8 @@ export class UserListComponent implements OnInit, OnDestroy {
   filteredUsers: UserDTO[] = [];
   stats: UserStatsDTO | null = null;
   userPhotos: Map<number, string> = new Map();
+  mantisUsers: string[] = [];
+  mantisUsersMap: { [key: string]: { realName?: string; email?: string } } = {};
 
   // Filters
   searchQuery = '';
@@ -70,6 +72,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUsers();
     this.loadStats();
+    this.loadMantisUsers();
   }
 
   ngOnDestroy(): void {
@@ -99,6 +102,16 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.adminService.getUserStats().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => this.stats = data,
       error: (err) => console.error('Erreur stats:', err)
+    });
+  }
+
+  loadMantisUsers(): void {
+    this.adminService.getMantisUsersWithDetails().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (usersMap) => {
+        this.mantisUsersMap = usersMap;
+        this.mantisUsers = Object.keys(usersMap);
+      },
+      error: (err) => console.error('Erreur chargement utilisateurs MantisBT:', err)
     });
   }
 
@@ -216,7 +229,8 @@ export class UserListComponent implements OnInit, OnDestroy {
       enabled: user.enabled,
       accountLocked: user.accountLocked || false,
       createdDate: user.createdDate,
-      departement: user.departement || ''
+      departement: user.departement || '',
+      username: user.username || ''
     };
     this.editedRole = user.roles[0] || '';
     this.isEditModalOpen = true;
@@ -278,8 +292,27 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.showPassword = true;
   }
 
+  onUsernameChange(): void {
+    const selectedUser = this.mantisUsersMap[this.newUser.username];
+    if (selectedUser) {
+      if (selectedUser.realName && selectedUser.realName.trim()) {
+        const parts = selectedUser.realName.trim().split(' ');
+        if (parts.length >= 2) {
+          this.newUser.firstName = parts[0];
+          this.newUser.lastName = parts.slice(1).join(' ');
+        } else {
+          this.newUser.firstName = parts[0] || '';
+          this.newUser.lastName = '';
+        }
+      }
+      if (selectedUser.email && selectedUser.email.trim()) {
+        this.newUser.email = selectedUser.email.trim();
+      }
+    }
+  }
+
   createUser(): void {
-    if (!this.newUser.firstName || !this.newUser.lastName || !this.newUser.email || !this.newUser.password) {
+    if (!this.newUser.username || !this.newUser.firstName || !this.newUser.lastName || !this.newUser.email || !this.newUser.password) {
       this.showError('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -403,6 +436,7 @@ export class UserListComponent implements OnInit, OnDestroy {
 
   private emptyUser(): CreateUserRequest {
     return {
+      username: '',
       firstName: '', lastName: '', email: '',
       password: '', phone: '', dateOfBirth: '',
       role: 'ROLE_METIER', departement: undefined

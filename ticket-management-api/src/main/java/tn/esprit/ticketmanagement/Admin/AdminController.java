@@ -8,18 +8,20 @@ import tn.esprit.ticketmanagement.Admin.dto.CreateUserRequest;
 import tn.esprit.ticketmanagement.Admin.dto.UserDTO;
 import tn.esprit.ticketmanagement.Admin.dto.UserStatsDTO;
 import tn.esprit.ticketmanagement.User.enums.Departement;
+import tn.esprit.ticketmanagement.mantis.MantisService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
 @Tag(name = "Admin")
-//@PreAuthorize("hasRole('ADMIN')")
-//@CrossOrigin(origins = "http://localhost:4200")
 public class AdminController {
 
     private final AdminService adminService;
+    private final MantisService mantisService;
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -90,5 +92,23 @@ public class AdminController {
             @RequestParam Departement departement
     ) {
         return ResponseEntity.ok(adminService.updateUserDepartement(id, departement));
+    }
+
+    @GetMapping("/mantis-users")
+    public ResponseEntity<List<String>> getMantisUsers() {
+        return ResponseEntity.ok(mantisService.getAllUsernames());
+    }
+
+    @GetMapping("/mantis-users/details")
+    public ResponseEntity<Map<String, Map<String, String>>> getMantisUsersWithDetails() {
+        List<String> usernames = mantisService.getAllUsernames();
+        Map<String, Map<String, String>> usersWithDetails = new HashMap<>();
+        
+        for (String username : usernames) {
+            Map<String, String> details = mantisService.getUserDetails(username);
+            usersWithDetails.put(username, details);
+        }
+        
+        return ResponseEntity.ok(usersWithDetails);
     }
 }

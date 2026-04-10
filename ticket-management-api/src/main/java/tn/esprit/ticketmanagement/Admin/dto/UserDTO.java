@@ -27,4 +27,5 @@ public class UserDTO {
     private LocalDate dateOfBirth;
     private Departement departement;
 
+    private String username;
 }

@@ -15,7 +15,7 @@ export interface UserDTO {
   roles: string[];
   createdDate: string;
   departement?: string; 
-  
+  username?: string;
 }
 
 export interface UserStatsDTO {
@@ -37,6 +37,7 @@ export interface UpdateUserRequest {
   dateOfBirth: string;
 }
 export interface CreateUserRequest {
+  username: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -99,5 +100,13 @@ export class AdminService {
     if (enabled !== undefined) params = params.set('enabled', enabled.toString());
 
     return this.http.get<UserDTO[]>(`${this.baseUrl}/users/search`, { params });
+  }
+
+  getMantisUsers(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/mantis-users`);
+  }
+
+  getMantisUsersWithDetails(): Observable<{ [key: string]: { realName?: string; email?: string } }> {
+    return this.http.get<{ [key: string]: { realName?: string; email?: string } }>(`${this.baseUrl}/mantis-users/details`);
   }
 }

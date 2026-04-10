@@ -160,8 +160,7 @@
             <th class="col-center">Type</th>
             <th class="col-center">Statut</th>
             <th class="col-center">SLA</th>
-            <th class="col-assignee">Assigné à</th>
-            <th class="col-date">Créé</th>
+            <th class="col-date">Créé le</th>
             <th class="col-actions"></th>
           </tr>
         </thead>
@@ -225,21 +224,10 @@
               </span>
             </td>
 
-            <!-- Assigné -->
-            <td class="col-assignee">
-              <div class="assignee-chip" *ngIf="ticket.assignedToFullName">
-                <div class="assignee-avatar-sm">{{ ticket.assignedToFullName.charAt(0) }}</div>
-                <span>{{ ticket.assignedToFullName }}</span>
-              </div>
-              <span class="unassigned-chip" *ngIf="!ticket.assignedToFullName">
-                <i class="fas fa-user-clock"></i> Non assigné
-              </span>
-            </td>
-
             <!-- Date -->
             <td class="col-date">
-              <span class="date-chip" [title]="ticket.createdDate | date:'dd/MM/yyyy HH:mm'">
-                {{ getTimeAgo(ticket.createdDate) }}
+              <span class="date-chip">
+                {{ ticket.createdDate | date:'dd/MM/yyyy' }}
               </span>
             </td>
 

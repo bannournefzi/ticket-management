@@ -1,34 +1,35 @@
 # AGENTS.md — telecom-frontend + ticket-management-api
 
-Monorepo with Angular 16.2 frontend and Spring Boot 3.3.5 (Java 17) backend for a telecom IT service desk / ticket management system. Three roles: `ROLE_ADMIN`, `ROLE_BUSINESS_ANALYST`, `ROLE_METIER`.
+Monorepo: Angular 16.2 frontend + Spring Boot 3.3.5 (Java 17) backend. Roles: `ROLE_ADMIN`, `ROLE_BUSINESS_ANALYST`, `ROLE_METIER`.
 
 ## Commands
 
 ### Frontend (`telecom-frontend/`)
 
 ```bash
-npm start          # ng serve — dev server at http://localhost:4200
-npm run build      # ng build — production build → dist/
-npm run watch      # ng build --watch --configuration development
-npm test           # ng test — Karma (no .spec files exist yet)
-ng generate component <name>   # scaffold new component (SCSS default)
-ng generate service <name>     # scaffold new service
+npm start          # ng serve → http://localhost:4200
+npm run build      # Production build → dist/
+npm run watch      # Dev watch mode
+npm test           # Karma (no .spec files exist yet)
+ng generate component <name>   # SCSS default
+ng generate service <name>
 ```
 
 ### Backend (`ticket-management-api/`)
 
 ```bash
-./mvnw spring-boot:run              # Run dev server (port 8088)
+./mvnw spring-boot:run              # Port 8088, base path /api/v1/
 ./mvnw clean package                # Build JAR (runs tests)
-./mvnw clean package -DskipTests    # Build JAR without tests
-./mvnw test                         # Run all tests
-./mvnw test -Dtest=ClassName        # Run a single test class
-./mvnw test -Dtest=ClassName#method # Run a single test method
-./mvnw clean install                # Build + install to local repo
-docker-compose up -d                # Start PostgreSQL + MailDev
+./mvnw clean package -DskipTests
+./mvnw test                         # All tests
+./mvnw test -Dtest=ClassName        # Single class
+./mvnw test -Dtest=ClassName#method # Single method
+./mvnw clean install                # Build + local install
 ```
 
-No linter/formatter configured in either project. Frontend follows `.editorconfig` (2-space indent, UTF-8, single quotes in TS). Backend uses tabs (Maven default).
+Config: `application.yml` sets context-path `/api/v1/` and AI/pgvector settings. `application-dev.yml` has port (8088), DB, mail, JWT secret.
+
+No linter/formatter. Frontend: `.editorconfig` (2-space, single quotes in TS). Backend: tabs (Maven default).
 
 ## Project Structure
 
@@ -162,7 +163,7 @@ ticket-management-api/src/main/java/tn/esprit/ticketmanagement/
 
 - STOMP over SockJS. Backend: broker on `/user` and `/topic`, prefix `/app`.
 - Frontend: auto-reconnect (3s), heartbeats (10s), message queueing (up to 100).
-- CORS allowed origin: `http://localhost:4200`. Token refresh triggers reconnect.
+- CORS allowed origin: `http://localhost:*`. Token refresh triggers reconnect.
 
 ## Key Notes for Agents
 
@@ -170,7 +171,10 @@ ticket-management-api/src/main/java/tn/esprit/ticketmanagement/
 - **No linter.** Run `ng build` (frontend) or `./mvnw clean package` (backend) to check compilation.
 - Backend expects JWT in `Authorization: Bearer <token>` header (handled by `AuthInterceptor`).
 - Role checks: frontend uses `authService.isAdmin()`, `isBusinessAnalyst()`, `isMetier()`; backend uses `User.isAdmin()`, `isIT()`, `isMetier()`.
-- Backend external deps: PostgreSQL (5432), Ollama (11434), MailDev (1080/1025), Mantis BT (8989).
+- Backend external deps: PostgreSQL main (5432), pgvector PostgreSQL (5433), Ollama (11434), MailDev (1080/1025), Mantis BT (8989).
+- pgvector uses separate PostgreSQL on port 5433 with database name `Telecom` (configured in `application.yml`).
+- CORS allows `http://localhost:*` patterns.
 - JPA Specifications used for dynamic ticket filtering (`TicketSpecification`).
 - Frontend CSV export is common across list components.
 - Frontend priority change is rate-limited (max 2/week via localStorage).
+- Swagger UI at `/swagger-ui.html` (requires auth token in requests).
