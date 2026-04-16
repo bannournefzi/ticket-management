@@ -526,6 +526,29 @@ export class BaTicketManagementComponent implements OnInit {
     return 'fas fa-file';
   }
 
+  isUserBA(): boolean {
+    return this.authService.isBusinessAnalyst();
+  }
+
+  get isCommentsEnabled(): boolean {
+    return this.selectedTicket?.commentsEnabled !== false;
+  }
+
+  toggleCommentsEnabled(enabled: boolean): void {
+    if (!this.selectedTicket) return;
+    this.ticketService.toggleCommentsEnabled(this.selectedTicket.id, enabled).subscribe({
+      next: (updated) => {
+        if (this.selectedTicket) {
+          this.selectedTicket = { ...this.selectedTicket, commentsEnabled: updated.commentsEnabled };
+        }
+        const idx = this.allTickets.findIndex(t => t.id === updated.id);
+        if (idx !== -1) this.allTickets[idx] = { ...this.allTickets[idx], commentsEnabled: updated.commentsEnabled };
+        this.showSuccess(enabled ? 'Commentaires activés pour les utilisateurs Métier' : 'Commentaires désactivés pour les utilisateurs Métier');
+      },
+      error: (err) => this.showError(err.error?.message || 'Erreur lors du changement')
+    });
+  }
+
   private showSuccess(msg: string): void { this.successMessage = msg; setTimeout(() => this.successMessage = null, 3000); }
   private showError(msg: string):   void { this.errorMessage   = msg; setTimeout(() => this.errorMessage   = null, 4000); }
 

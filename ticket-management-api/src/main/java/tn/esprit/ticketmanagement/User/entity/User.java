@@ -109,6 +109,10 @@ public class User implements UserDetails, Principal {
         return hasRole("ROLE_ADMIN");
     }
 
+    public boolean isBusinessAnalyst() {
+        return hasRole("ROLE_BUSINESS_ANALYST");
+    }
+
     public boolean isIT() {
         return hasRole("ROLE_BUSINESS_ANALYST");
     }

@@ -13,11 +13,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.enums.Departement;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/tickets")
@@ -218,5 +220,18 @@ public class TicketController {
             @PathVariable Integer ticketId,
             @PathVariable Long attachmentId) {
         return ticketService.getAttachment(ticketId, attachmentId);
+    }
+
+    @PatchMapping("/{ticketId}/comments-enabled")
+    @Operation(summary = "Activer/désactiver les commentaires pour les utilisateurs Métier")
+    public ResponseEntity<TicketDTO> toggleCommentsEnabled(
+            @PathVariable Integer ticketId,
+            @RequestBody Map<String, Boolean> request,
+            @AuthenticationPrincipal User currentUser) {
+        Boolean enabled = request.get("enabled");
+        if (enabled == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le champ 'enabled' est obligatoire");
+        }
+        return ResponseEntity.ok(ticketService.toggleCommentsEnabled(ticketId, enabled, currentUser));
     }
 }

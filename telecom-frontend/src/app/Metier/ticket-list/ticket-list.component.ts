@@ -349,6 +349,10 @@ export class TicketListComponent implements OnInit {
 
   sendComment(): void {
     if (!this.newComment.trim() || !this.viewedTicket) return;
+    if (!this.isCommentsEnabled) {
+      this.showError('Les commentaires sont désactivés pour les utilisateurs Métier sur ce ticket');
+      return;
+    }
     this.isSendingComment = true;
     const request: CreateCommentRequest = {
       content: this.newComment.trim(),
@@ -361,7 +365,10 @@ export class TicketListComponent implements OnInit {
         this.isInternalNote = false;
         this.isSendingComment = false;
       },
-      error: () => { this.isSendingComment = false; }
+      error: (err) => {
+        this.isSendingComment = false;
+        this.showError(err.error?.message || 'Erreur lors de l\'ajout du commentaire');
+      }
     });
   }
 
@@ -567,5 +574,13 @@ export class TicketListComponent implements OnInit {
   private showError(msg: string): void {
     this.errorMessage = msg;
     setTimeout(() => this.errorMessage = null, 4000);
+  }
+
+  isUserMetier(): boolean {
+    return this.authService.isMetier();
+  }
+
+  get isCommentsEnabled(): boolean {
+    return this.viewedTicket?.commentsEnabled !== false;
   }
 }

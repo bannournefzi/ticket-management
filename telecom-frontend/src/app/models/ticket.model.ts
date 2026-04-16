@@ -34,6 +34,7 @@ export interface Ticket {
   commentCount?: number;
   allowedTransitions?: TicketStatus[];
   attachments?: Attachment[];
+  commentsEnabled?: boolean;
 }
 
 export interface Attachment {

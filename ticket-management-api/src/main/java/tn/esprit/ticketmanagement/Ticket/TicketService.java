@@ -263,6 +263,29 @@ public class TicketService {
     }
 
     // ══════════════════════════════════════════
+    //  COMMENTAIRES ACTIVÉS/DÉSACTIVÉS
+    // ══════════════════════════════════════════
+
+    @Transactional
+    public TicketDTO toggleCommentsEnabled(Integer ticketId, boolean enabled, User currentUser) {
+        if (!currentUser.isBusinessAnalyst()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Seul un Business Analyst peut activer/désactiver les commentaires");
+        }
+
+        Ticket ticket = findTicketOrThrow(ticketId);
+        ticket.setCommentsEnabled(enabled);
+
+        log.info("User {} {} comments for ticket {}",
+                currentUser.fullName(),
+                enabled ? "enabled" : "disabled",
+                ticketId);
+
+        Ticket saved = ticketRepository.save(ticket);
+        return convertToDTO(saved);
+    }
+
+    // ══════════════════════════════════════════
     //  CHANGEMENT DE STATUT
     // ══════════════════════════════════════════
 
@@ -553,6 +576,9 @@ public class TicketService {
                     .collect(Collectors.toList());
             builder.attachments(attachmentDTOs);
         }
+
+        // Comments enabled
+        builder.commentsEnabled(ticket.getCommentsEnabled() != null ? ticket.getCommentsEnabled() : true);
 
         return builder.build();
     }

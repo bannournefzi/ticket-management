@@ -47,4 +47,6 @@ public class TicketDTO {
     private Long mantisProjectId;
 
     private List<AttachmentDTO> attachments;
+
+    private Boolean commentsEnabled;
 }

@@ -29,6 +29,12 @@ public class CommentService {
             throw new IllegalArgumentException("Les notes internes ne sont pas disponibles pour les utilisateurs Métier");
         }
 
+        // Vérifier si les commentaires sont désactivés pour les utilisateurs Métier
+        boolean commentsEnabled = ticket.getCommentsEnabled() != null ? ticket.getCommentsEnabled() : true;
+        if (!commentsEnabled && currentUser.isMetier()) {
+            throw new IllegalArgumentException("Les commentaires sont désactivés pour les utilisateurs Métier sur ce ticket");
+        }
+
         Comment comment = Comment.builder()
                 .content(request.getContent())
                 .internalNote(isInternal)

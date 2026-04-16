@@ -92,6 +92,12 @@ public class Ticket {
     @Builder.Default
     private List<String> tags = new ArrayList<>();
 
+    // ===== Comments Enabled (NOUVEAU) =====
+
+    @Column(name = "comments_enabled")
+    @Builder.Default
+    private Boolean commentsEnabled = true;
+
     // ===== Dates =====
 
     @CreatedDate

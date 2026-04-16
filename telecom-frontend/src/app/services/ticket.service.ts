@@ -182,4 +182,8 @@ downloadAttachment(ticketId: number, attachmentId: number): Observable<Blob> {
     responseType: 'blob'
   });
 }
+
+toggleCommentsEnabled(ticketId: number, enabled: boolean): Observable<Ticket> {
+  return this.http.patch<Ticket>(`${this.baseUrl}/${ticketId}/comments-enabled`, { enabled });
+}
 }

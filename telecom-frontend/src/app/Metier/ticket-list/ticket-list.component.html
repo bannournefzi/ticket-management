@@ -350,7 +350,13 @@
           </div>
         </div>
 
-        <div class="comment-form">
+        <!-- Comment disabled message for Metier -->
+        <div class="comment-disabled-msg" *ngIf="!isCommentsEnabled && isUserMetier()">
+          <i class="fas fa-lock"></i>
+          <span>Les commentaires sont désactivés pour les utilisateurs Métier sur ce ticket.</span>
+        </div>
+
+        <div class="comment-form" *ngIf="isCommentsEnabled">
           <textarea class="comment-input" [(ngModel)]="newComment"
                     placeholder="Écrire un commentaire… (Ctrl+Entrée pour envoyer)"
                     rows="3" (keydown.control.enter)="sendComment()"></textarea>
