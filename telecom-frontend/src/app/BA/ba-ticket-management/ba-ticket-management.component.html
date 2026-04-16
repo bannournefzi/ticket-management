@@ -364,6 +364,10 @@
                     (click)="pushSelectedToMantis()">
               <i class="fas fa-share-square"></i> Envoyer vers Mantis
             </button>
+            <button class="btn-action btn-kb" *ngIf="canConvertToKB()"
+                    (click)="convertToKnowledgeBase()">
+              <i class="fas fa-book"></i> Convertir en article KB
+            </button>
             <span class="mini-tag" *ngIf="selectedTicket?.mantisId">
               Mantis #{{ selectedTicket?.mantisId }}
             </span>
@@ -495,6 +499,41 @@
       <button class="btn-cancel" (click)="closeStatusModal()">Annuler</button>
       <button class="btn-confirm" (click)="confirmStatusChange()">
         <i class="fas fa-check"></i> Confirmer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- MODAL CRÉER ARTICLE KNOWLEDGE BASE                  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="isKbModalOpen" (click)="closeKbModal()">
+  <div class="modal-container modal-kb" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-book"></i> Créer un article de base de connaissances</h2>
+      <button class="modal-close" (click)="closeKbModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Titre <span class="required">*</span></label>
+        <input type="text" class="form-input" [(ngModel)]="kbTitle" placeholder="Titre de l'article">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description (Problème)</label>
+        <textarea class="form-textarea" [(ngModel)]="kbDescription" rows="4" placeholder="Description du problème"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Solution <span class="required">*</span></label>
+        <textarea class="form-textarea solution-input" [(ngModel)]="kbSolution" rows="6" 
+                  placeholder="Décrivez la solution étape par étape..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeKbModal()">Annuler</button>
+      <button class="btn-confirm" (click)="saveKnowledgeBase()" [disabled]="isSavingKb || !kbSolution.trim()">
+        <i class="fas fa-spinner fa-spin" *ngIf="isSavingKb"></i>
+        <i class="fas fa-save" *ngIf="!isSavingKb"></i>
+        {{ isSavingKb ? 'Création...' : 'Enregistrer' }}
       </button>
     </div>
   </div>

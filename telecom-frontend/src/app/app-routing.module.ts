@@ -17,6 +17,8 @@ import { TicketListComponent } from './Metier/ticket-list/ticket-list.component'
 import { BaTicketManagementComponent } from './BA/ba-ticket-management/ba-ticket-management.component';
 import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.component';
 import { BaSettingsComponent } from './BA/settings/settings.component';
+import { KnowledgeBaseListComponent } from './Metier/knowledge-base/knowledge-base-list/knowledge-base-list.component';
+import { KnowledgeBaseDetailComponent } from './Metier/knowledge-base/knowledge-base-detail/knowledge-base-detail.component';
 
 const routes: Routes = [
   // Public routes (no layout)
@@ -35,6 +37,8 @@ const routes: Routes = [
       { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
       { path: 'create-ticket', component: CreateTicketComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
       { path: 'my-tickets', component: TicketListComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
+      { path: 'knowledge-base', component: KnowledgeBaseListComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_METIER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
+      { path: 'knowledge-base/:id', component: KnowledgeBaseDetailComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_METIER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
       { path: 'business-analyst/tickets', component: BaTicketManagementComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'business-analyst', component: ItDashboardComponentComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'ticket-calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },

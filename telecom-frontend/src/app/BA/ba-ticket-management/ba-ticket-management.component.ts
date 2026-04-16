@@ -2,6 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { TicketService } from '../../services/ticket.service';
 import { CommentService } from '../../services/CommentService';
 import { AuthService } from '../../auth/service/auth.service';
+import { KnowledgeBaseService } from '../../services/knowledge-base.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -74,6 +75,13 @@ export class BaTicketManagementComponent implements OnInit {
   targetStatus: TicketStatus | null = null;
   statusComment = '';
 
+  // ── Knowledge Base modal ──────────────────────────────────────────────
+  isKbModalOpen = false;
+  kbTitle = '';
+  kbDescription = '';
+  kbSolution = '';
+  isSavingKb = false;
+
   currentUserId = 0;
 
   // ── Config ────────────────────────────────────────────────────────────
@@ -129,7 +137,8 @@ export class BaTicketManagementComponent implements OnInit {
   constructor(
     private ticketService: TicketService,
     private commentService: CommentService,
-    private authService: AuthService
+    private authService: AuthService,
+    private kbService: KnowledgeBaseService
   ) {}
 
   ngOnInit(): void {
@@ -547,6 +556,55 @@ export class BaTicketManagementComponent implements OnInit {
       },
       error: (err) => this.showError(err.error?.message || 'Erreur lors du changement')
     });
+  }
+
+  convertToKnowledgeBase(): void {
+    if (!this.selectedTicket) return;
+    if (this.selectedTicket.status !== 'RESOLVED' && this.selectedTicket.status !== 'CLOSED') {
+      this.showError('Le ticket doit être en statut Résolu ou Fermé pour être converti en article');
+      return;
+    }
+    // Open modal with pre-filled data
+    this.kbTitle = this.selectedTicket.title;
+    this.kbDescription = this.selectedTicket.description;
+    this.kbSolution = '';
+    this.isKbModalOpen = true;
+  }
+
+  saveKnowledgeBase(): void {
+    if (!this.selectedTicket) return;
+    if (!this.kbSolution.trim()) {
+      this.showError('La solution est obligatoire');
+      return;
+    }
+
+    this.isSavingKb = true;
+    this.kbService.createFromTicket(this.selectedTicket.id, {
+      title: this.kbTitle.trim(),
+      description: this.kbDescription.trim(),
+      solution: this.kbSolution.trim()
+    }).subscribe({
+      next: () => {
+        this.isSavingKb = false;
+        this.isKbModalOpen = false;
+        this.showSuccess('Article de base de connaissances créé avec succès!');
+      },
+      error: (err) => {
+        this.isSavingKb = false;
+        this.showError(err.error?.message || 'Erreur lors de la création');
+      }
+    });
+  }
+
+  closeKbModal(): void {
+    this.isKbModalOpen = false;
+    this.kbTitle = '';
+    this.kbDescription = '';
+    this.kbSolution = '';
+  }
+
+  canConvertToKB(): boolean {
+    return this.selectedTicket?.status === 'RESOLVED' || this.selectedTicket?.status === 'CLOSED';
   }
 
   private showSuccess(msg: string): void { this.successMessage = msg; setTimeout(() => this.successMessage = null, 3000); }

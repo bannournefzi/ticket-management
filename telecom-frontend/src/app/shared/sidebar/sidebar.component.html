@@ -50,6 +50,12 @@
         <span class="nav-text">Calendrier SLA</span>
       </a>
 
+      <a routerLink="/knowledge-base" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Base de Connaissances' : ''">
+        <i class="fas fa-book"></i>
+        <span class="nav-text">Base de Connaissances</span>
+      </a>
+
       <div class="nav-divider"></div>
 
       <div class="nav-section">
@@ -98,19 +104,9 @@
         <span class="nav-text">Dashboard</span>
       </a>
 
-      <a routerLink="/business-analyst/assigned" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Mes assignations' : ''">
-        <i class="fas fa-tasks"></i>
-        <span class="nav-text">Mes assignations</span>
-        <span class="nav-badge badge-warn" *ngIf="stats?.inProgressTickets">{{ stats?.inProgressTickets }}</span>
-      </a>
+      
 
-      <a routerLink="/business-analyst/unassigned" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Non assignés' : ''">
-        <i class="fas fa-user-clock"></i>
-        <span class="nav-text">Non assignés</span>
-        <span class="nav-badge" *ngIf="stats?.openTickets">{{ stats?.openTickets }}</span>
-      </a>
+     
 
       <div class="nav-divider"></div>
 
@@ -125,7 +121,7 @@
         <span class="nav-badge" *ngIf="stats?.inProgressTickets">{{ stats?.inProgressTickets }}</span>
       </a>
 
-      <a routerLink="/business-analyst/resolved" routerLinkActive="active"
+      <!-- <a routerLink="/business-analyst/resolved" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Résolus' : ''">
         <i class="fas fa-check-double"></i>
         <span class="nav-text">Résolus</span>
@@ -135,7 +131,7 @@
          class="nav-link" [title]="isCollapsed ? 'Clôturés' : ''">
         <i class="fas fa-archive"></i>
         <span class="nav-text">Clôturés</span>
-      </a>
+      </a> -->
 
       <div class="nav-divider"></div>
 
@@ -148,6 +144,12 @@
         <i class="fas fa-calendar-alt"></i>
         <span class="nav-text">Calendrier SLA</span>
         <span class="nav-badge badge-danger" *ngIf="stats?.slaBreachedTickets">{{ stats?.slaBreachedTickets }}</span>
+      </a>
+
+      <a routerLink="/knowledge-base" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Base de Connaissances' : ''">
+        <i class="fas fa-book"></i>
+        <span class="nav-text">Base de Connaissances</span>
       </a>
 
     </ng-container>

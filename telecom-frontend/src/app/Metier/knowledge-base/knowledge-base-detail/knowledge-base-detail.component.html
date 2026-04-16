@@ -1,0 +1,50 @@
+<div class="kb-detail-container">
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+    <span>Chargement...</span>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" *ngIf="errorMessage && !isLoading">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h3>{{ errorMessage }}</h3>
+    <button class="btn-back" (click)="back()">Retour à la liste</button>
+  </div>
+
+  <!-- Article Content -->
+  <div class="article-content" *ngIf="article && !isLoading">
+    
+    <!-- Header -->
+    <div class="article-header">
+      <button class="btn-back" (click)="back()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <div class="article-meta">
+        <span class="meta-date">{{ formatDate(article.createdAt) }}</span>
+        <span class="meta-author"><i class="fas fa-user"></i> {{ article.createdByName }}</span>
+        <span class="meta-source" *ngIf="article.ticketId">
+          <i class="fas fa-ticket-alt"></i> Ticket #{{ article.ticketId }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h1 class="article-title">{{ article.title }}</h1>
+
+    <!-- Description -->
+    <div class="article-section" *ngIf="article.description">
+      <h2><i class="fas fa-align-left"></i> Description</h2>
+      <div class="section-content">{{ article.description }}</div>
+    </div>
+
+    <!-- Solution -->
+    <div class="article-section solution-section">
+      <h2><i class="fas fa-lightbulb"></i> Solution</h2>
+      <div class="section-content">{{ article.solution }}</div>
+    </div>
+
+  </div>
+
+</div>

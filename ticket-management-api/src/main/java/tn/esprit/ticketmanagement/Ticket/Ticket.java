@@ -98,6 +98,12 @@ public class Ticket {
     @Builder.Default
     private Boolean commentsEnabled = true;
 
+    // ===== Converted to KB (NOUVEAU) =====
+
+    @Column(name = "converted_to_kb")
+    @Builder.Default
+    private Boolean convertedToKB = false;
+
     // ===== Dates =====
 
     @CreatedDate

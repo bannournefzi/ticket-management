@@ -35,6 +35,7 @@ export interface Ticket {
   allowedTransitions?: TicketStatus[];
   attachments?: Attachment[];
   commentsEnabled?: boolean;
+  convertedToKB?: boolean;
 }
 
 export interface Attachment {

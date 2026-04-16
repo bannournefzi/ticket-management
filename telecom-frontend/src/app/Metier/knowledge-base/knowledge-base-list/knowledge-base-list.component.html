@@ -1,0 +1,72 @@
+<div class="kb-container">
+
+  <!-- Header -->
+  <div class="kb-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <i class="fas fa-book"></i> Base de Connaissances
+      </h1>
+      <p class="page-subtitle">Trouvez des réponses à vos questions</p>
+    </div>
+    <button class="btn-refresh" (click)="loadArticles()" [disabled]="isLoading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+    <button class="alert-close" (click)="successMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" [(ngModel)]="searchQuery" (input)="search()"
+             placeholder="Rechercher dans la base de connaissances..." />
+      <button class="search-btn" (click)="search()">
+        <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+    <span>Chargement...</span>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && filteredArticles.length === 0">
+    <i class="fas fa-book-open"></i>
+    <h3>Aucun article trouvé</h3>
+    <p>{{ searchQuery ? 'Essayez avec d\'autres mots-clés.' : 'Aucun article disponible pour le moment.' }}</p>
+  </div>
+
+  <!-- Articles Grid -->
+  <div class="articles-grid" *ngIf="!isLoading && filteredArticles.length > 0">
+    <div class="article-card" *ngFor="let article of filteredArticles" (click)="viewArticle(article)">
+      <div class="card-header">
+        <i class="fas fa-file-alt"></i>
+        <span class="card-date">{{ getTimeAgo(article.createdAt) }}</span>
+      </div>
+      <h3 class="card-title">{{ article.title }}</h3>
+      <p class="card-description">{{ article.description | slice:0:120 }}{{ article.description && article.description.length > 120 ? '...' : '' }}</p>
+      <div class="card-footer">
+        <span class="author"><i class="fas fa-user"></i> {{ article.createdByName }}</span>
+        <div class="card-actions" (click)="$event.stopPropagation()">
+          <button class="btn-delete" *ngIf="isUserBA()" (click)="deleteArticle(article)" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        <span class="read-more">Lire plus <i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,234 @@
+// Variables
+$bg:           #f0f2f5;
+$card:         #ffffff;
+$border:       #e5e7eb;
+$border-light: #f3f4f6;
+$text-1:       #1f2937;
+$text-2:       #6b7280;
+$text-3:       #9ca3af;
+$accent:       #4f46e5;
+$accent-light: #e0e7ff;
+$success:      #10b981;
+$danger:       #ef4444;
+$radius:       8px;
+
+// Container
+.kb-container {
+  padding: 20px;
+  background: $bg;
+  min-height: 100vh;
+}
+
+// Header
+.kb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  background: $card;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1px solid $border;
+}
+
+.header-left {
+  .page-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-1;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    i { color: $accent; }
+  }
+  .page-subtitle {
+    font-size: 12px;
+    color: $text-3;
+    margin: 4px 0 0;
+  }
+}
+
+.btn-refresh {
+  width: 36px;
+  height: 36px;
+  border-radius: $radius;
+  border: 1px solid $border;
+  background: $card;
+  color: $text-3;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  &:hover { background: $border-light; color: $text-2; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+// Alerts
+.alert {
+  padding: 10px 14px;
+  border-radius: $radius;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.alert-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.alert-close   { background: none; border: none; color: inherit; cursor: pointer; margin-left: auto; &:hover { opacity: 0.7; } }
+
+// Search
+.search-section {
+  margin-bottom: 24px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto;
+  
+  i.fa-search {
+    position: absolute;
+    left: 14px;
+    color: $text-3;
+    font-size: 14px;
+  }
+  
+  input {
+    flex: 1;
+    padding: 12px 40px 12px 40px;
+    border: 1px solid $border;
+    border-radius: $radius;
+    font-size: 14px;
+    color: $text-1;
+    &::placeholder { color: $text-3; }
+    &:focus { outline: none; border-color: $accent; box-shadow: 0 0 0 3px rgba($accent, 0.1); }
+  }
+  
+  .search-btn {
+    position: absolute;
+    right: 8px;
+    padding: 8px 12px;
+    background: $accent;
+    color: white;
+    border: none;
+    border-radius: $radius;
+    cursor: pointer;
+    &:hover { background: darken($accent, 10%); }
+  }
+}
+
+// Loading
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: $text-3;
+  i { margin-bottom: 12px; display: block; }
+}
+
+// Empty
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: $text-3;
+  background: $card;
+  border-radius: 10px;
+  border: 1px solid $border;
+  
+  i { font-size: 48px; margin-bottom: 16px; color: $border; display: block; }
+  h3 { font-size: 18px; color: $text-1; margin: 0 0 8px; }
+  p { font-size: 14px; margin: 0; }
+}
+
+// Articles Grid
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.article-card {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: $accent;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  
+  i { color: $accent; font-size: 14px; }
+  .card-date { font-size: 11px; color: $text-3; }
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: $text-1;
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.card-description {
+  font-size: 13px;
+  color: $text-2;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid $border-light;
+  
+  .author {
+    font-size: 12px;
+    color: $text-3;
+    i { margin-right: 4px; }
+  }
+  .read-more {
+    font-size: 12px;
+    color: $accent;
+    font-weight: 500;
+    i { margin-left: 4px; font-size: 10px; }
+  }
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-delete {
+  padding: 6px 10px;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: $radius;
+  cursor: pointer;
+  transition: all 0.15s;
+  
+  &:hover {
+    background: #ef4444;
+    color: white;
+  }
+}
