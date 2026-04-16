@@ -168,9 +168,15 @@ public class AdminService {
     }
 
     public void deleteUser(Integer id) {
-        if (!userRepository.existsById(id)) {
-            throw new UsernameNotFoundException("User not found");
-        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // Clear relationships that might cause constraint violations
+        user.getRoles().clear();
+        user.getChatsAsSender().clear();
+        user.getChatsAsRecipient().clear();
+        userRepository.save(user);
+
         userRepository.deleteById(id);
     }
 

@@ -211,4 +211,12 @@ public class TicketController {
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(ticketService.pushToMantis(ticketId, currentUser));
     }
+
+    @GetMapping("/{ticketId}/attachments/{attachmentId}")
+    @Operation(summary = "Télécharger une pièce jointe")
+    public ResponseEntity<byte[]> downloadAttachment(
+            @PathVariable Integer ticketId,
+            @PathVariable Long attachmentId) {
+        return ticketService.getAttachment(ticketId, attachmentId);
+    }
 }

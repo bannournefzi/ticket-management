@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { TicketService } from '../../services/ticket.service';
 import { CommentService } from '../../services/CommentService';
 import { AuthService } from '../../auth/service/auth.service';
@@ -35,6 +35,13 @@ export class TicketListComponent implements OnInit {
   currentPage = 1;
   itemsPerPage = 10;
   Math = Math;
+
+  // Tri
+  sortField = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  // Dropdown actions
+  openDropdownId: number | null = null;
 
   // Modal détails
   isViewModalOpen = false;
@@ -78,7 +85,6 @@ export class TicketListComponent implements OnInit {
     'OTHER':           { label: 'Autre',           icon: 'fas fa-ellipsis-h' }
   };
 
-  // ✅ FIX: Keys now match real backend status values
   statusConfig: Record<string, { label: string; icon: string }> = {
     'NEW':         { label: 'Nouveau',    icon: 'fas fa-circle' },
     'ASSIGNED':    { label: 'En cours',   icon: 'fas fa-spinner' },
@@ -151,6 +157,30 @@ export class TicketListComponent implements OnInit {
   }
 
   // ══════════════════════════════════════════
+  //  TRI
+  // ══════════════════════════════════════════
+
+  sortBy(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.filteredTickets = [...this.filteredTickets].sort((a, b) => {
+      const aVal = (a as any)[field] ?? '';
+      const bVal = (b as any)[field] ?? '';
+      const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return this.sortDirection === 'asc' ? cmp : -cmp;
+    });
+  }
+
+  getSortIcon(field: string): string {
+    if (this.sortField !== field) return 'fa-sort';
+    return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+  }
+
+  // ══════════════════════════════════════════
   //  PAGINATION
   // ══════════════════════════════════════════
 
@@ -160,12 +190,49 @@ export class TicketListComponent implements OnInit {
   }
 
   get totalPages(): number {
-    return Math.ceil(this.filteredTickets.length / this.itemsPerPage);
+    return Math.ceil(this.filteredTickets.length / this.itemsPerPage) || 1;
+  }
+
+  get totalTickets(): number {
+    return this.allTickets.length;
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  getPageStart(): number {
+    if (this.filteredTickets.length === 0) return 0;
+    return (this.currentPage - 1) * this.itemsPerPage + 1;
+  }
+
+  getPageEnd(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.filteredTickets.length);
+  }
+
+  getPages(): number[] {
+    const pages: number[] = [];
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+    for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   // ══════════════════════════════════════════
-  //  STATS — using real backend status values
+  //  STATS
   // ══════════════════════════════════════════
+
+  get criticalCount(): number {
+    return this.allTickets.filter(t => t.priority === 'CRITICAL').length;
+  }
+
+  get unassignedCount(): number {
+    return this.allTickets.filter(t => !t.assignedToFullName).length;
+  }
 
   get newCount():      number { return this.allTickets.filter(t => t.status === 'NEW').length; }
   get progressCount(): number { return this.allTickets.filter(t => t.status === 'ASSIGNED').length; }
@@ -173,6 +240,77 @@ export class TicketListComponent implements OnInit {
   get resolvedCount(): number { return this.allTickets.filter(t => t.status === 'RESOLVED').length; }
   get closedCount():   number { return this.allTickets.filter(t => t.status === 'CLOSED').length; }
   get slaBreachedCount(): number { return this.allTickets.filter(t => t.slaStatus === 'BREACHED').length; }
+
+  // ══════════════════════════════════════════
+  //  DROPDOWN ACTIONS
+  // ══════════════════════════════════════════
+
+  toggleDropdown(ticketId: number, event: Event): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === ticketId ? null : ticketId;
+  }
+
+  @HostListener('document:click')
+  closeAllDropdowns(): void {
+    this.openDropdownId = null;
+  }
+
+  // ══════════════════════════════════════════
+  //  HELPERS CONFIG (méthodes wrapping les objets config)
+  // ══════════════════════════════════════════
+
+  getPriorityConfig(priority: string): { label: string; icon: string; color: string } {
+    return this.priorityConfig[priority] ?? { label: priority, icon: 'fas fa-question', color: '' };
+  }
+
+  getCategoryConfig(category: string): { label: string; icon: string } {
+    return this.categoryConfig[category] ?? { label: category, icon: 'fas fa-tag' };
+  }
+
+  getStatusLabel(status: string): string {
+    return this.statusConfig[status]?.label ?? status;
+  }
+
+  getSLACellClass(slaStatus?: string): string {
+    return this.getSLAClass(slaStatus);
+  }
+
+  // ══════════════════════════════════════════
+  //  PIÈCES JOINTES
+  // ══════════════════════════════════════════
+
+  getFileIcon(contentType: string | undefined): string {
+    if (!contentType) return 'fas fa-file';
+    if (contentType.startsWith('image/'))       return 'fas fa-file-image';
+    if (contentType === 'application/pdf')       return 'fas fa-file-pdf';
+    if (contentType.includes('word'))            return 'fas fa-file-word';
+    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return 'fas fa-file-excel';
+    if (contentType.includes('zip') || contentType.includes('compressed'))    return 'fas fa-file-archive';
+    if (contentType.startsWith('text/'))         return 'fas fa-file-alt';
+    return 'fas fa-file';
+  }
+
+  formatFileSize(bytes: number | undefined): string {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+  }
+
+  downloadAttachment(ticketId: number, attachmentId: number, fileName: string): void {
+    this.ticketService.downloadAttachment(ticketId, attachmentId).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.showError('Erreur lors du téléchargement')
+    });
+  }
 
   // ══════════════════════════════════════════
   //  MODAL DÉTAILS
@@ -405,7 +543,6 @@ export class TicketListComponent implements OnInit {
               'HIGH': 'priority-high', 'CRITICAL': 'priority-critical' } as any)[priority] || '';
   }
 
-  // ✅ FIX: uses real backend status values
   getStatusClass(status: string): string {
     return ({ 'NEW': 'status-new', 'ASSIGNED': 'status-assigned', 'FEEDBACK': 'status-feedback',
               'RESOLVED': 'status-resolved', 'CLOSED': 'status-closed',

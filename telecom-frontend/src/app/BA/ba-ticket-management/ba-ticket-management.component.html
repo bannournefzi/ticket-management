@@ -337,6 +337,21 @@
             <p>{{ selectedTicket.assignedToFullName }}</p>
           </div>
         </div>
+
+        <!-- Pièces jointes -->
+        <div class="detail-attachments" *ngIf="selectedTicket.attachments && selectedTicket.attachments.length > 0">
+          <label><i class="fas fa-paperclip"></i> Pièces jointes ({{ selectedTicket.attachments.length }})</label>
+          <div class="attachment-list">
+            <div class="attachment-item" *ngFor="let att of selectedTicket.attachments">
+              <i [class]="getFileIcon(att.contentType)"></i>
+              <span class="attachment-name">{{ att.fileName }}</span>
+              <span class="attachment-size">{{ formatFileSize(att.sizeBytes) }}</span>
+              <button class="btn-download" (click)="downloadAttachment(selectedTicket!.id, att.id, att.fileName)" title="Télécharger">
+                <i class="fas fa-download"></i>
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="quick-actions" *ngIf="getAvailableTransitions(selectedTicket).length > 0">
           <label><i class="fas fa-exchange-alt"></i> Actions rapides</label>
           <div class="action-buttons">

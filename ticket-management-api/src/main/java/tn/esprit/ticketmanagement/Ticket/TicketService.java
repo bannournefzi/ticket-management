@@ -6,7 +6,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -536,6 +539,21 @@ public class TicketService {
                     .assignedToEmail(ticket.getAssignedTo().getEmail());
         }
 
+        // Load attachments
+        List<TicketAttachment> attachments = ticketAttachmentRepository.findByTicketId(ticket.getId());
+        if (attachments != null && !attachments.isEmpty()) {
+            List<AttachmentDTO> attachmentDTOs = attachments.stream()
+                    .map(a -> AttachmentDTO.builder()
+                            .id(a.getId())
+                            .fileName(a.getFileName())
+                            .contentType(a.getContentType())
+                            .sizeBytes(a.getSizeBytes())
+                            .uploadedAt(a.getUploadedAt())
+                            .build())
+                    .collect(Collectors.toList());
+            builder.attachments(attachmentDTOs);
+        }
+
         return builder.build();
     }
 
@@ -586,6 +604,30 @@ public class TicketService {
 
         Ticket saved = ticketRepository.save(ticket);
         return convertToDTO(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> getAttachment(Integer ticketId, Long attachmentId) {
+        findTicketOrThrow(ticketId); // Verify ticket exists
+
+        TicketAttachment attachment = ticketAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pièce jointe introuvable"));
+
+        // Verify attachment belongs to this ticket
+        if (!attachment.getTicket().getId().equals(ticketId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette pièce jointe n'appartient pas au ticket");
+        }
+
+        String contentType = attachment.getContentType();
+        if (contentType == null || contentType.isEmpty()) {
+            contentType = "application/octet-stream";
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + attachment.getFileName() + "\"")
+                .body(attachment.getFileData());
     }
 
     @Transactional

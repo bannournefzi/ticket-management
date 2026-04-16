@@ -33,6 +33,15 @@ export interface Ticket {
   tags?: string[];
   commentCount?: number;
   allowedTransitions?: TicketStatus[];
+  attachments?: Attachment[];
+}
+
+export interface Attachment {
+  id: number;
+  fileName: string;
+  contentType?: string;
+  sizeBytes?: number;
+  uploadedAt?: string;
 }
 
 export interface CreateTicketRequest {

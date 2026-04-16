@@ -142,7 +142,13 @@ export class UserListComponent implements OnInit, OnDestroy {
   // -- Filtering --
 
   applyFilters(): void {
-    this.filteredUsers = this.users.filter(user => {
+    const sortedUsers = [...this.users].sort((a, b) => {
+      const dateA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+      const dateB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    this.filteredUsers = sortedUsers.filter(user => {
       const q = this.searchQuery.toLowerCase();
       const matchSearch = !q ||
         user.firstName.toLowerCase().includes(q) ||

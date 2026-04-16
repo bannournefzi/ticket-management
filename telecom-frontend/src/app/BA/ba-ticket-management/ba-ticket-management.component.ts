@@ -30,8 +30,8 @@ export class BaTicketManagementComponent implements OnInit {
   filterPriority = '';
   filterSLA      = '';
 
-  sortColumn    = 'id';
-  sortAscending = true;
+  sortColumn    = 'createdDate';
+  sortAscending = false;
 
   // ── Pagination ────────────────────────────────────────────────────────
   currentPage = 1;
@@ -212,6 +212,11 @@ export class BaTicketManagementComponent implements OnInit {
 
       if (this.sortColumn === 'priority')  { av = this.priorityOrder[av] ?? 9; bv = this.priorityOrder[bv] ?? 9; }
       if (this.sortColumn === 'slaStatus') { av = this.slaOrder[av]      ?? 9; bv = this.slaOrder[bv]      ?? 9; }
+      if (this.sortColumn === 'createdDate' || this.sortColumn === 'dueDate') {
+        const dateA = av ? new Date(av).getTime() : 0;
+        const dateB = bv ? new Date(bv).getTime() : 0;
+        return this.sortAscending ? dateA - dateB : dateB - dateA;
+      }
 
       if (typeof av === 'string' && typeof bv === 'string') {
         return this.sortAscending ? av.localeCompare(bv) : bv.localeCompare(av);
@@ -486,6 +491,39 @@ export class BaTicketManagementComponent implements OnInit {
 
   getCommentRoleLabel(r: string): string {
     return ({ ADMIN: 'Admin', BUSINESS_ANALYST: 'BA', METIER: 'Métier' } as any)[r] ?? r;
+  }
+
+  downloadAttachment(ticketId: number, attachmentId: number, fileName: string): void {
+    this.ticketService.downloadAttachment(ticketId, attachmentId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => this.showError('Erreur lors du téléchargement')
+    });
+  }
+
+  formatFileSize(bytes?: number): string {
+    if (!bytes) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  getFileIcon(contentType?: string): string {
+    if (!contentType) return 'fas fa-file';
+    if (contentType.startsWith('image/')) return 'fas fa-file-image';
+    if (contentType.startsWith('video/')) return 'fas fa-file-video';
+    if (contentType.startsWith('audio/')) return 'fas fa-file-audio';
+    if (contentType.includes('pdf')) return 'fas fa-file-pdf';
+    if (contentType.includes('word') || contentType.includes('document')) return 'fas fa-file-word';
+    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return 'fas fa-file-excel';
+    if (contentType.includes('zip') || contentType.includes('archive')) return 'fas fa-file-archive';
+    return 'fas fa-file';
   }
 
   private showSuccess(msg: string): void { this.successMessage = msg; setTimeout(() => this.successMessage = null, 3000); }

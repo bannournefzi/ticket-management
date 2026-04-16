@@ -176,4 +176,10 @@ uploadAttachments(ticketId: number, files: File[]): Observable<void> {
   files.forEach(f => fd.append('files', f));
   return this.http.post<void>(`${this.baseUrl}/${ticketId}/attachments`, fd);
 }
+
+downloadAttachment(ticketId: number, attachmentId: number): Observable<Blob> {
+  return this.http.get(`${this.baseUrl}/${ticketId}/attachments/${attachmentId}`, {
+    responseType: 'blob'
+  });
+}
 }

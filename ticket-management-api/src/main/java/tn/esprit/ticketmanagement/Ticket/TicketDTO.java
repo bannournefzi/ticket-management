@@ -45,4 +45,6 @@ public class TicketDTO {
 
     private Long mantisId;
     private Long mantisProjectId;
+
+    private List<AttachmentDTO> attachments;
 }
