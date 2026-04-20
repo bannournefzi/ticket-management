@@ -49,8 +49,11 @@ public class AdminService {
         return convertToDTO(user);
     }
     public UserDTO createUser(CreateUserRequest request) {
-        if (request.getUsername() == null || request.getUsername().isBlank()) {
-            throw new IllegalArgumentException("Le nom d'utilisateur est obligatoire");
+        boolean isBA = "ROLE_BUSINESS_ANALYST".equals(request.getRole());
+        
+        // Username is required only for BA role
+        if (isBA && (request.getUsername() == null || request.getUsername().isBlank())) {
+            throw new IllegalArgumentException("Le nom d'utilisateur Mantis est obligatoire pour un Business Analyst");
         }
 
         userRepository.findByEmail(request.getEmail())
@@ -58,11 +61,14 @@ public class AdminService {
                     throw new RuntimeException("Cet email est déjà utilisé");
                 });
 
-         Role role = roleRepository.findByName(request.getRole())
+        Role role = roleRepository.findByName(request.getRole())
                 .orElseThrow(() -> new IllegalArgumentException("Role not found: " + request.getRole()));
 
+        // For BA: use Mantis username; for others: use email as username
+        String username = isBA ? request.getUsername() : request.getEmail();
+
         User user = User.builder()
-                .username(request.getUsername())
+                .username(username)
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())

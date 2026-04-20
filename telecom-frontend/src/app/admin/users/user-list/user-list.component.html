@@ -366,7 +366,7 @@
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group full-width">
+        <div class="form-group full-width" *ngIf="newUser.role === 'ROLE_BUSINESS_ANALYST'">
           <label>Nom d'utilisateur (MantisBT) *</label>
           <select class="form-input" [(ngModel)]="newUser.username" (change)="onUsernameChange()">
             <option value="">-- Sélectionner un utilisateur --</option>
@@ -418,15 +418,15 @@
           <label>Rôle</label>
           <div class="role-selector">
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_ADMIN'">
-              <input type="radio" name="newRole" value="ROLE_ADMIN" [(ngModel)]="newUser.role" />
+              <input type="radio" name="newRole" value="ROLE_ADMIN" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
               <div class="role-card role-admin"><i class="fas fa-crown"></i><span>Admin</span></div>
             </label>
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_BUSINESS_ANALYST'">
-              <input type="radio" name="newRole" value="ROLE_BUSINESS_ANALYST" [(ngModel)]="newUser.role" />
+              <input type="radio" name="newRole" value="ROLE_BUSINESS_ANALYST" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
               <div class="role-card role-it"><i class="fas fa-tools"></i><span>Business Analyst</span></div>
             </label>
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_METIER'">
-              <input type="radio" name="newRole" value="ROLE_METIER" [(ngModel)]="newUser.role" />
+              <input type="radio" name="newRole" value="ROLE_METIER" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
               <div class="role-card role-metier"><i class="fas fa-briefcase"></i><span>Métier</span></div>
             </label>
           </div>

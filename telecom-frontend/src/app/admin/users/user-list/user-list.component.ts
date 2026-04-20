@@ -291,6 +291,12 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.isCreateModalOpen = false;
   }
 
+  onRoleChange(): void {
+    if (this.newUser.role !== 'ROLE_BUSINESS_ANALYST') {
+      this.newUser.username = '';
+    }
+  }
+
   generatePassword(): void {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%';
     this.newUser.password = Array.from({ length: 12 }, () =>
@@ -318,10 +324,16 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   createUser(): void {
-    if (!this.newUser.username || !this.newUser.firstName || !this.newUser.lastName || !this.newUser.email || !this.newUser.password) {
-      this.showError('Veuillez remplir tous les champs obligatoires');
-      return;
-    }
+   if (
+  !this.newUser.firstName ||
+  !this.newUser.lastName ||
+  !this.newUser.email ||
+  !this.newUser.password ||
+  (this.newUser.role === 'ROLE_BUSINESS_ANALYST' && !this.newUser.username)
+) {
+  this.showError('Veuillez remplir tous les champs obligatoires');
+  return;
+}
 
     this.adminService.createUser(this.newUser)
       .pipe(takeUntil(this.destroy$))
