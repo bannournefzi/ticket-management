@@ -499,7 +499,7 @@ export class BaTicketManagementComponent implements OnInit {
   getInitial(n: string): string { return n ? n.charAt(0).toUpperCase() : '?'; }
 
   getCommentRoleLabel(r: string): string {
-    return ({ ADMIN: 'Admin', BUSINESS_ANALYST: 'BA', METIER: 'Métier' } as any)[r] ?? r;
+    return ({ ADMIN: 'Admin', BUSINESS_ANALYST: 'BA', USER: 'Utilisateur' } as any)[r] ?? r;
   }
 
   downloadAttachment(ticketId: number, attachmentId: number, fileName: string): void {

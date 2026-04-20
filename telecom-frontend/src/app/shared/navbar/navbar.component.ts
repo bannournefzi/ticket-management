@@ -28,7 +28,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   userName = '';
   isAdmin = false;
   isIT = false;
-  isMetier = false;
+  isUser = false;
   isDropdownOpen = false;
   isNotificationsOpen = false;
   avatarPhoto: string | null = null;
@@ -49,7 +49,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.userName = this.authService.getFullName() || 'Utilisateur';
     this.isAdmin = this.authService.isAdmin();
     this.isIT = this.authService.isBusinessAnalyst();
-    this.isMetier = this.authService.isMetier();
+    this.isUser = this.authService.isUser();
     this.loadAvatar();
     this.initNotifications();
   }
@@ -138,7 +138,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   getUserRole(): string {
     if (this.isAdmin) return 'Admin';
     if (this.isIT) return 'Business Analyst';
-    if (this.isMetier) return 'Métier';
+    if (this.isUser) return 'Utilisateur';
     return 'Utilisateur';
   }
 

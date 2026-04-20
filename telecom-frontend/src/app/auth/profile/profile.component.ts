@@ -307,15 +307,15 @@ export class ProfileComponent implements OnInit {
   }
 
   getRoleLabel(r: string): string {
-    return ({ ROLE_ADMIN: 'Administrateur', ROLE_BUSINESS_ANALYST: 'Business Analyst', ROLE_METIER: 'Métier' } as any)[r] || 'Utilisateur';
+    return ({ ROLE_ADMIN: 'Administrateur', ROLE_BUSINESS_ANALYST: 'Business Analyst', ROLE_USER: 'Utilisateur' } as any)[r] || 'Utilisateur';
   }
 
   getRoleColor(r: string): string {
-    return ({ ROLE_ADMIN: '#374151', ROLE_BUSINESS_ANALYST: '#2563eb', ROLE_METIER: '#059669' } as any)[r] || '#6b7280';
+    return ({ ROLE_ADMIN: '#374151', ROLE_BUSINESS_ANALYST: '#2563eb', ROLE_USER: '#059669' } as any)[r] || '#6b7280';
   }
 
   getRoleBadgeClass(): string {
-    return ({ ROLE_ADMIN: 'badge-admin', ROLE_BUSINESS_ANALYST: 'badge-ba', ROLE_METIER: 'badge-metier' } as any)[this.role] || '';
+    return ({ ROLE_ADMIN: 'badge-admin', ROLE_BUSINESS_ANALYST: 'badge-ba', ROLE_USER: 'badge-user' } as any)[this.role] || '';
   }
 
   hasUpperCase(v: string): boolean   { return /[A-Z]/.test(v || ''); }

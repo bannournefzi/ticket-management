@@ -51,6 +51,17 @@ $shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
   margin: 0;
   letter-spacing: -0.4px;
 }
+.badge-operationnel {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.role-operationnel {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
 
 .breadcrumb {
   display: flex;
@@ -307,7 +318,7 @@ $shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
 
   &.avatar-admin { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
   &.avatar-it { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
-  &.avatar-metier { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+  &.avatar-user { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
 }
 
 .avatar-photo {
@@ -348,7 +359,7 @@ $shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
 
   &.badge-admin { background: $accent-lt; color: $accent; }
   &.badge-it { background: $blue-lt; color: #1d4ed8; }
-  &.badge-metier { background: $orange-lt; color: #b45309; }
+  &.badge-user { background: $orange-lt; color: #b45309; }
   &.badge-default { background: $gray-lt; color: $gray; }
 }
 
@@ -576,7 +587,7 @@ $shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
 
   &.avatar-admin { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
   &.avatar-it { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
-  &.avatar-metier { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+  &.avatar-user { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
 }
 
 .avatar-photo {
@@ -691,7 +702,7 @@ select.form-input {
 
   &.role-admin { i { color: $accent; } }
   &.role-it { i { color: $blue; } }
-  &.role-metier { i { color: $orange; } }
+  &.role-user { i { color: $orange; } }
 }
 
 .role-option.selected .role-card {

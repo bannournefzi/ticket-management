@@ -1,6 +1,6 @@
 # AGENTS.md — telecom-frontend + ticket-management-api
 
-Monorepo: Angular 16.2 frontend + Spring Boot 3.3.5 (Java 17) backend. Roles: `ROLE_ADMIN`, `ROLE_BUSINESS_ANALYST`, `ROLE_METIER`.
+Monorepo: Angular 16.2 frontend + Spring Boot 3.3.5 (Java 17) backend. Roles: `ROLE_ADMIN`, `ROLE_BUSINESS_ANALYST`, `ROLE_USER`.
 
 ## Commands
 

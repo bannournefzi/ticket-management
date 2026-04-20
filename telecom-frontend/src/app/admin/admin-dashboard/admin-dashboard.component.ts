@@ -209,14 +209,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   getRoleBadge(roles: string[]): string {
     if (roles.includes('ROLE_ADMIN')) return 'Admin';
     if (roles.includes('ROLE_BUSINESS_ANALYST')) return 'Business Analyst';
-    if (roles.includes('ROLE_METIER')) return 'Métier';
+    if (roles.includes('ROLE_USER')) return 'Utilisateur';
     return 'User';
   }
 
   getRoleClass(roles: string[]): string {
     if (roles.includes('ROLE_ADMIN')) return 'role-admin';
     if (roles.includes('ROLE_BUSINESS_ANALYST')) return 'role-ba';
-    if (roles.includes('ROLE_METIER')) return 'role-metier';
+    if (roles.includes('ROLE_USER')) return 'role-user';
     return 'role-default';
   }
 

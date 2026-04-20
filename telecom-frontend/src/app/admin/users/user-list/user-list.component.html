@@ -34,9 +34,9 @@
         <span class="stat-lbl">IT</span>
       </div>
       <div class="header-stat stat-metier">
-        <span class="stat-val">{{ stats.metierCount }}</span>
-        <span class="stat-lbl">Métier</span>
-      </div>
+  <span class="stat-val">{{ stats.metierCount }}</span>
+  <span class="stat-lbl">User</span>
+</div>
     </div>
   </div>
 
@@ -72,7 +72,7 @@
           <option value="">Tous les rôles</option>
           <option value="ROLE_ADMIN">Admin</option>
           <option value="ROLE_BUSINESS_ANALYST">Business Analyst</option>
-          <option value="ROLE_METIER">Métier</option>
+<option value="ROLE_USER">User</option>
         </select>
         <select class="filter-select" [(ngModel)]="selectedStatus" (change)="applyFilters()" aria-label="Filtrer par statut">
           <option value="">Tous les statuts</option>
@@ -122,7 +122,8 @@
                 <div class="user-avatar" [ngClass]="{
                   'avatar-admin': user.roles.includes('ROLE_ADMIN'),
                   'avatar-it': user.roles.includes('ROLE_BUSINESS_ANALYST'),
-                  'avatar-metier': user.roles.includes('ROLE_METIER')
+                  'avatar-user': user.roles.includes('ROLE_USER')
+
                 }">
                   <img *ngIf="getPhotoUrl(user.id)" [src]="getPhotoUrl(user.id)" class="avatar-photo" alt="" />
                   <span *ngIf="!getPhotoUrl(user.id)">{{ getInitials(user.firstName, user.lastName) }}</span>
@@ -225,7 +226,7 @@
       <div class="modal-avatar" [ngClass]="{
         'avatar-admin': viewedUser.roles.includes('ROLE_ADMIN'),
         'avatar-it': viewedUser.roles.includes('ROLE_BUSINESS_ANALYST'),
-        'avatar-metier': viewedUser.roles.includes('ROLE_METIER')
+        'avatar-user': viewedUser.roles.includes('ROLE_USER')
       }">
         {{ getInitials(viewedUser.firstName, viewedUser.lastName) }}
       </div>
@@ -296,7 +297,7 @@
       <div class="modal-avatar" [ngClass]="{
         'avatar-admin': editedUser.roles.includes('ROLE_ADMIN'),
         'avatar-it': editedUser.roles.includes('ROLE_BUSINESS_ANALYST'),
-        'avatar-metier': editedUser.roles.includes('ROLE_METIER')
+        'avatar-user': editedUser.roles.includes('ROLE_USER')
       }">
         <img *ngIf="getPhotoUrl(editedUser.id)" [src]="getPhotoUrl(editedUser.id)" class="avatar-photo" alt="" />
         <span *ngIf="!getPhotoUrl(editedUser.id)">{{ getInitials(editedUser.firstName, editedUser.lastName) }}</span>
@@ -340,10 +341,11 @@
               <input type="radio" name="editRole" value="ROLE_BUSINESS_ANALYST" [(ngModel)]="editedRole" />
               <div class="role-card role-it"><i class="fas fa-tools"></i><span>Business Analyst</span></div>
             </label>
-            <label class="role-option" [class.selected]="editedRole === 'ROLE_METIER'">
-              <input type="radio" name="editRole" value="ROLE_METIER" [(ngModel)]="editedRole" />
-              <div class="role-card role-metier"><i class="fas fa-briefcase"></i><span>Métier</span></div>
-            </label>
+            <label class="role-option" [class.selected]="editedRole === 'ROLE_USER'">
+  <input type="radio" name="editRole" value="ROLE_USER" [(ngModel)]="editedRole" />
+  <div class="role-card role-user"><i class="fas fa-user"></i><span>User</span></div>
+</label>
+
           </div>
         </div>
       </div>
@@ -425,10 +427,11 @@
               <input type="radio" name="newRole" value="ROLE_BUSINESS_ANALYST" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
               <div class="role-card role-it"><i class="fas fa-tools"></i><span>Business Analyst</span></div>
             </label>
-            <label class="role-option" [class.selected]="newUser.role === 'ROLE_METIER'">
-              <input type="radio" name="newRole" value="ROLE_METIER" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
-              <div class="role-card role-metier"><i class="fas fa-briefcase"></i><span>Métier</span></div>
-            </label>
+            <label class="role-option" [class.selected]="newUser.role === 'ROLE_USER'">
+  <input type="radio" name="newRole" value="ROLE_USER" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
+  <div class="role-card role-user"><i class="fas fa-user"></i><span>User</span></div>
+</label>
+
           </div>
         </div>
       </div>

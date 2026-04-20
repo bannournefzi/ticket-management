@@ -384,7 +384,7 @@ export class TicketListComponent implements OnInit {
   }
 
   getCommentRoleLabel(role: string): string {
-    return ({ 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'METIER': 'Métier' } as any)[role] || role;
+    return ({ 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'USER': 'Utilisateur' } as any)[role] || role;
   }
 
   getInitial(name: string): string {
@@ -577,7 +577,7 @@ export class TicketListComponent implements OnInit {
   }
 
   isUserMetier(): boolean {
-    return this.authService.isMetier();
+    return this.authService.isUser();
   }
 
   get isCommentsEnabled(): boolean {

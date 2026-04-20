@@ -11,7 +11,8 @@ public class UserStatsDTO {
     private long totalUsers;
     private long activeUsers;
     private long inactiveUsers;
-    private long metierCount;
+    private long userCount;
+    private long operationnelCount;
     private long itCount;
     private long adminCount;
 }

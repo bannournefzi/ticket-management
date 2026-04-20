@@ -25,13 +25,13 @@ public class CommentService {
 
         // Un utilisateur Métier ne peut pas créer de note interne
         boolean isInternal = Boolean.TRUE.equals(request.getInternalNote());
-        if (isInternal && currentUser.isMetier()) {
+        if (isInternal && currentUser.isUser()) {
             throw new IllegalArgumentException("Les notes internes ne sont pas disponibles pour les utilisateurs Métier");
         }
 
         // Vérifier si les commentaires sont désactivés pour les utilisateurs Métier
         boolean commentsEnabled = ticket.getCommentsEnabled() != null ? ticket.getCommentsEnabled() : true;
-        if (!commentsEnabled && currentUser.isMetier()) {
+        if (!commentsEnabled && currentUser.isUser()) {
             throw new IllegalArgumentException("Les commentaires sont désactivés pour les utilisateurs Métier sur ce ticket");
         }
 
@@ -54,7 +54,7 @@ public class CommentService {
     public List<CommentDTO> getCommentsByTicket(Integer ticketId, User currentUser) {
         List<Comment> comments;
 
-        if (currentUser.isMetier()) {
+        if (currentUser.isUser()) {
             // Métier ne voit pas les notes internes
             comments = commentRepository.findByTicketIdAndInternalNoteFalseOrderByCreatedDateAsc(ticketId);
         } else {
@@ -96,7 +96,7 @@ public class CommentService {
         String role = "UTILISATEUR";
         if (comment.getAuthor().isAdmin()) role = "ADMIN";
         else if (comment.getAuthor().isIT()) role = "BUSINESS_ANALYST";
-        else if (comment.getAuthor().isMetier()) role = "METIER";
+        else if (comment.getAuthor().isUser() || comment.getAuthor().isOperationnel()) role = "USER";
 
         return CommentDTO.builder()
                 .id(comment.getId())

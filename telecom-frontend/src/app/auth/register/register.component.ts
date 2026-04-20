@@ -44,7 +44,7 @@ export class RegisterComponent implements OnInit {
       smsNotifications: [false],
       acceptTerms: [false, Validators.requiredTrue],
       acceptMarketing: [false],
-      role: ['ROLE_METIER', Validators.required],
+      role: ['ROLE_USER', Validators.required],
     }, { validators: this.matchPasswords });
   }
 

@@ -52,8 +52,8 @@ public class AuthenticationService {
 
     public void register(RegistrationRequest request) throws MessagingException {
 
-        // ✅ Utiliser le rôle envoyé depuis le frontend (ou ROLE_METIER par défaut)
-        String roleName = request.getRole() != null ? request.getRole() : "ROLE_METIER";
+        // Default to ROLE_USER if no role provided
+        String roleName = request.getRole() != null ? request.getRole() : "ROLE_USER";
 
         var userRole = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new IllegalArgumentException(roleName + " not found"));

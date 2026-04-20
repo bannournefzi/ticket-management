@@ -117,8 +117,12 @@ public class User implements UserDetails, Principal {
         return hasRole("ROLE_BUSINESS_ANALYST");
     }
 
-    public boolean isMetier() {
-        return hasRole("ROLE_METIER");
+    public boolean isUser() {
+        return hasRole("ROLE_USER");
+    }
+
+    public boolean isOperationnel() {
+        return hasRole("ROLE_OPERATIONNEL");
     }
 
     @Transient

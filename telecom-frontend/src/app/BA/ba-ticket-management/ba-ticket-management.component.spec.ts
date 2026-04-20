@@ -442,7 +442,7 @@ export class BaTicketManagementComponent implements OnInit {
   getInitial(n: string): string { return n ? n.charAt(0).toUpperCase() : '?'; }
 
   getCommentRoleLabel(r: string): string {
-    return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'METIER': 'Métier' }[r] || r;
+    return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'USER': 'Utilisateur' }[r] || r;
   }
 
   private showSuccess(msg: string): void { this.successMessage = msg; setTimeout(() => this.successMessage = null, 3000); }

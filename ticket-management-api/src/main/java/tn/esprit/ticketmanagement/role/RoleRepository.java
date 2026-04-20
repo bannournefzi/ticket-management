@@ -1,7 +1,6 @@
 package tn.esprit.ticketmanagement.role;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Optional;
 

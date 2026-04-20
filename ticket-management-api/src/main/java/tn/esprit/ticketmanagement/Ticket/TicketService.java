@@ -56,7 +56,7 @@ public class TicketService {
     // ══════════════════════════════════════════
 
     public TicketDTO createTicket(CreateTicketRequest request, User currentUser) {
-        boolean isMetier = currentUser.isMetier();
+        boolean isMetier = currentUser.isUser();
 
         Ticket ticket = Ticket.builder()
                 .title(request.getTitle().trim())
@@ -108,7 +108,7 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public Page<TicketDTO> getMyTickets(User currentUser, Pageable pageable) {
-        if (currentUser.isMetier()) {
+        if (currentUser.isUser()) {
             // Métier sees only their own tickets
             return ticketRepository.findByCreatorId(currentUser.getId(), pageable)
                     .map(this::convertToDTO);
@@ -131,7 +131,7 @@ public class TicketService {
     public List<TicketDTO> getMyTicketsAsList(User currentUser) {
         List<Ticket> tickets;
 
-        if (currentUser.isMetier()) {
+        if (currentUser.isUser()) {
             // Métier: only tickets they created
             tickets = ticketRepository.findByCreatorId(currentUser.getId());
             log.info("Métier {} fetching their own {} tickets",

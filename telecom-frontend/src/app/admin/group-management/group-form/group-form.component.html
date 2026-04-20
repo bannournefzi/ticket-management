@@ -1,0 +1,94 @@
+<div class="form-page-container">
+
+  <div class="page-header">
+    <button class="btn-back" (click)="cancel()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <div class="header-icon">
+      <i class="fas fa-layer-group"></i>
+    </div>
+    <div>
+      <h1 class="page-title">{{ isEditMode ? 'Modifier le groupe' : 'Nouveau groupe' }}</h1>
+      <p class="breadcrumb">
+        <span>Admin</span>
+        <i class="fas fa-chevron-right"></i>
+        <span>Groupes</span>
+        <i class="fas fa-chevron-right"></i>
+        <span>{{ isEditMode ? 'Modifier' : 'Créer' }}</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ errorMessage }}</span>
+    <button (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">
+      <h2><i class="fas fa-info-circle"></i> Informations du groupe</h2>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loader"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" *ngIf="!isLoading">
+      <div class="form-body">
+
+        <!-- Name -->
+        <div class="form-group" [class.error]="nameCtrl.invalid && nameCtrl.touched">
+          <label class="form-label">
+            <i class="fas fa-tag"></i> Nom du groupe *
+          </label>
+          <input type="text" class="form-input" formControlName="name"
+                 placeholder="Ex: Équipe Support Lyon" />
+          <div class="form-error" *ngIf="nameCtrl.touched && nameCtrl.errors">
+            <span *ngIf="nameCtrl.errors?.['required']">Le nom est obligatoire</span>
+            <span *ngIf="nameCtrl.errors?.['minlength']">Minimum 3 caractères</span>
+            <span *ngIf="nameCtrl.errors?.['maxlength']">Maximum 50 caractères</span>
+          </div>
+          <div class="char-count">{{ nameCtrl.value?.length || 0 }}/50</div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group" [class.error]="descCtrl.invalid && descCtrl.touched">
+          <label class="form-label">
+            <i class="fas fa-align-left"></i> Description
+          </label>
+          <textarea class="form-input form-textarea" formControlName="description"
+                    placeholder="Décrivez le rôle et les responsabilités de ce groupe..."
+                    rows="4"></textarea>
+          <div class="form-error" *ngIf="descCtrl.touched && descCtrl.errors">
+            <span *ngIf="descCtrl.errors?.['maxlength']">Maximum 200 caractères</span>
+          </div>
+          <div class="char-count">{{ descCtrl.value?.length || 0 }}/200</div>
+        </div>
+
+        <!-- Info box -->
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>Prochaine étape</strong>
+            <p>Après la création du groupe, vous pourrez y ajouter des utilisateurs (User et Opérationnel).</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn-cancel" (click)="cancel()">
+          <i class="fas fa-times"></i> Annuler
+        </button>
+        <button type="submit" class="btn-save" [disabled]="isSaving">
+          <i class="fas fa-spin fa-spinner" *ngIf="isSaving"></i>
+          <i class="fas fa-check" *ngIf="!isSaving"></i>
+          {{ isSaving ? 'Enregistrement...' : (isEditMode ? 'Enregistrer' : 'Créer le groupe') }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>

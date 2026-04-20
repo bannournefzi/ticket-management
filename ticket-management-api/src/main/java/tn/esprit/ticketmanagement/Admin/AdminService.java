@@ -1,6 +1,7 @@
 package tn.esprit.ticketmanagement.Admin;
 
 import jakarta.mail.MessagingException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,10 +14,12 @@ import tn.esprit.ticketmanagement.Notification.NotificationType;
 import tn.esprit.ticketmanagement.Notification.PlatformNotificationService;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 import tn.esprit.ticketmanagement.User.entity.User;
+import tn.esprit.ticketmanagement.User.repository.TokenRepository;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.auth.service.Emailservice;
 import tn.esprit.ticketmanagement.role.Role;
 import tn.esprit.ticketmanagement.role.RoleRepository;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +37,8 @@ public class AdminService {
     private final PasswordEncoder passwordEncoder;
     private final PlatformNotificationService platformNotificationService;
     private final Emailservice emailService;
+    private final TokenRepository tokenRepository;
+
 
 
     public List<UserDTO> getAllUsers() {
@@ -172,12 +177,15 @@ public class AdminService {
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
-
+    @Transactional
     public void deleteUser(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Clear relationships that might cause constraint violations
+        // ✅ Supprimer les tokens en premier
+        tokenRepository.deleteAllByUser(user);
+
+        // Clear les autres relations
         user.getRoles().clear();
         user.getChatsAsSender().clear();
         user.getChatsAsRecipient().clear();
@@ -191,7 +199,8 @@ public class AdminService {
         long activeUsers = userRepository.countByEnabled(true);
         long inactiveUsers = userRepository.countByEnabled(false);
 
-        long metierCount = userRepository.countByRoleName("ROLE_METIER");
+        long userCount = userRepository.countByRoleName("ROLE_USER");
+        long operationnelCount = userRepository.countByRoleName("ROLE_OPERATIONNEL");
         long itCount = userRepository.countByRoleName("ROLE_BUSINESS_ANALYST");
         long adminCount = userRepository.countByRoleName("ROLE_ADMIN");
 
@@ -199,7 +208,8 @@ public class AdminService {
                 .totalUsers(totalUsers)
                 .activeUsers(activeUsers)
                 .inactiveUsers(inactiveUsers)
-                .metierCount(metierCount)
+                .userCount(userCount)
+                .operationnelCount(operationnelCount)
                 .itCount(itCount)
                 .adminCount(adminCount)
                 .build();

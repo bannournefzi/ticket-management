@@ -19,6 +19,9 @@ import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.co
 import { BaSettingsComponent } from './BA/settings/settings.component';
 import { KnowledgeBaseListComponent } from './Metier/knowledge-base/knowledge-base-list/knowledge-base-list.component';
 import { KnowledgeBaseDetailComponent } from './Metier/knowledge-base/knowledge-base-detail/knowledge-base-detail.component';
+import { GroupListComponent } from './admin/group-management/group-list/group-list.component';
+import { GroupFormComponent } from './admin/group-management/group-form/group-form.component';
+import { GroupDetailComponent } from './admin/group-management/group-detail/group-detail.component';
 
 const routes: Routes = [
   // Public routes (no layout)
@@ -30,28 +33,31 @@ const routes: Routes = [
   { path: 'settings', component: BaSettingsComponent},
   
 
-  // Protected routes (with sidebar + navbar via MainLayoutComponent)
   {
     path: '', component: MainLayoutComponent, children: [
 
-      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
-      { path: 'create-ticket', component: CreateTicketComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
-      { path: 'my-tickets', component: TicketListComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
-      { path: 'knowledge-base', component: KnowledgeBaseListComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_METIER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
-      { path: 'knowledge-base/:id', component: KnowledgeBaseDetailComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_METIER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
+      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+      { path: 'create-ticket', component: CreateTicketComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+      { path: 'my-tickets', component: TicketListComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+      { path: 'knowledge-base', component: KnowledgeBaseListComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
+      { path: 'knowledge-base/:id', component: KnowledgeBaseDetailComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
       { path: 'business-analyst/tickets', component: BaTicketManagementComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'business-analyst', component: ItDashboardComponentComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'ticket-calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
-      { path: 'metier/calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
+      { path: 'metier/calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
       { path: 'business-analyst/settings', component: BaSettingsComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
-      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_METIER' } },
+      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
 
 
       {
         path: 'admin', canActivate: [RoleGuard], data: { role: 'ROLE_ADMIN' },
         children: [
           { path: '', component: AdminDashboardComponent, pathMatch: 'full' },
-          { path: 'users', component: UserListComponent }
+          { path: 'users', component: UserListComponent },
+          { path: 'groups', component: GroupListComponent },
+          { path: 'groups/create', component: GroupFormComponent },        // ← ADD
+          { path: 'groups/:id', component: GroupDetailComponent },         // ← ADD
+          { path: 'groups/:id/edit', component: GroupFormComponent },
         ]
       },
       {
@@ -60,12 +66,11 @@ const routes: Routes = [
           import('../app/websocket/main-component/main-component.component').then(m => m.MainComponent)
       },
 
-      // ✅ Profile est DANS le layout → sidebar + navbar visibles
       {
         path: 'profile',
         component: ProfileComponent,
         canActivate: [RoleGuard],
-        data: { roles: ['ROLE_ADMIN', 'ROLE_BUSINESS_ANALYST', 'ROLE_METIER'] }
+        data: { roles: ['ROLE_ADMIN', 'ROLE_BUSINESS_ANALYST', 'ROLE_USER'] }
       },
 
       { path: '', redirectTo: '/login', pathMatch: 'full' }

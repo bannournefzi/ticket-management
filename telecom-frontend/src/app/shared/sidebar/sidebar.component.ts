@@ -10,7 +10,7 @@ import { TicketStats } from '../../models/ticket.model';
 })
 export class SidebarComponent implements OnInit {
 
-  isMetier = false;
+  isUser = false;
   isIT = false;
   isAdmin = false;
   isCollapsed = false;
@@ -26,7 +26,7 @@ export class SidebarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isMetier = this.authService.isMetier();
+    this.isUser = this.authService.isUser();
     this.isIT = this.authService.isBusinessAnalyst();
     this.isAdmin = this.authService.isAdmin();
 
@@ -54,14 +54,14 @@ export class SidebarComponent implements OnInit {
   getMenuTitle(): string {
     if (this.isAdmin) return 'Administration';
     if (this.isIT) return 'Business Analyst';
-    if (this.isMetier) return 'Espace Métier';
+    if (this.isUser) return 'Espace Utilisateur';
     return 'Menu';
   }
 
   getRoleIcon(): string {
     if (this.isAdmin) return 'fas fa-shield-alt';
     if (this.isIT) return 'fas fa-laptop-code';
-    if (this.isMetier) return 'fas fa-briefcase';
+    if (this.isUser) return 'fas fa-user';
     return 'fas fa-user';
   }
 

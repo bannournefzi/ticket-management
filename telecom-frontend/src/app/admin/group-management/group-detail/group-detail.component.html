@@ -1,0 +1,226 @@
+<div class="detail-container">
+
+  <!-- ====== HEADER ====== -->
+  <div class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <div class="header-info" *ngIf="group">
+      <div class="group-icon-lg">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <h1 class="page-title">{{ group.name }}</h1>
+        <p class="group-desc">{{ group.description || 'Aucune description' }}</p>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="group">
+      <div class="group-stat">
+        <i class="fas fa-users"></i>
+        <span>{{ group.members?.length || 0 }} membre(s)</span>
+      </div>
+      <button class="btn-edit" (click)="goToEdit()">
+        <i class="fas fa-edit"></i> Modifier
+      </button>
+      <button class="btn-add-member" (click)="openAddModal()">
+        <i class="fas fa-user-plus"></i> Ajouter
+      </button>
+    </div>
+  </div>
+
+  <!-- ====== ALERTS ====== -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i><span>{{ successMessage }}</span>
+    <button (click)="successMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i><span>{{ errorMessage }}</span>
+    <button (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ====== LOADING ====== -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loader"></div>
+    <p>Chargement du groupe...</p>
+  </div>
+
+  <!-- ====== MAIN CONTENT ====== -->
+  <div class="content-grid" *ngIf="!isLoading && group">
+
+    <!-- Group Info Card -->
+    <div class="info-card">
+      <div class="card-header">
+        <h3><i class="fas fa-info-circle"></i> Informations</h3>
+      </div>
+      <div class="info-list">
+        <div class="info-row">
+          <span class="info-label"><i class="fas fa-tag"></i> Nom</span>
+          <span class="info-val">{{ group.name }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="fas fa-align-left"></i> Description</span>
+          <span class="info-val">{{ group.description || '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="fas fa-user-shield"></i> Créé par</span>
+          <span class="info-val">{{ group.createdBy }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="fas fa-calendar"></i> Date</span>
+          <span class="info-val">{{ group.createdDate | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="fas fa-users"></i> Membres</span>
+          <span class="info-val highlight">{{ group.members?.length || 0 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Members Card -->
+    <div class="members-card">
+      <div class="card-header">
+        <h3><i class="fas fa-users"></i> Membres du groupe</h3>
+        <div class="header-right">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher..." [(ngModel)]="searchMembers" />
+          </div>
+          <button class="btn-add-sm" (click)="openAddModal()">
+            <i class="fas fa-plus"></i> Ajouter
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty members -->
+      <div class="empty-members" *ngIf="!group.members || group.members.length === 0">
+        <i class="fas fa-user-slash"></i>
+        <p>Aucun membre dans ce groupe</p>
+        <button class="btn-add-member" (click)="openAddModal()">
+          <i class="fas fa-user-plus"></i> Ajouter des membres
+        </button>
+      </div>
+
+      <!-- Members list -->
+      <div class="members-list" *ngIf="group.members && group.members.length > 0">
+        <div class="member-row" *ngFor="let member of filteredMembers"
+             [class.confirm-mode]="removeConfirmUserId === member.id">
+
+          <div class="member-left">
+            <div class="member-avatar">{{ getInitials(member.fullName) }}</div>
+            <div class="member-info">
+              <span class="member-name">{{ member.fullName }}</span>
+              <span class="member-email">{{ member.email }}</span>
+            </div>
+          </div>
+
+          <div class="member-right">
+            <div class="role-badges">
+              <span class="role-badge" *ngFor="let role of member.roles"
+                    [ngClass]="getRoleBadgeClass(role)">
+                {{ getRoleLabel(role) }}
+              </span>
+            </div>
+
+            <!-- Normal state -->
+            <button class="btn-remove" *ngIf="removeConfirmUserId !== member.id"
+                    (click)="confirmRemove(member.id)" title="Retirer">
+              <i class="fas fa-user-minus"></i>
+            </button>
+
+            <!-- Confirm state -->
+            <div class="confirm-actions" *ngIf="removeConfirmUserId === member.id">
+              <span class="confirm-text">Retirer ?</span>
+              <button class="btn-confirm-yes" (click)="removeMember(member.id)">
+                <i class="fas fa-check"></i>
+              </button>
+              <button class="btn-confirm-no" (click)="cancelRemove()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== ADD MEMBERS MODAL ====== -->
+<div class="modal-overlay" *ngIf="isModalOpen" (click)="closeModal()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fas fa-user-plus"></i>
+        <h2>Ajouter des membres</h2>
+        <span class="selected-badge" *ngIf="selectedUserIds.size > 0">
+          {{ selectedUserIds.size }} sélectionné(s)
+        </span>
+      </div>
+      <button class="modal-close" (click)="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-search-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Rechercher un utilisateur..."
+               [(ngModel)]="searchAvailable" (input)="applyAvailableFilter()" />
+      </div>
+     <select class="role-filter" [(ngModel)]="roleFilter" (change)="applyAvailableFilter()">
+  <option value="">Tous les rôles</option>
+  <option value="ROLE_USER">User</option>
+  <option value="ROLE_ADMIN">Admin</option>
+  <option value="ROLE_BUSINESS_ANALYST">Business Analyst</option>
+</select>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="empty-available" *ngIf="filteredAvailable.length === 0">
+        <i class="fas fa-user-check"></i>
+        <p>Tous les utilisateurs disponibles sont déjà membres</p>
+      </div>
+
+      <div class="available-list" *ngIf="filteredAvailable.length > 0">
+        <div class="available-item" *ngFor="let user of filteredAvailable"
+             [class.selected]="isSelected(user.id)"
+             (click)="toggleSelect(user.id)">
+
+          <div class="check-box" [class.checked]="isSelected(user.id)">
+            <i class="fas fa-check" *ngIf="isSelected(user.id)"></i>
+          </div>
+
+          <div class="user-avatar">{{ getInitials(user.fullName) }}</div>
+
+          <div class="user-info">
+            <span class="user-name">{{ user.fullName }}</span>
+            <span class="user-email">{{ user.email }}</span>
+          </div>
+
+          <div class="user-roles">
+            <span class="role-badge" *ngFor="let role of user.roles"
+                  [ngClass]="getRoleBadgeClass(role)">
+              {{ getRoleLabel(role) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <span class="available-count">{{ filteredAvailable.length }} utilisateur(s) disponible(s)</span>
+      <div class="footer-actions">
+        <button class="btn-cancel" (click)="closeModal()">
+          <i class="fas fa-times"></i> Annuler
+        </button>
+        <button class="btn-save" (click)="addSelectedMembers()"
+                [disabled]="selectedUserIds.size === 0 || isAdding">
+          <i class="fas fa-spin fa-spinner" *ngIf="isAdding"></i>
+          <i class="fas fa-user-plus" *ngIf="!isAdding"></i>
+          {{ isAdding ? 'Ajout...' : 'Ajouter (' + selectedUserIds.size + ')' }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

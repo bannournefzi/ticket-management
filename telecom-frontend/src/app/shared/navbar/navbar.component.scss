@@ -26,6 +26,7 @@ $danger: #dc2626;
   z-index: 100;
 }
 
+
 // ============================================
 // LEFT
 // ============================================
@@ -376,6 +377,20 @@ $danger: #dc2626;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
 }
 
 .user-panel-role {

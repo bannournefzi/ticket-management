@@ -45,6 +45,9 @@ import { BaSettingsComponent } from './BA/settings/settings.component';
 import { KnowledgeBaseListComponent } from './Metier/knowledge-base/knowledge-base-list/knowledge-base-list.component';
 import { KnowledgeBaseDetailComponent } from './Metier/knowledge-base/knowledge-base-detail/knowledge-base-detail.component';
 import { CommonModule } from '@angular/common';
+import { GroupListComponent } from './admin/group-management/group-list/group-list.component';
+import { GroupFormComponent } from './admin/group-management/group-form/group-form.component';
+import { GroupDetailComponent } from './admin/group-management/group-detail/group-detail.component';
 
 
 @NgModule({
@@ -73,6 +76,9 @@ import { CommonModule } from '@angular/common';
     BaSettingsComponent,
     KnowledgeBaseListComponent,
     KnowledgeBaseDetailComponent,
+    GroupListComponent,
+    GroupFormComponent,
+    GroupDetailComponent,
     
   ],
   imports: [

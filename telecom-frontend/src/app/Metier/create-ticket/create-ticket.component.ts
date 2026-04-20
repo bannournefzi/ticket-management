@@ -352,7 +352,7 @@ resetForm(): void {
 
   canDeleteComment(c: TicketComment): boolean { return c.authorId === this.currentUserId; }
   getInitial(n: string): string { return n ? n.charAt(0).toUpperCase() : '?'; }
-  getCommentRoleLabel(r: string): string { return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'METIER': 'Métier' }[r] || r; }
+  getCommentRoleLabel(r: string): string { return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'USER': 'Utilisateur' }[r] || r; }
   closeViewModal(): void { this.isViewModalOpen = false; this.viewedTicket = null; this.ticketHistory = []; }
 
   loadHistory(id: number): void {

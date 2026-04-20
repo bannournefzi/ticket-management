@@ -69,7 +69,8 @@ public class ChatbotService {
         // ── Role counts ──────────────────────────────────────────────────────
         long totalUsers  = allUsers.size();
         long adminCount  = countByRole(allUsers, "ROLE_ADMIN");
-        long metierCount = countByRole(allUsers, "ROLE_METIER");
+        long userCount = countByRole(allUsers, "ROLE_USER");
+        long operationnelCount = countByRole(allUsers, "ROLE_OPERATIONNEL");
         long baCount     = countByRole(allUsers, "ROLE_BUSINESS_ANALYST");
         long locked      = allUsers.stream().filter(u -> !u.isAccountNonLocked()).count();
         long disabled    = allUsers.stream().filter(u -> !u.isEnabled()).count();
@@ -81,7 +82,7 @@ public class ChatbotService {
         if (locked > 0)       alerts.add(locked + " account(s) are currently LOCKED");
         if (disabled > 0)     alerts.add(disabled + " account(s) are DISABLED and cannot log in");
         if (baCount == 0)     alerts.add("No Business Analysts registered — platform may be understaffed");
-        if (metierCount == 0) alerts.add("No Metier users registered — no one can submit tickets");
+        if (userCount == 0 && operationnelCount == 0) alerts.add("No user accounts registered — no one can submit tickets");
         if (totalUsers == 0)  alerts.add("No users found in the system at all");
 
         String alertsBlock = alerts.isEmpty()
@@ -182,7 +183,7 @@ public class ChatbotService {
                 admin.getEmail(),
                 now.format(DATE_FMT),
                 totalUsers, active, locked, disabled,
-                adminCount, metierCount, baCount,
+                adminCount, userCount, operationnelCount, baCount,
                 alertsBlock,
                 usersContext,
                 vectorContext.isBlank() ? ""
@@ -206,7 +207,7 @@ public class ChatbotService {
 
         // ── Nouvelle logique pour récupérer les tickets selon le rôle ───────
         List<Ticket> userTickets;
-        if (currentUser.isMetier()) {
+        if (currentUser.isUser()) {
             userTickets = ticketRepository.findAll().stream()
                     .filter(t -> t.getCreator() != null &&
                             t.getCreator().getId().equals(currentUser.getId()))

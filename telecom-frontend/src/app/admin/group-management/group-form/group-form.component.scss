@@ -1,0 +1,316 @@
+// ============================================
+// GROUP FORM — Clean Professional Theme
+// ============================================
+
+$bg: #f8f9fc;
+$card: #ffffff;
+$border: #e8eaed;
+$border-lt: #f1f5f9;
+$t1: #1e293b;
+$t2: #64748b;
+$t3: #94a3b8;
+$accent: #6366f1;
+$accent-lt: #eef2ff;
+$green: #10b981;
+$green-lt: #ecfdf5;
+$red: #ef4444;
+$red-lt: #fef2f2;
+$gray-lt: #f3f4f6;
+$r: 10px;
+$shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+
+// ─── Container ───────────────────────────────────────────────────────────────
+.form-page-container {
+  padding: 28px 32px;
+  min-height: 100vh;
+  background: $bg;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $border;
+}
+
+.btn-back {
+  width: 36px;
+  height: 36px;
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 8px;
+  color: $t2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  box-shadow: $shadow;
+
+  &:hover {
+    background: $accent-lt;
+    border-color: rgba(99, 102, 241, 0.3);
+    color: $accent;
+  }
+}
+
+.header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: $accent-lt;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $accent;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: $t1;
+  margin: 0 0 4px;
+  letter-spacing: -0.4px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: $t3;
+  margin: 0;
+
+  i { font-size: 9px; }
+  span:last-child { color: $accent; font-weight: 500; }
+}
+
+// ─── Alert ───────────────────────────────────────────────────────────────────
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: $r;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: slideDown 0.2s ease;
+  background: $red-lt;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+
+  span { flex: 1; }
+
+  button {
+    background: none;
+    border: none;
+    color: #b91c1c;
+    cursor: pointer;
+    opacity: 0.6;
+    &:hover { opacity: 1; }
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ─── Form Card ───────────────────────────────────────────────────────────────
+.form-card {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: $r;
+  overflow: hidden;
+  box-shadow: $shadow;
+}
+
+.form-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid $border-lt;
+  background: #fafbfe;
+
+  h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: $t1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+
+    i { color: $accent; }
+  }
+}
+
+// ─── Loading ─────────────────────────────────────────────────────────────────
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  color: $t2;
+}
+
+.loader {
+  width: 32px;
+  height: 32px;
+  border: 3px solid $border-lt;
+  border-top-color: $accent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ─── Form Body ───────────────────────────────────────────────────────────────
+.form-body {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &.error .form-input {
+    border-color: #fca5a5;
+    background: $red-lt;
+  }
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: $t2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  i { color: $accent; font-size: 11px; }
+}
+
+.form-input {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: $t1;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+
+  &::placeholder { color: $t3; }
+  &:focus { border-color: $accent; }
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-error {
+  font-size: 11px;
+  color: $red;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.char-count {
+  font-size: 11px;
+  color: $t3;
+  text-align: right;
+}
+
+// ─── Info Box ─────────────────────────────────────────────────────────────────
+.info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: $accent-lt;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 14px;
+
+  i { color: $accent; font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+
+  strong { display: block; color: $t1; font-size: 13px; margin-bottom: 4px; }
+  p { margin: 0; font-size: 12px; color: $t2; }
+}
+
+// ─── Form Footer ─────────────────────────────────────────────────────────────
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid $border-lt;
+}
+
+.btn-cancel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $t2;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: $border-lt; color: $t1; }
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: $accent;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+
+  &:hover:not(:disabled) {
+    background: #4f46e5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  }
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .form-page-container { padding: 16px; }
+  .page-header { flex-wrap: wrap; }
+}

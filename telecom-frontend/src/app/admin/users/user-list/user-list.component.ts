@@ -424,17 +424,19 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   getRoleBadgeClass(role: string): string {
-    const map: Record<string, string> = {
-      'ROLE_ADMIN': 'badge-admin',
-      'ROLE_BUSINESS_ANALYST': 'badge-it',
-      'ROLE_METIER': 'badge-metier'
-    };
-    return map[role] || 'badge-default';
-  }
+  const map: Record<string, string> = {
+    'ROLE_ADMIN': 'badge-admin',
+    'ROLE_BUSINESS_ANALYST': 'badge-it',
+    'ROLE_USER': 'badge-user',
+  };
+  return map[role] || 'badge-default';
+}
 
-  getRoleLabel(role: string): string {
-    return role.replace('ROLE_', '');
-  }
+
+getRoleLabel(role: string): string {
+  if (!role) return '';
+  return role.replace('ROLE_', '');
+}
 
   getFormattedRoles(roles: string[]): string {
     return roles.map(r => this.getRoleLabel(r)).join(', ');
@@ -453,13 +455,13 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   private emptyUser(): CreateUserRequest {
-    return {
-      username: '',
-      firstName: '', lastName: '', email: '',
-      password: '', phone: '', dateOfBirth: '',
-      role: 'ROLE_METIER', departement: undefined
-    };
-  }
+  return {
+    username: '',
+    firstName: '', lastName: '', email: '',
+    password: '', phone: '', dateOfBirth: '',
+    role: 'ROLE_USER', departement: undefined
+  };
+}
 
   private showSuccess(msg: string): void {
     this.successMessage = msg;

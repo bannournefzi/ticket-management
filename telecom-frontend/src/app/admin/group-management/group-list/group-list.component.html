@@ -1,0 +1,203 @@
+<div class="group-management-container">
+
+  <!-- ====== HEADER ====== -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <i class="fas fa-layer-group"></i>
+      </div>
+      <div>
+        <h1 class="page-title">Gestion des Groupes</h1>
+        <p class="breadcrumb">
+          <i class="fas fa-home"></i>
+          <span>Admin</span>
+          <i class="fas fa-chevron-right"></i>
+          <span>Groupes</span>
+        </p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-card">
+        <span class="stat-val">{{ groups.length }}</span>
+        <span class="stat-lbl">Total</span>
+      </div>
+      <div class="stat-card stat-active">
+<span class="stat-val">{{ groups.reduce(sumMembers, 0) }}</span>
+        <span class="stat-lbl">Membres</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== ALERTS ====== -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ successMessage }}</span>
+    <button class="alert-close" (click)="successMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ errorMessage }}</span>
+    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ====== MAIN CARD ====== -->
+  <div class="main-card">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" class="search-input" placeholder="Rechercher un groupe..."
+                 [(ngModel)]="searchQuery" (input)="applyFilter()" />
+          <button class="search-clear" *ngIf="searchQuery" (click)="searchQuery = ''; applyFilter()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <span class="result-count">{{ filteredGroups.length }} groupe(s)</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-icon" (click)="loadGroups()" title="Actualiser">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        <button class="btn-create" (click)="goToCreate()">
+          <i class="fas fa-plus"></i> Nouveau groupe
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loader"></div>
+      <p>Chargement des groupes...</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="!isLoading && filteredGroups.length === 0">
+      <div class="empty-icon"><i class="fas fa-layer-group"></i></div>
+      <h3>Aucun groupe trouvé</h3>
+      <p>Créez votre premier groupe pour organiser vos utilisateurs</p>
+      <button class="btn-create" (click)="goToCreate()">
+        <i class="fas fa-plus"></i> Créer un groupe
+      </button>
+    </div>
+
+    <!-- Grid -->
+    <div class="groups-grid" *ngIf="!isLoading && filteredGroups.length > 0">
+      <div class="group-card" *ngFor="let group of paginatedGroups">
+        <div class="card-header">
+          <div class="group-icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="card-actions">
+            <button class="btn-action btn-view" (click)="goToDetail(group.id)" title="Voir détails">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-action btn-edit" (click)="goToEdit(group.id)" title="Modifier">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-action btn-delete" (click)="openDeleteModal(group)" title="Supprimer">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body" (click)="goToDetail(group.id)">
+          <h3 class="group-name">{{ group.name }}</h3>
+          <p class="group-desc">{{ group.description || 'Aucune description' }}</p>
+
+          <div class="group-meta">
+            <div class="meta-item">
+              <i class="fas fa-users"></i>
+              <span>{{ getMemberCount(group) }} membre(s)</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-user-shield"></i>
+              <span>{{ group.createdBy }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-clock"></i>
+              <span>{{ getTimeAgo(group.createdDate) }}</span>
+            </div>
+          </div>
+
+          <!-- Member avatars preview -->
+          <div class="members-preview" *ngIf="group.members && group.members.length > 0">
+            <div class="avatar-stack">
+              <div class="mini-avatar" *ngFor="let m of group.members.slice(0, 4)"
+                   [title]="m.fullName">
+{{ getInitials((m.fullName ?? '').split(' ')[0] || '', (m.fullName ?? '').split(' ')[1] || '') }}
+              </div>
+              <div class="mini-avatar more" *ngIf="group.members.length > 4">
+                +{{ group.members.length - 4 }}
+              </div>
+            </div>
+          </div>
+          <div class="no-members" *ngIf="!group.members || group.members.length === 0">
+            <i class="fas fa-user-slash"></i> Aucun membre
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button class="btn-detail" (click)="goToDetail(group.id)">
+            <i class="fas fa-arrow-right"></i> Gérer les membres
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-footer" *ngIf="filteredGroups.length > itemsPerPage">
+      <div class="footer-info">
+        Page {{ currentPage }} / {{ totalPages }}
+      </div>
+      <div class="pagination">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="page-num" *ngFor="let p of pages"
+                [class.active]="p === currentPage" (click)="setPage(p)">{{ p }}</button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== DELETE MODAL ====== -->
+<div class="modal-overlay" *ngIf="isDeleteModalOpen" (click)="closeDeleteModal()">
+  <div class="modal-container modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header modal-header-delete">
+      <div class="modal-title">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2>Confirmer la suppression</h2>
+      </div>
+      <button class="modal-close" (click)="closeDeleteModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body modal-body-delete" *ngIf="groupToDelete">
+      <div class="delete-icon"><i class="fas fa-layer-group"></i></div>
+      <h3 class="delete-title">Supprimer « {{ groupToDelete.name }} » ?</h3>
+      <p class="delete-msg">Cette action est <strong>irréversible</strong>.</p>
+      <div class="delete-info">
+        <div class="delete-row">
+          <span class="delete-label">Membres</span>
+          <span>{{ getMemberCount(groupToDelete) }} utilisateur(s)</span>
+        </div>
+        <div class="delete-row">
+          <span class="delete-label">Créé par</span>
+          <span>{{ groupToDelete.createdBy }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer modal-footer-delete">
+      <button class="btn-cancel" (click)="closeDeleteModal()">
+        <i class="fas fa-times"></i> Annuler
+      </button>
+      <button class="btn-delete" (click)="confirmDelete()">
+        <i class="fas fa-trash-alt"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>

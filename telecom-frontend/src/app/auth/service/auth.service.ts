@@ -120,5 +120,5 @@ export class AuthService {
 
   isAdmin(): boolean { return this.hasRole('ROLE_ADMIN'); }
   isBusinessAnalyst(): boolean { return this.hasRole('ROLE_BUSINESS_ANALYST'); }
-  isMetier(): boolean { return this.hasRole('ROLE_METIER'); }
+  isUser(): boolean { return this.hasRole('ROLE_USER'); }
 }

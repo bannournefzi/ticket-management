@@ -54,8 +54,8 @@ goToForgotPassword(): void {
         if (this.authService.isAdmin()) {
           this.router.navigate(['/admin']);
         } else if (this.authService.isBusinessAnalyst()) {
-  this.router.navigate(['/business-analyst']);
-        } else if (this.authService.isMetier()) {
+          this.router.navigate(['/business-analyst']);
+        } else if (this.authService.isUser()) {
           this.router.navigate(['/metier']);
         } else {
           this.router.navigate(['/login']);
