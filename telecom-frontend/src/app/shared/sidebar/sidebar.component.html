@@ -41,11 +41,11 @@
         <span class="nav-text">Mes Tickets</span>
         <span class="nav-badge" *ngIf="myTicketCount">{{ myTicketCount }}</span>
       </a>
-      <a routerLink="/metier/calendar" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Calendrier' : ''">
-        <i class="fas fa-calendar-alt"></i>
-        <span class="nav-text">Calendrier SLA</span>
-      </a>
+     
+
+      <div class="nav-section">
+        <span class="nav-section-label">Outils</span>
+      </div>
 
       <a routerLink="/knowledge-base" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Base de Connaissances' : ''">
@@ -53,32 +53,18 @@
         <span class="nav-text">Base de Connaissances</span>
       </a>
 
-      <div class="nav-divider"></div>
-
-      <div class="nav-section">
-        <span class="nav-section-label">Suivi</span>
-      </div>
-
-      <a routerLink="/metier/pending" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Ouverts' : ''">
-        <i class="fas fa-inbox"></i>
-        <span class="nav-text">Ouverts</span>
-        <span class="nav-badge" *ngIf="stats?.openTickets">{{ stats?.openTickets }}</span>
+ <a routerLink="/metier/calendar" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Calendrier' : ''">
+        <i class="fas fa-calendar-alt"></i>
+        <span class="nav-text">Calendrier SLA</span>
       </a>
+      <a routerLink="/chat" routerLinkActive="active"
+       class="nav-link" [title]="isCollapsed ? 'Messages' : ''">
+      <i class="fas fa-comment-dots"></i>
+      <span class="nav-text">Messages</span>
+    </a>
 
-      <a routerLink="/metier/in-progress" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'En cours' : ''">
-        <i class="fas fa-spinner"></i>
-        <span class="nav-text">En cours</span>
-        <span class="nav-badge badge-warn" *ngIf="stats?.inProgressTickets">{{ stats?.inProgressTickets }}</span>
-      </a>
-
-      <a routerLink="/metier/resolved" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Résolus' : ''">
-        <i class="fas fa-check-circle"></i>
-        <span class="nav-text">Résolus</span>
-        <span class="nav-badge badge-ok" *ngIf="stats?.resolvedTickets">{{ stats?.resolvedTickets }}</span>
-      </a>
+    
 
       <a routerLink="/metier/history" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Historique' : ''">
@@ -118,23 +104,20 @@
         <span class="nav-badge" *ngIf="stats?.inProgressTickets">{{ stats?.inProgressTickets }}</span>
       </a>
 
-      <!-- <a routerLink="/business-analyst/resolved" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Résolus' : ''">
-        <i class="fas fa-check-double"></i>
-        <span class="nav-text">Résolus</span>
-      </a>
+      
 
-      <a routerLink="/business-analyst/closed" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Clôturés' : ''">
-        <i class="fas fa-archive"></i>
-        <span class="nav-text">Clôturés</span>
-      </a> -->
+      
 
       <div class="nav-divider"></div>
 
       <div class="nav-section">
         <span class="nav-section-label">Outils</span>
       </div>
+      <a routerLink="/chat" routerLinkActive="active"
+       class="nav-link" [title]="isCollapsed ? 'Messages' : ''">
+      <i class="fas fa-comment-dots"></i>
+      <span class="nav-text">Messages</span>
+    </a>
 
       <a routerLink="/ticket-calendar" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Calendrier SLA' : ''">
