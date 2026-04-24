@@ -76,32 +76,37 @@ public class MantisService {
     public void uploadIssueAttachment(Long mantisIssueId, String fileName, String contentType, byte[] data) {
         String url = mantisProperties.getBaseUrl() + "/api/rest/issues/" + mantisIssueId + "/files";
 
+        // 1. Mantis API expects JSON, not Multipart
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", mantisProperties.getApiToken());
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        ByteArrayResource fileResource = new ByteArrayResource(data) {
-            @Override
-            public String getFilename() {
-                return fileName != null && !fileName.isBlank() ? fileName : "attachment.bin";
-            }
-        };
+        // 2. Encode the file byte array into a Base64 string
+        String base64Content = java.util.Base64.getEncoder().encodeToString(data);
+        String safeFileName = (fileName != null && !fileName.isBlank()) ? fileName : "attachment.bin";
 
-        HttpHeaders fileHeaders = new HttpHeaders();
-        if (contentType != null && !contentType.isBlank()) {
-            fileHeaders.setContentType(MediaType.parseMediaType(contentType));
-        } else {
-            fileHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        }
+        // 3. Build the exact JSON structure Mantis expects
+        /*
+          {
+            "files": [
+              {
+                "name": "filename.txt",
+                "content": "base64encodedstring..."
+              }
+            ]
+          }
+        */
+        Map<String, Object> fileObject = new HashMap<>();
+        fileObject.put("name", safeFileName);
+        fileObject.put("content", base64Content);
 
-        HttpEntity<ByteArrayResource> fileEntity = new HttpEntity<>(fileResource, fileHeaders);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("files", List.of(fileObject));
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", fileEntity);
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(payload, headers);
 
-        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-
-        ResponseEntity<String> response = new RestTemplate().exchange(
+        // 4. Send the POST request to Mantis
+        ResponseEntity<String> response = restTemplate.exchange(
                 url,
                 HttpMethod.POST,
                 requestEntity,
