@@ -15,13 +15,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/groups")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+// REMOVED: @PreAuthorize("hasRole('ADMIN')") from here so users/BAs can fetch their groups
 @CrossOrigin(origins = "*")
 public class GroupController {
 
     private final GroupService groupService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')") // Admin only
     public ResponseEntity<GroupResponse> createGroup(
             @RequestBody GroupRequest request,
             Authentication authentication) {
@@ -29,8 +30,8 @@ public class GroupController {
     }
 
     @GetMapping
-    public ResponseEntity<List<GroupResponse>> getAllGroups() {
-        return ResponseEntity.ok(groupService.getAllGroups());
+    public ResponseEntity<List<GroupResponse>> getAllGroups(Authentication authentication) {
+        return ResponseEntity.ok(groupService.getAllGroups(authentication.getName()));
     }
 
     @GetMapping("/{id}")
@@ -39,6 +40,7 @@ public class GroupController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Admin only
     public ResponseEntity<GroupResponse> updateGroup(
             @PathVariable Long id,
             @RequestBody GroupRequest request) {
@@ -46,12 +48,14 @@ public class GroupController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Admin only
     public ResponseEntity<Void> deleteGroup(@PathVariable Long id) {
         groupService.deleteGroup(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/members")
+    @PreAuthorize("hasRole('ADMIN')") // Admin only
     public ResponseEntity<GroupResponse> addMember(
             @PathVariable Long id,
             @RequestBody GroupMemberRequest request) {
@@ -59,6 +63,7 @@ public class GroupController {
     }
 
     @DeleteMapping("/{id}/members/{userId}")
+    @PreAuthorize("hasRole('ADMIN')") // Admin only
     public ResponseEntity<GroupResponse> removeMember(
             @PathVariable Long id,
             @PathVariable Long userId) {
@@ -66,6 +71,7 @@ public class GroupController {
     }
 
     @GetMapping("/users/available")
+    @PreAuthorize("hasRole('ADMIN')") // Admin only
     public ResponseEntity<List<GroupResponse.UserSummary>> getAvailableUsers() {
         return ResponseEntity.ok(groupService.getAvailableUsers());
     }

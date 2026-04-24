@@ -6,7 +6,10 @@ import java.util.List;
 
 public interface GroupService {
     GroupResponse createGroup(GroupRequest request, String createdBy);
-    List<GroupResponse> getAllGroups();
+
+    // Add the username parameter here
+    List<GroupResponse> getAllGroups(String username);
+
     GroupResponse getGroupById(Long id);
     GroupResponse updateGroup(Long id, GroupRequest request);
     void deleteGroup(Long id);

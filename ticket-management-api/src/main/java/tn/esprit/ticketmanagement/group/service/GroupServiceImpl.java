@@ -35,8 +35,18 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<GroupResponse> getAllGroups() {
+    public List<GroupResponse> getAllGroups(String username) {
+        // 1. Fetch the currently authenticated user
+        User currentUser = userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + username));
+
+        // 2. Filter groups so the user only sees ones they created or belong to
         return groupRepository.findAll().stream()
+                .filter(group ->
+                        username.equals(group.getCreatedBy()) ||
+                                group.getMembers().stream()
+                                        .anyMatch(member -> member.getId().equals(currentUser.getId()))
+                )
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
