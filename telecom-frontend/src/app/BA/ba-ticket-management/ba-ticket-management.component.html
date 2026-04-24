@@ -368,8 +368,9 @@
                     (click)="convertToKnowledgeBase()">
               <i class="fas fa-book"></i> Convertir en article KB
             </button>
-            <span class="mini-tag" *ngIf="selectedTicket?.mantisId">
-              Mantis #{{ selectedTicket?.mantisId }}
+            <span class="mini-tag" *ngIf="selectedTicket.mantisId">
+              Mantis #{{ selectedTicket.mantisId }}
+
             </span>
           </div>
         </div>

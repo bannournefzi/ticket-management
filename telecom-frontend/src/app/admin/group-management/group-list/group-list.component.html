@@ -126,7 +126,7 @@
             <div class="avatar-stack">
               <div class="mini-avatar" *ngFor="let m of group.members.slice(0, 4)"
                    [title]="m.fullName">
-{{ getInitials((m.fullName ?? '').split(' ')[0] || '', (m.fullName ?? '').split(' ')[1] || '') }}
+{{ getInitials((m.fullName || '').split(' ')[0] || '', (m.fullName || '').split(' ')[1] || '') }}
               </div>
               <div class="mini-avatar more" *ngIf="group.members.length > 4">
                 +{{ group.members.length - 4 }}

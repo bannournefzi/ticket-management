@@ -14,15 +14,15 @@
       </div>
       <div class="ticket-meta">
         <ng-container *ngIf="variant === 'urgent'">
-          <span class="priority-tag" [class]="priorityConfig[t.priority]?.class">
-            {{ priorityConfig[t.priority]?.label }}
+          <span class="priority-tag" [class]="priorityConfig[t.priority].class">
+            {{ priorityConfig[t.priority].label }}
           </span>
           <span class="sla-tag" *ngIf="t.slaStatus === 'BREACHED'">
             <i class="fas fa-clock"></i> SLA dépassé
           </span>
         </ng-container>
         <ng-container *ngIf="variant === 'default'">
-          <span class="status-dot" [class]="statusConfig[t.status]?.class"></span>
+          <span class="status-dot" [class]="statusConfig[t.status].class"></span>
           <span class="ticket-time">{{ getTimeAgo(t.createdDate) }}</span>
         </ng-container>
       </div>

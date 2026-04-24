@@ -54,4 +54,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>,
 
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.resolvedDate >= :since")
     long countResolvedSince(@Param("since") LocalDateTime since);
+
+    Page<Ticket> findByCreatorIdIn(List<Integer> creatorIds, Pageable pageable);
+    List<Ticket> findByCreatorIdIn(List<Integer> creatorIds);
+
 }

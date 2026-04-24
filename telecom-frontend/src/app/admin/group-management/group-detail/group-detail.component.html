@@ -17,7 +17,7 @@
     <div class="header-actions" *ngIf="group">
       <div class="group-stat">
         <i class="fas fa-users"></i>
-        <span>{{ group.members?.length || 0 }} membre(s)</span>
+        <span>{{ group.members.length || 0 }} membre(s)</span>
       </div>
       <button class="btn-edit" (click)="goToEdit()">
         <i class="fas fa-edit"></i> Modifier
@@ -71,7 +71,7 @@
         </div>
         <div class="info-row">
           <span class="info-label"><i class="fas fa-users"></i> Membres</span>
-          <span class="info-val highlight">{{ group.members?.length || 0 }}</span>
+          <span class="info-val highlight">{{ group.members.length || 0 }}</span>
         </div>
       </div>
     </div>

@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import tn.esprit.ticketmanagement.group.repository.GroupRepository;
+import tn.esprit.ticketmanagement.group.entity.Group;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +52,8 @@ public class TicketService {
     private final MantisProperties mantisProperties;
     @PersistenceContext
     private EntityManager em;
+    private final GroupRepository groupRepository;
+
 
 
     // ══════════════════════════════════════════
@@ -96,6 +101,31 @@ public class TicketService {
     //  LECTURE — PAGINÉE
     // ══════════════════════════════════════════
 
+    private List<Integer> getVisibleUserIds(User currentUser) {
+        List<Integer> visibleIds = new ArrayList<>();
+
+        // 1. You always see your own tickets
+        visibleIds.add(currentUser.getId());
+
+        // 2. Fetch groups where the user is either the creator or a member
+        List<Group> userGroups = groupRepository.findAll().stream()
+                .filter(g ->
+                        currentUser.getEmail().equals(g.getCreatedBy()) ||
+                                g.getMembers().stream().anyMatch(m -> m.getId().equals(currentUser.getId()))
+                )
+                .toList();
+
+        // 3. Add the IDs of all members from these groups
+        for (Group group : userGroups) {
+            for (User member : group.getMembers()) {
+                visibleIds.add(member.getId());
+            }
+        }
+
+        // Return a list without duplicate IDs
+        return visibleIds.stream().distinct().collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public Page<TicketDTO> getAllTickets(Pageable pageable) {
         return ticketRepository.findAll(pageable).map(this::convertToDTO);
@@ -108,15 +138,16 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public Page<TicketDTO> getMyTickets(User currentUser, Pageable pageable) {
-        if (currentUser.isUser()) {
-            // Métier sees only their own tickets
-            return ticketRepository.findByCreatorId(currentUser.getId(), pageable)
-                    .map(this::convertToDTO);
-        } else {
-            // BA / Admin / IT see all tickets
+        if (currentUser.isAdmin()) {
+            // Admin sees all tickets
             return ticketRepository.findAll(pageable).map(this::convertToDTO);
+        } else {
+            // Users and BAs see tickets from users in their groups
+            List<Integer> visibleIds = getVisibleUserIds(currentUser);
+            return ticketRepository.findByCreatorIdIn(visibleIds, pageable).map(this::convertToDTO);
         }
     }
+
 
     // ══════════════════════════════════════════
     //  LECTURE — LISTE (frontend kanban)
@@ -131,23 +162,15 @@ public class TicketService {
     public List<TicketDTO> getMyTicketsAsList(User currentUser) {
         List<Ticket> tickets;
 
-        if (currentUser.isUser()) {
-            // Métier: only tickets they created
-            tickets = ticketRepository.findByCreatorId(currentUser.getId());
-            log.info("Métier {} fetching their own {} tickets",
-                    currentUser.fullName(), tickets.size());
-
-        } else if (currentUser.isIT()) {
-            // ✅ FIX: BA sees ALL tickets from ALL Métier users, all statuses
+        if (currentUser.isAdmin()) {
+            // Admin sees all tickets
             tickets = ticketRepository.findAll();
-            log.info("Business Analyst {} fetching all {} tickets",
-                    currentUser.fullName(), tickets.size());
-
+            log.info("Admin {} fetching all {} tickets", currentUser.fullName(), tickets.size());
         } else {
-            // Admin / other roles: see everything
-            tickets = ticketRepository.findAll();
-            log.info("Admin/Other {} fetching all {} tickets",
-                    currentUser.fullName(), tickets.size());
+            // Users and BAs see tickets from users in their groups
+            List<Integer> visibleIds = getVisibleUserIds(currentUser);
+            tickets = ticketRepository.findByCreatorIdIn(visibleIds);
+            log.info("User/BA {} fetching {} tickets from their groups", currentUser.fullName(), tickets.size());
         }
 
         return tickets.stream()
