@@ -1,0 +1,118 @@
+<div class="group-management-container">
+
+  <!-- ====== HEADER ====== -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-icon" style="background: #eef2ff; color: #6366f1; border-color: rgba(99, 102, 241, 0.2);">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div>
+        <h1 class="page-title">Sécurité & Sessions</h1>
+        <p class="breadcrumb">
+          <i class="fas fa-home"></i>
+          <span>Profil</span>
+          <i class="fas fa-chevron-right"></i>
+          <span>Appareils connectés</span>
+        </p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-card">
+        <span class="stat-val">{{ sessions.length }}</span>
+        <span class="stat-lbl">Sessions Actives</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== ALERTS ====== -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ successMessage }}</span>
+    <button class="alert-close" (click)="successMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ errorMessage }}</span>
+    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ====== MAIN CARD ====== -->
+  <div class="main-card">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h3 style="margin: 0; color: #1e293b; font-size: 16px; font-weight: 600;">Vos appareils récemment connectés</h3>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-icon" (click)="loadSessions()" title="Actualiser">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loader"></div>
+      <p>Analyse de la sécurité...</p>
+    </div>
+
+    <!-- List -->
+    <div class="table-container" *ngIf="!isLoading && sessions.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Appareil / Navigateur</th>
+            <th>Date de connexion</th>
+            <th>Dernière activité</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of sessions; let i = index" [class.current-session]="i === 0">
+            <td>
+              <div class="device-cell">
+                <i class="fas" [ngClass]="s.browser.toLowerCase().includes('mobile') ? 'fa-mobile-alt' : 'fa-laptop'"></i>
+                <div>
+                  <!-- Shows the User's name on top, and the clean browser/OS below! -->
+                  <div class="device-name" style="font-size: 15px;">{{ s.userFullName || 'Utilisateur' }}</div>
+                  <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">{{ s.browser }} sur {{ s.deviceOs }}</div>
+                  <span class="badge" *ngIf="i === 0">Votre session actuelle</span>
+                </div>
+              </div>
+            </td>
+           
+            <td>{{ s.loginAt | date:'dd MMM yyyy à HH:mm' }}</td>
+            <td>{{ s.lastActivityAt | date:'dd MMM yyyy à HH:mm' }}</td>
+            <td class="actions-cell">
+              <button class="btn-action btn-delete" 
+                      title="Déconnecter cet appareil" 
+                      *ngIf="i !== 0" 
+                      (click)="openRevokeModal(s)">
+                <i class="fas fa-sign-out-alt"></i> Révoquer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ====== MODAL REVOKE ====== -->
+  <div class="modal-overlay" *ngIf="isRevokeModalOpen">
+    <div class="modal-content modal-danger">
+      <div class="modal-header">
+        <div class="modal-icon-danger"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3>Révoquer la session ?</h3>
+      </div>
+      <div class="modal-body text-center">
+        <p>Êtes-vous sûr de vouloir déconnecter cet appareil ?</p>
+        <p class="modal-highlight">{{ sessionToRevoke?.browser | slice:0:30 }}</p>
+        <p class="modal-warning">L'utilisateur sur cet appareil devra se reconnecter.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeRevokeModal()">Annuler</button>
+        <button class="btn-confirm btn-danger" (click)="confirmRevoke()">Oui, Révoquer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

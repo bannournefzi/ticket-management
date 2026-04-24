@@ -24,6 +24,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class JwtFilter extends OncePerRequestFilter {
     private final jwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final tn.esprit.ticketmanagement.User.repository.UserSessionRepository userSessionRepository;
 
 
     @Override
@@ -53,10 +54,25 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String jwt = authHeader.substring(7);
         String userEmail = jwtService.extractUsername(jwt);
+        String jwtId = jwtService.extractJwtId(jwt); // <--- Get JTI
+
+        // Check if the session is still valid in the database
+        var sessionOpt = userSessionRepository.findByJwtId(jwtId);
+        if (sessionOpt.isEmpty() || !sessionOpt.get().isValid()) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Session expired or revoked.");
+            return; // Block the request immediately
+        }
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails)) {
+
+                // Update last activity time
+                tn.esprit.ticketmanagement.User.entity.UserSession session = sessionOpt.get();
+                session.setLastActivityAt(java.time.LocalDateTime.now());
+                userSessionRepository.save(session);
+
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

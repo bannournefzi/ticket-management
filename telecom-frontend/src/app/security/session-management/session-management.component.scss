@@ -1,0 +1,138 @@
+$bg: #f8f9fc;
+$card: #ffffff;
+$border: #e8eaed;
+$t1: #1e293b;
+$t3: #94a3b8;
+$accent-lt: #eef2ff;
+$green: #10b981;
+$red: #ef4444;
+$r: 10px;
+$shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+
+.group-management-container {
+  padding: 28px 32px;
+  background: $bg;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $border;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: $t1;
+  margin: 0 0 4px;
+}
+
+.breadcrumb {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: $t3;
+  margin: 0;
+}
+
+.header-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 20px;
+  background: $card;
+  border: 1px solid $border;
+  border-radius: $r;
+  box-shadow: $shadow;
+}
+
+.stat-val { font-size: 20px; font-weight: 700; color: $t1; }
+.stat-lbl { font-size: 12px; color: $t3; }
+
+.main-card {
+  background: $card;
+  border-radius: $r;
+  border: 1px solid $border;
+  box-shadow: $shadow;
+  padding: 20px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid $border;
+    font-size: 14px;
+  }
+  th { color: $t3; font-weight: 600; }
+}
+
+.btn-action {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.btn-delete {
+  background: #fef2f2;
+  color: $red;
+  &:hover { background: $red; color: #fff; }
+}
+
+/* --- Specific Session Styles --- */
+.device-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  i { font-size: 20px; color: #64748b; background: #f1f5f9; padding: 10px; border-radius: 8px; }
+}
+
+.device-name { font-weight: 600; color: $t1; margin-bottom: 4px; }
+.badge { background: #ecfdf5; color: $green; font-size: 11px; padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); }
+.current-session { background-color: #f8fafc; border-left: 4px solid $green; }
+.ip-address { font-family: monospace; color: #475569; i { margin-right: 4px; color: $t3; } }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: #fff; padding: 24px; border-radius: 12px; width: 400px; text-align: center; }
+.modal-icon-danger { font-size: 40px; color: $red; margin-bottom: 16px; }
+.btn-danger { background: $red; color: #fff; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }
+.btn-cancel { background: #f1f5f9; color: #1e293b; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px; }

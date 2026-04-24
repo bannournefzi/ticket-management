@@ -48,6 +48,7 @@ import { CommonModule } from '@angular/common';
 import { GroupListComponent } from './admin/group-management/group-list/group-list.component';
 import { GroupFormComponent } from './admin/group-management/group-form/group-form.component';
 import { GroupDetailComponent } from './admin/group-management/group-detail/group-detail.component';
+import { SessionManagementComponent } from './security/session-management/session-management.component';
 
 
 @NgModule({
@@ -79,6 +80,7 @@ import { GroupDetailComponent } from './admin/group-management/group-detail/grou
     GroupListComponent,
     GroupFormComponent,
     GroupDetailComponent,
+    SessionManagementComponent,
     
   ],
   imports: [

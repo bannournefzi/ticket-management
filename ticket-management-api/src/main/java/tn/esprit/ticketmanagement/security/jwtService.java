@@ -32,6 +32,10 @@ public class jwtService {
         final Claims claims = extractAllClaim(token);
         return claimsResolver.apply(claims);
     }
+    public String extractJwtId(String token) {
+        return extractClaim(token, Claims::getId);
+    }
+
 
     private Claims extractAllClaim(String token) {
         return Jwts
@@ -42,33 +46,37 @@ public class jwtService {
                 .getBody();
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateToken(Map<String, Object> claims, UserDetails userDetails, String jwtId) {
+        return buildToken(claims, userDetails, jwtExpiration, jwtId);
     }
 
     public String generateToken(Map<String, Object> claims, UserDetails userDetails) {
-        return buildToken(claims, userDetails, jwtExpiration);
+        // Generate a random UUID for this specific login session
+        String jwtId = java.util.UUID.randomUUID().toString();
+        return buildToken(claims, userDetails, jwtExpiration, jwtId);
     }
 
     private String buildToken(
             Map<String, Object> extraClaims,
             UserDetails userDetails,
-            long jwtExpiration
+            long jwtExpiration,
+            String jwtId
     ) {
         var authorities = userDetails.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
+
         return Jwts
                 .builder()
-                .setClaims(extraClaims)
+                .setClaims(extraClaims) // <--- THIS MUST BE FIRST!
+                .setId(jwtId)           // <--- THIS MUST BE AFTER setClaims!
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .claim("roles", authorities)
                 .signWith(getSignInKey())
-                .compact()
-                ;
+                .compact();
     }
 
     public boolean isTokenValid(String token , UserDetails userDetails) {

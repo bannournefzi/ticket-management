@@ -1,8 +1,5 @@
 package tn.esprit.ticketmanagement.auth.service;
 
-
-
-
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +31,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-
 public class AuthenticationService {
 
     private final RoleRepository roleRepository;
@@ -43,6 +39,8 @@ public class AuthenticationService {
     private final TokenRepository tokenRepository;
     private final Emailservice emailservice;
     private final AuthenticationManager authenticationManager;
+    private final jakarta.servlet.http.HttpServletRequest httpServletRequest;
+    private final tn.esprit.ticketmanagement.User.repository.UserSessionRepository userSessionRepository;
 
     private final jwtService jwtservice;
     private final PlatformNotificationService platformNotificationService;
@@ -120,10 +118,7 @@ public class AuthenticationService {
 
     public AuthenticationResponse authenticate(@Valid AuthenticationRequest request) {
         var auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
         var claims = new HashMap<String, Object>();
@@ -136,12 +131,51 @@ public class AuthenticationService {
                 .collect(Collectors.toList());
         claims.put("roles", roles);
 
-        var jwtToken = jwtservice.generateToken(claims, user);
+        // 1. Generate the unique JWT ID FIRST
+        String jwtId = java.util.UUID.randomUUID().toString();
+
+        // 2. Generate the token WITH the new JTI
+        var jwtToken = jwtservice.generateToken(claims, user, jwtId);
+
+        // 3. Get IP and User-Agent
+        String ipAddress = httpServletRequest.getRemoteAddr();
+        String userAgent = httpServletRequest.getHeader("User-Agent");
+        String browser = "Inconnu";
+        String os = "Inconnu";
+
+        if (userAgent != null) {
+            // Very simple User-Agent parsing
+            if (userAgent.toLowerCase().contains("chrome")) browser = "Google Chrome";
+            else if (userAgent.toLowerCase().contains("firefox")) browser = "Firefox";
+            else if (userAgent.toLowerCase().contains("safari")) browser = "Safari";
+            else if (userAgent.toLowerCase().contains("edge")) browser = "Microsoft Edge";
+            else if (userAgent.toLowerCase().contains("postman")) browser = "Postman";
+
+            if (userAgent.toLowerCase().contains("windows")) os = "Windows";
+            else if (userAgent.toLowerCase().contains("mac")) os = "MacOS";
+            else if (userAgent.toLowerCase().contains("linux")) os = "Linux";
+            else if (userAgent.toLowerCase().contains("android")) os = "Android";
+            else if (userAgent.toLowerCase().contains("iphone") || userAgent.toLowerCase().contains("ipad")) os = "iOS";
+        }
+
+        // 4. Save the active session using the CLEANED parsed values
+        tn.esprit.ticketmanagement.User.entity.UserSession session = tn.esprit.ticketmanagement.User.entity.UserSession.builder()
+                .user(user)
+                .jwtId(jwtId)
+                .ipAddress(ipAddress)
+                .browser(browser) // <--- Fixed here to use the parsed variable
+                .deviceOs(os)     // <--- Fixed here to use the parsed variable
+                .loginAt(LocalDateTime.now())
+                .lastActivityAt(LocalDateTime.now())
+                .isValid(true)
+                .build();
+
+        userSessionRepository.save(session);
+
         return AuthenticationResponse.builder()
-                .token(jwtToken).build();
-
+                .token(jwtToken)
+                .build();
     }
-
 
     public void activateAccount(String token) throws MessagingException {
         Token savedToken = tokenRepository.findByToken(token)
