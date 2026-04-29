@@ -1,23 +1,33 @@
 package tn.esprit.ticketmanagement.group.service;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.group.dto.GroupRequest;
 import tn.esprit.ticketmanagement.group.dto.GroupResponse;
 import tn.esprit.ticketmanagement.group.entity.Group;
+import tn.esprit.ticketmanagement.group.entity.GroupMembership;
+import tn.esprit.ticketmanagement.group.repository.GroupMembershipRepository;
 import tn.esprit.ticketmanagement.group.repository.GroupRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+@Slf4j
 
 @Service
 @RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
 
     private final GroupRepository groupRepository;
+    private final GroupMembershipRepository groupMembershipRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -65,8 +75,12 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public void deleteGroup(Long id) {
-        groupRepository.delete(findGroup(id));
+        Group group = findGroup(id);
+
+        groupMembershipRepository.deleteByGroup(group);
+        groupRepository.delete(group);
     }
 
     @Override
@@ -76,6 +90,18 @@ public class GroupServiceImpl implements GroupService {
         User user = findUser(userId);
         if (!group.getMembers().contains(user))
             group.getMembers().add(user);
+
+        // Create membership record if not exists
+        if (!groupMembershipRepository.existsByUserAndGroupAndLeftAtIsNull(user, group)) {
+            GroupMembership membership = GroupMembership.builder()
+                    .user(user)
+                    .group(group)
+                    .joinedAt(LocalDateTime.now())
+                    .build();
+            groupMembershipRepository.save(membership);
+            log.info("Created membership record for user {} in group {}", user.getEmail(), group.getName());
+        }
+
         return toResponse(groupRepository.save(group));
     }
 
@@ -85,6 +111,15 @@ public class GroupServiceImpl implements GroupService {
         Group group = findGroup(groupId);
         User user = findUser(userId);
         group.getMembers().remove(user);
+
+        // Close membership record
+        groupMembershipRepository.findByUserAndGroupAndLeftAtIsNull(user, group)
+                .ifPresent(m -> {
+                    m.setLeftAt(LocalDateTime.now());
+                    groupMembershipRepository.save(m);
+                    log.info("Closed membership record for user {} in group {}", user.getEmail(), group.getName());
+                });
+
         return toResponse(groupRepository.save(group));
     }
 
@@ -136,5 +171,32 @@ public class GroupServiceImpl implements GroupService {
                         .map(r -> r.getName())
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void initHistoricalMemberships() {
+        log.info("Initializing historical group memberships...");
+        List<Group> allGroups = groupRepository.findAll();
+        int count = 0;
+        for (Group group : allGroups) {
+            // Initialize the members collection within transaction
+            group.getMembers().size();
+            for (User member : group.getMembers()) {
+                if (groupMembershipRepository.findByUserAndGroupAndLeftAtIsNull(member, group).isEmpty()) {
+                    LocalDateTime joinTime = group.getCreatedDate() != null
+                            ? group.getCreatedDate()
+                            : LocalDateTime.now();
+                    GroupMembership membership = GroupMembership.builder()
+                            .user(member)
+                            .group(group)
+                            .joinedAt(joinTime)
+                            .build();
+                    groupMembershipRepository.save(membership);
+                    count++;
+                }
+            }
+        }
+        log.info("Created {} historical membership records", count);
     }
 }

@@ -30,6 +30,10 @@ public class TicketDTO {
     private String assignedToFullName;
     private String assignedToEmail;
 
+    // Group
+    private Long groupId;
+    private String groupName;
+
     // Dates
     private LocalDateTime createdDate;
     private LocalDateTime lastModifiedDate;

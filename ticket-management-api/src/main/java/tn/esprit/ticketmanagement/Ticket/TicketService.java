@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import tn.esprit.ticketmanagement.group.repository.GroupRepository;
 import tn.esprit.ticketmanagement.group.entity.Group;
+import tn.esprit.ticketmanagement.group.entity.GroupMembership;
+import tn.esprit.ticketmanagement.group.repository.GroupMembershipRepository;
 import java.util.ArrayList;
 
 @Service
@@ -53,6 +55,7 @@ public class TicketService {
     @PersistenceContext
     private EntityManager em;
     private final GroupRepository groupRepository;
+    private final GroupMembershipRepository groupMembershipRepository;
 
 
 
@@ -77,6 +80,17 @@ public class TicketService {
                 .creator(currentUser)
                 .tags(request.getTags() != null ? request.getTags() : List.of())
                 .build();
+
+        // Capture creator's group at ticket creation time
+        List<GroupMembership> activeMemberships = groupMembershipRepository.findByUserAndLeftAtIsNull(currentUser);
+        if (!activeMemberships.isEmpty()) {
+            // Get the first group (or could be all groups)
+            Group primaryGroup = activeMemberships.get(0).getGroup();
+            ticket.setGroupAtCreation(primaryGroup);
+            log.info("Ticket assigned to group: {} (creator: {})", primaryGroup.getName(), currentUser.fullName());
+        } else {
+            log.info("Ticket creator {} has no active group membership", currentUser.fullName());
+        }
 
         if (!isMetier && request.getAssignedToId() != null) {
             User assignee = findAssigneeOrThrow(request.getAssignedToId());
@@ -107,33 +121,173 @@ public class TicketService {
         // 1. You always see your own tickets
         visibleIds.add(currentUser.getId());
 
-        // 2. Fetch groups where the user is either the creator or a member
-        List<Group> userGroups = groupRepository.findAll().stream()
-                .filter(g ->
-                        currentUser.getEmail().equals(g.getCreatedBy()) ||
-                                g.getMembers().stream().anyMatch(m -> m.getId().equals(currentUser.getId()))
-                )
-                .toList();
+        // 2. Admin sees everything
+        if (currentUser.isAdmin()) {
+            log.info("Admin {} sees all tickets", currentUser.fullName());
+            return ticketRepository.findAll().stream()
+                    .map(t -> t.getCreator().getId())
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
 
-        // 3. Add the IDs of all members from these groups
-        for (Group group : userGroups) {
-            for (User member : group.getMembers()) {
-                visibleIds.add(member.getId());
+        // 3. Get all groups user was ever a member of (including past memberships)
+        List<Group> groupsUserBelongedTo = groupMembershipRepository.findAllGroupsByUser(currentUser);
+
+        log.info("User {} (role: {}) belongs to {} groups: {}",
+                currentUser.fullName(),
+                currentUser.isBusinessAnalyst() ? "BA" : (currentUser.isUser() ? "USER" : "OTHER"),
+                groupsUserBelongedTo.size(),
+                groupsUserBelongedTo.stream().map(Group::getName).toList());
+
+        if (groupsUserBelongedTo.isEmpty()) {
+            log.info("User {} has no group memberships, seeing only own tickets", currentUser.fullName());
+            return visibleIds.stream().distinct().collect(Collectors.toList());
+        }
+
+        // 4. Get all tickets where groupAtCreation is one of those groups
+        // CRITICAL: MUST have groupAtCreation NOT NULL in the query
+        List<Ticket> ticketsInUserGroups;
+        if (groupsUserBelongedTo.isEmpty()) {
+            ticketsInUserGroups = List.of();
+        } else {
+            ticketsInUserGroups = ticketRepository.findByGroupAtCreationIn(groupsUserBelongedTo);
+            // DOUBLE CHECK: Remove any tickets that somehow have null group
+            final List<Ticket> filtered = ticketsInUserGroups.stream()
+                    .filter(t -> t.getGroupAtCreation() != null)
+                    .collect(Collectors.toList());
+            if (filtered.size() != ticketsInUserGroups.size()) {
+                log.warn(">>> FILTERED OUT {} tickets with null group!", ticketsInUserGroups.size() - filtered.size());
+                ticketsInUserGroups = filtered;
             }
         }
 
+        // CRITICAL: Log EACH ticket to debug
+        for (Ticket t : ticketsInUserGroups) {
+            log.info(">>> TICKET #{} - groupAtCreation: {} - creator: {}",
+                    t.getId(),
+                    t.getGroupAtCreation() != null ? t.getGroupAtCreation().getName() : "NULL",
+                    t.getCreator() != null ? t.getCreator().getEmail() : "NULL");
+        }
+
+        log.info("User {} - querying groups: {} - found {} tickets with group (AFTER FILTER)",
+                currentUser.fullName(),
+                groupsUserBelongedTo.stream().map(Group::getName).toList(),
+                ticketsInUserGroups.size());
+
+        // 5. Filter: only include if:
+        //    - ticket HAS a group (groupAtCreation is NOT null)
+        //    - creator was in that group AT TIME OF TICKET CREATION
+        //    - AND current user (BA) was also in that group AT TIME OF TICKET CREATION
+        int includedCount = 0;
+        int excludedNoGroup = 0;
+        for (Ticket ticket : ticketsInUserGroups) {
+            // Explicit check: if ticket has NO group, skip it completely
+            if (ticket.getGroupAtCreation() == null) {
+                excludedNoGroup++;
+                log.info(">>> EXCLUDING ticket #{} - has NO group", ticket.getId());
+                continue;
+            }
+
+            if (ticket.getCreator() != null) {
+                LocalDateTime ticketTime = ticket.getCreatedDate();
+
+                // Check if CREATOR was a member of this group at ticket creation time
+                boolean creatorWasMember = groupMembershipRepository.wasMemberAt(
+                        ticket.getCreator().getId(),
+                        ticket.getGroupAtCreation().getId(),
+                        ticketTime);
+
+                // Check if CURRENT USER (BA) was a member of this group at ticket creation time
+                boolean currentUserWasMember = groupMembershipRepository.wasMemberAt(
+                        currentUser.getId(),
+                        ticket.getGroupAtCreation().getId(),
+                        ticketTime);
+
+                if (creatorWasMember && currentUserWasMember) {
+                    visibleIds.add(ticket.getCreator().getId());
+                    includedCount++;
+                    log.info("Including ticket #{} from user {} in group {} (created: {})",
+                            ticket.getId(), ticket.getCreator().fullName(),
+                            ticket.getGroupAtCreation().getName(), ticketTime);
+                } else if (!currentUserWasMember) {
+                    log.debug("Excluding ticket #{} - current user {} was not in group {} at {}",
+                            ticket.getId(), currentUser.fullName(),
+                            ticket.getGroupAtCreation().getName(), ticketTime);
+                } else {
+                    log.debug("Excluding ticket #{} - creator {} was not in group {} at {}",
+                            ticket.getId(), ticket.getCreator().fullName(),
+                            ticket.getGroupAtCreation().getName(), ticketTime);
+                }
+            }
+        }
+
+        log.info("User {} - excluded {} tickets with no group from {} total",
+                currentUser.fullName(), excludedNoGroup, ticketsInUserGroups.size());
+
+        // 6. IMPORTANT: Tickets with NO group (groupAtCreation = null) should ONLY be visible to:
+        //    - The creator themselves
+        //    - Admins
+        //    NON-ADMIN users should NOT see other users' tickets with no group
+        List<Ticket> ticketsWithNoGroup = ticketRepository.findByGroupAtCreationIsNull();
+        log.info("User {} found {} tickets with no group", currentUser.fullName(), ticketsWithNoGroup.size());
+
+        // FIX: Only add own tickets from no-group. Don't add other users' no-group tickets!
+        // A non-admin user should NEVER see another user's ticket that has no group.
+        // Only the creator themselves or admins can see tickets with no group.
+        boolean hasOwnNoGroupTicket = ticketsWithNoGroup.stream()
+                .anyMatch(t -> t.getCreator().getId().equals(currentUser.getId()));
+        if (hasOwnNoGroupTicket) {
+            log.info("User {} has their own ticket with no group - will see only their own", currentUser.fullName());
+            // Add only own ticket ID to visible list
+            visibleIds.add(currentUser.getId());
+        } else {
+            log.info("User {} has NO tickets with no group", currentUser.fullName());
+        }
+
+        log.info("User {} will see {} tickets from {} unique creators: {}",
+                currentUser.fullName(), includedCount, visibleIds.size(), visibleIds);
+
         // Return a list without duplicate IDs
-        return visibleIds.stream().distinct().collect(Collectors.toList());
+        List<Integer> result = visibleIds.stream().distinct().collect(Collectors.toList());
+        log.info(">>> FINAL RESULT: User {} can see creator IDs: {}", currentUser.fullName(), result);
+        return result;
     }
 
     @Transactional(readOnly = true)
-    public Page<TicketDTO> getAllTickets(Pageable pageable) {
-        return ticketRepository.findAll(pageable).map(this::convertToDTO);
+    public Page<TicketDTO> getAllTickets(Pageable pageable, User currentUser) {
+        if (currentUser.isAdmin()) {
+            return ticketRepository.findAll(pageable).map(this::convertToDTO);
+        } else {
+            // For non-admins, only show tickets they should have access to
+            List<Integer> visibleIds = getVisibleUserIds(currentUser);
+
+            // Get current user's active groups for filtering
+            List<GroupMembership> activeMemberships = groupMembershipRepository.findByUserAndLeftAtIsNull(currentUser);
+            List<Group> currentGroups = activeMemberships.stream()
+                    .map(GroupMembership::getGroup)
+                    .collect(Collectors.toList());
+
+            // Filter by creator AND groupAtCreation:
+            // - Show tickets with group in user's current groups
+            // - Show tickets with NO group ONLY for self (not other users)
+            return ticketRepository.findByCreatorIdInAndGroupAtCreationInOrNull(visibleIds, currentGroups, currentUser.getId(), pageable)
+                    .map(this::convertToDTO);
+        }
     }
 
     @Transactional(readOnly = true)
-    public TicketDTO getTicketById(Integer id) {
-        return convertToDTO(findTicketOrThrow(id));
+    public TicketDTO getTicketById(Integer id, User currentUser) {
+        Ticket ticket = findTicketOrThrow(id);
+
+        // Check if user has access to this ticket
+        if (!currentUser.isAdmin()) {
+            List<Integer> visibleIds = getVisibleUserIds(currentUser);
+            if (!visibleIds.contains(ticket.getCreator().getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous n'avez pas accès à ce ticket");
+            }
+        }
+
+        return convertToDTO(ticket);
     }
 
     @Transactional(readOnly = true)
@@ -144,7 +298,15 @@ public class TicketService {
         } else {
             // Users and BAs see tickets from users in their groups
             List<Integer> visibleIds = getVisibleUserIds(currentUser);
-            return ticketRepository.findByCreatorIdIn(visibleIds, pageable).map(this::convertToDTO);
+
+            // Get current user's active groups for filtering
+            List<GroupMembership> activeMemberships = groupMembershipRepository.findByUserAndLeftAtIsNull(currentUser);
+            List<Group> currentGroups = activeMemberships.stream()
+                    .map(GroupMembership::getGroup)
+                    .collect(Collectors.toList());
+
+            return ticketRepository.findByCreatorIdInAndGroupAtCreationInOrNull(visibleIds, currentGroups, currentUser.getId(), pageable)
+                    .map(this::convertToDTO);
         }
     }
 
@@ -169,11 +331,18 @@ public class TicketService {
         } else {
             // Users and BAs see tickets from users in their groups
             List<Integer> visibleIds = getVisibleUserIds(currentUser);
-            tickets = ticketRepository.findByCreatorIdIn(visibleIds);
+
+            // Get current user's active groups for filtering
+            List<GroupMembership> activeMemberships = groupMembershipRepository.findByUserAndLeftAtIsNull(currentUser);
+            List<Group> currentGroups = activeMemberships.stream()
+                    .map(GroupMembership::getGroup)
+                    .collect(Collectors.toList());
+
+            tickets = ticketRepository.findByCreatorIdInAndGroupAtCreationInOrNull(visibleIds, currentGroups, currentUser.getId());
             log.info("User/BA {} fetching {} tickets from their groups", currentUser.fullName(), tickets.size());
         }
 
-        return tickets.stream()
+return tickets.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -583,6 +752,12 @@ public class TicketService {
             builder.assignedToId(ticket.getAssignedTo().getId())
                     .assignedToFullName(ticket.getAssignedTo().fullName())
                     .assignedToEmail(ticket.getAssignedTo().getEmail());
+        }
+
+        // Group at creation
+        if (ticket.getGroupAtCreation() != null) {
+            builder.groupId(ticket.getGroupAtCreation().getId())
+                    .groupName(ticket.getGroupAtCreation().getName());
         }
 
         // Load attachments

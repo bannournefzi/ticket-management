@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import tn.esprit.ticketmanagement.group.entity.Group;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,5 +58,29 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>,
 
     Page<Ticket> findByCreatorIdIn(List<Integer> creatorIds, Pageable pageable);
     List<Ticket> findByCreatorIdIn(List<Integer> creatorIds);
+
+    // Group-based queries for point-in-time membership
+    // IMPORTANT: Must explicitly check that groupAtCreation is NOT NULL
+    @Query("SELECT t FROM Ticket t WHERE t.groupAtCreation IS NOT NULL AND t.groupAtCreation IN :groups")
+    List<Ticket> findByGroupAtCreationIn(@Param("groups") List<Group> groups);
+
+    @Query("SELECT t FROM Ticket t WHERE t.groupAtCreation IS NOT NULL AND t.groupAtCreation = :group")
+    List<Ticket> findByGroupAtCreation(@Param("group") Group group);
+
+    @Query("SELECT t FROM Ticket t WHERE t.groupAtCreation IS NULL")
+    List<Ticket> findByGroupAtCreationIsNull();
+
+    // Filter by creator AND groupAtCreation (for BA access control)
+    // Shows: tickets with group in user's current groups, OR tickets with NO group only for self
+    @Query("SELECT t FROM Ticket t WHERE t.creator.id IN :creatorIds AND (t.groupAtCreation IN :groups OR (t.groupAtCreation IS NULL AND t.creator.id = :currentUserId))")
+    Page<Ticket> findByCreatorIdInAndGroupAtCreationInOrNull(@Param("creatorIds") List<Integer> creatorIds,
+                                                               @Param("groups") List<Group> groups,
+                                                               @Param("currentUserId") Integer currentUserId,
+                                                               Pageable pageable);
+
+    @Query("SELECT t FROM Ticket t WHERE t.creator.id IN :creatorIds AND (t.groupAtCreation IN :groups OR (t.groupAtCreation IS NULL AND t.creator.id = :currentUserId))")
+    List<Ticket> findByCreatorIdInAndGroupAtCreationInOrNull(@Param("creatorIds") List<Integer> creatorIds,
+                                                              @Param("groups") List<Group> groups,
+                                                              @Param("currentUserId") Integer currentUserId);
 
 }

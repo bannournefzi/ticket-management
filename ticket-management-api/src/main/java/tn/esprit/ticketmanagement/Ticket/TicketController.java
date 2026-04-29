@@ -58,15 +58,18 @@ public class TicketController {
     @GetMapping
     @Operation(summary = "Lister tous les tickets (paginé)")
     public ResponseEntity<Page<TicketDTO>> getAllTickets(
+            @AuthenticationPrincipal User currentUser,
             @PageableDefault(size = 20, sort = "createdDate",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(ticketService.getAllTickets(pageable));
+        return ResponseEntity.ok(ticketService.getAllTickets(pageable, currentUser));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Détail d'un ticket")
-    public ResponseEntity<TicketDTO> getTicketById(@PathVariable Integer id) {
-        return ResponseEntity.ok(ticketService.getTicketById(id));
+    public ResponseEntity<TicketDTO> getTicketById(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(ticketService.getTicketById(id, currentUser));
     }
 
     @GetMapping("/my-tickets")
