@@ -6,10 +6,10 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
-import tn.esprit.ticketmanagement.Ticket.Ticket;
-import tn.esprit.ticketmanagement.Ticket.TicketStatus;
-import tn.esprit.ticketmanagement.Ticket.TicketPriority;
-import tn.esprit.ticketmanagement.Ticket.TicketRepository;
+import tn.esprit.ticketmanagement.Ticket.entity.Ticket;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketStatus;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketPriority;
+import tn.esprit.ticketmanagement.Ticket.repository.TicketRepository;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 

@@ -1,5 +1,8 @@
 package tn.esprit.ticketmanagement.Ticket;
 
+import tn.esprit.ticketmanagement.Ticket.enums.TicketPriority;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketStatus;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;

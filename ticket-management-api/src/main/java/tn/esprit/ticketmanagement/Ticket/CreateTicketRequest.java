@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketPriority;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 
 import java.util.List;

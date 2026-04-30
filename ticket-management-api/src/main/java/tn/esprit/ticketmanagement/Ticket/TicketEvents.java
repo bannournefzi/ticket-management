@@ -2,6 +2,8 @@ package tn.esprit.ticketmanagement.Ticket;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
+import tn.esprit.ticketmanagement.Ticket.entity.Ticket;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketStatus;
 import tn.esprit.ticketmanagement.User.entity.User;
 
 public class TicketEvents {

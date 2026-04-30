@@ -2,6 +2,7 @@ package tn.esprit.ticketmanagement.KnowledgeBase;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import tn.esprit.ticketmanagement.KnowledgeBase.entity.TroubleshootingTree;
 
 import java.util.List;
 

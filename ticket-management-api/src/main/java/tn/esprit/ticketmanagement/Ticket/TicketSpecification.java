@@ -1,6 +1,10 @@
 package tn.esprit.ticketmanagement.Ticket;
 
 import org.springframework.data.jpa.domain.Specification;
+import tn.esprit.ticketmanagement.Ticket.entity.Ticket;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketCategory;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketPriority;
+import tn.esprit.ticketmanagement.Ticket.enums.TicketStatus;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 
 import java.time.LocalDateTime;
