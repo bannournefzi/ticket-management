@@ -44,12 +44,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>,
     List<Object[]> countByCategoryGrouped();
 
     @Query("SELECT t FROM Ticket t WHERE t.dueDate < :now " +
-            "AND t.status NOT IN (tn.esprit.ticketmanagement.Ticket.TicketStatus.RESOLVED, " +
-            "tn.esprit.ticketmanagement.Ticket.TicketStatus.CLOSED)")
+            "AND t.status NOT IN (tn.esprit.ticketmanagement.Ticket.enums.TicketStatus.RESOLVED, " +
+            "tn.esprit.ticketmanagement.Ticket.enums.TicketStatus.CLOSED)")
     List<Ticket> findSLABreachedTickets(@Param("now") LocalDateTime now);
 
     @Query("SELECT t FROM Ticket t WHERE t.assignedTo IS NULL " +
-            "AND t.status = tn.esprit.ticketmanagement.Ticket.TicketStatus.NEW " +
+            "AND t.status = tn.esprit.ticketmanagement.Ticket.enums.TicketStatus.NEW " +
             "ORDER BY t.createdDate ASC")
     List<Ticket> findUnassignedNewTickets();
 
