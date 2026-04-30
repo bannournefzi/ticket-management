@@ -6,11 +6,8 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { ToastrModule } from 'ngx-toastr';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-
-// Auth
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { ValidateAccountComponent } from './auth/validate-account/validate-account.component';
@@ -19,23 +16,15 @@ import { ResetPasswordComponent } from './auth/reset-password/reset-password.com
 import { ChangePasswordComponent } from './auth/change-password/change-password.component';
 import { ProfileComponent } from './auth/profile/profile.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
-
-// Layouts & Shared
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { SidebarComponent } from './shared/sidebar/sidebar.component';
-
-// Admin
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { UserListComponent } from './admin/users/user-list/user-list.component';
-
-// Métier
 import { MetierDashboardComponent } from './Metier/metier-dashboard/metier-dashboard.component';
 import { CreateTicketComponent } from './Metier/create-ticket/create-ticket.component';
 import { TicketListComponent } from './Metier/ticket-list/ticket-list.component';
 import { DashboardModule } from './Metier/metier-dashboard/dashboard.module';
-
-// BA
 import { ItDashboardComponentComponent } from './BA/it-dashboard-component/it-dashboard-component.component';
 import { BaTicketManagementComponent } from './BA/ba-ticket-management/ba-ticket-management.component';
 import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.component';
@@ -49,6 +38,7 @@ import { GroupListComponent } from './admin/group-management/group-list/group-li
 import { GroupFormComponent } from './admin/group-management/group-form/group-form.component';
 import { GroupDetailComponent } from './admin/group-management/group-detail/group-detail.component';
 import { SessionManagementComponent } from './security/session-management/session-management.component';
+import { InteractiveTreeComponent } from './Metier/interactive-tree/interactive-tree.component';
 
 
 @NgModule({
@@ -81,6 +71,7 @@ import { SessionManagementComponent } from './security/session-management/sessio
     GroupFormComponent,
     GroupDetailComponent,
     SessionManagementComponent,
+    InteractiveTreeComponent,
     
   ],
   imports: [

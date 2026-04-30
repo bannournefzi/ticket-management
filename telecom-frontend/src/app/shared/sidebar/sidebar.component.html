@@ -41,6 +41,15 @@
         <span class="nav-text">Mes Tickets</span>
         <span class="nav-badge" *ngIf="myTicketCount">{{ myTicketCount }}</span>
       </a>
+
+
+      <a routerLink="/metier/diagnostic" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Assistant de Dépannage' : ''">
+        <i class="fas fa-robot"></i>
+        <span class="nav-text">Assistant de Dépannage</span>
+      </a>
+
+     
      
 
       <div class="nav-section">

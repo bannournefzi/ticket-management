@@ -97,7 +97,27 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     private commentService: CommentService,
     private aiService: AiService,
     private ngZone: NgZone
-  ) {}
+  ) {const navigation = this.router.getCurrentNavigation();
+    
+    if (navigation?.extras.state) {
+      const stateData = navigation.extras.state as { aiDescription: string, aiCategory: string };
+      
+      if (stateData.aiDescription) {
+        // On pré-remplit les champs de ton modèle newTicket
+        this.newTicket.description = stateData.aiDescription;
+        
+        // On crée un titre automatique très pro
+        const categoryName = stateData.aiCategory && stateData.aiCategory !== 'Autre' 
+            ? stateData.aiCategory 
+            : 'Diagnostic';
+            
+        this.newTicket.title = `[Suite Diagnostic IA] - ${categoryName}`;
+        
+        // Optionnel : Tu pourrais même mapper l'ID de l'arbre à tes vraies catégories
+        // ex: this.newTicket.category = 'SUPPORT';
+      }
+    }
+  }
 
   ngOnInit(): void {
     this.loadSlaConfigs();

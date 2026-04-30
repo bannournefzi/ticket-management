@@ -23,6 +23,7 @@ import { GroupListComponent } from './admin/group-management/group-list/group-li
 import { GroupFormComponent } from './admin/group-management/group-form/group-form.component';
 import { GroupDetailComponent } from './admin/group-management/group-detail/group-detail.component';
 import { SessionManagementComponent } from './security/session-management/session-management.component';
+import { InteractiveTreeComponent } from './Metier/interactive-tree/interactive-tree.component';
 
 const routes: Routes = [
   // Public routes (no layout)
@@ -49,6 +50,7 @@ const routes: Routes = [
       { path: 'business-analyst/settings', component: BaSettingsComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
       { path: 'security/sessions', component: SessionManagementComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_ADMIN'] } },
+      { path: 'metier/diagnostic', component: InteractiveTreeComponent,  canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
 
 
       {

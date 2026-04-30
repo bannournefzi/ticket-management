@@ -1,0 +1,267 @@
+<div class="diag-page">
+
+  <!-- ══ LEFT PANEL ══════════════════════════════════════════════════════════ -->
+  <aside class="diag-sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 001.357 2.059l.096.038a3.375 3.375 0 013.171 3.36v1.696m-15 0a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 19.5v-1.696M3.75 19.5a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 19.5"/>
+        </svg>
+        IT Support
+      </div>
+
+      <div class="sidebar-hero">
+        <h1>Diagnostic<br>Intelligent</h1>
+        <p>Notre IA analyse votre problème et vous guide étape par étape vers la résolution.</p>
+      </div>
+
+      <!-- Stepper vertical -->
+      <nav class="v-stepper" aria-label="Progression du diagnostic">
+        <div class="v-step"
+             [class.v-step--active]="state === 'idle' || state === 'scanning'"
+             [class.v-step--done]="state === 'navigating' || state === 'resolved' || state === 'needs-ticket'">
+          <div class="v-step__track">
+            <div class="v-step__dot">
+              <svg *ngIf="state === 'navigating' || state === 'resolved' || state === 'needs-ticket'"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M5 13l4 4L19 7"/>
+              </svg>
+              <span *ngIf="state === 'idle' || state === 'scanning'">1</span>
+            </div>
+            <div class="v-step__line"></div>
+          </div>
+          <div class="v-step__content">
+            <span class="v-step__title">Description</span>
+            <span class="v-step__sub">Décrivez votre problème</span>
+          </div>
+        </div>
+
+        <div class="v-step"
+             [class.v-step--active]="state === 'navigating'"
+             [class.v-step--done]="state === 'resolved' || state === 'needs-ticket'">
+          <div class="v-step__track">
+            <div class="v-step__dot">
+              <svg *ngIf="state === 'resolved' || state === 'needs-ticket'"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M5 13l4 4L19 7"/>
+              </svg>
+              <span *ngIf="state !== 'resolved' && state !== 'needs-ticket'">2</span>
+            </div>
+            <div class="v-step__line"></div>
+          </div>
+          <div class="v-step__content">
+            <span class="v-step__title">Diagnostic guidé</span>
+            <span class="v-step__sub">Questions de vérification</span>
+          </div>
+        </div>
+
+        <div class="v-step"
+             [class.v-step--active]="state === 'resolved' || state === 'needs-ticket'">
+          <div class="v-step__track">
+            <div class="v-step__dot">3</div>
+          </div>
+          <div class="v-step__content">
+            <span class="v-step__title">Résolution</span>
+            <span class="v-step__sub">Solution ou ticket IT</span>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        Système de diagnostic automatisé &mdash; v2.0
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ RIGHT CONTENT ═══════════════════════════════════════════════════════ -->
+  <main class="diag-content" role="main">
+
+    <!-- ── ÉTAPE 1 : Formulaire ── -->
+    <div class="content-panel" *ngIf="state === 'idle'" role="form" aria-labelledby="form-title">
+      <header class="cp-header">
+        <h2 id="form-title" class="cp-title">Décrivez votre problème</h2>
+        <p class="cp-sub">Plus votre description est précise, plus le diagnostic sera efficace.</p>
+      </header>
+
+      <div class="cp-body">
+        <label for="problem-input" class="field-label">
+          Description du problème <span class="field-required" aria-hidden="true">*</span>
+        </label>
+        <textarea
+          id="problem-input"
+          class="field-textarea"
+          [(ngModel)]="userProblem"
+          placeholder="Ex : Mon écran externe reste noir quand je le branche. J'ai déjà essayé de redémarrer l'ordinateur…"
+          rows="6"
+          aria-required="true"
+          aria-describedby="problem-hint">
+        </textarea>
+        <p id="problem-hint" class="field-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/>
+          </svg>
+          Mentionnez les actions déjà effectuées pour accélérer le diagnostic.
+        </p>
+      </div>
+
+      <footer class="cp-footer">
+        <button
+          class="btn btn--primary btn--lg"
+          (click)="submitProblem()"
+          [disabled]="!userProblem.trim()"
+          [attr.aria-disabled]="!userProblem.trim()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Lancer le diagnostic
+        </button>
+      </footer>
+    </div>
+
+    <!-- ── SCAN ANIMATION ── -->
+    <div class="content-panel scan-panel" *ngIf="state === 'scanning'" role="status" aria-live="polite" aria-label="Analyse en cours">
+      <div class="scan-radar">
+        <div class="scan-radar__ring scan-radar__ring--1"></div>
+        <div class="scan-radar__ring scan-radar__ring--2"></div>
+        <div class="scan-radar__ring scan-radar__ring--3"></div>
+        <div class="scan-radar__core">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 001.357 2.059l.096.038a3.375 3.375 0 013.171 3.36v1.696"/>
+          </svg>
+        </div>
+      </div>
+
+      <h2 class="scan-title">Analyse en cours…</h2>
+      <p class="scan-sub">Identification de la procédure de diagnostic adaptée</p>
+
+      <div class="scan-steps" role="list">
+        <div
+          *ngFor="let step of scanSteps; let i = index"
+          class="scan-step"
+          [class.scan-step--waiting]="i > activeScanStep"
+          [class.scan-step--active]="i === activeScanStep"
+          [class.scan-step--done]="i < activeScanStep"
+          role="listitem"
+          [attr.aria-label]="step.label + (i < activeScanStep ? ' — Complété' : (i === activeScanStep ? ' — En cours' : ' — En attente'))">
+
+          <div class="scan-step__icon">
+            <!-- Waiting -->
+            <span class="scan-step__num" *ngIf="i > activeScanStep">{{ i + 1 }}</span>
+            <!-- Active : spinner -->
+            <span class="scan-step__spinner" *ngIf="i === activeScanStep" aria-hidden="true"></span>
+            <!-- Done : checkmark -->
+            <svg *ngIf="i < activeScanStep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
+              <path d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+
+          <div class="scan-step__body">
+            <span class="scan-step__label">{{ step.label }}</span>
+            <span class="scan-step__detail" *ngIf="i === activeScanStep">{{ step.detail }}</span>
+          </div>
+
+          <!-- Progress bar sous l'étape active -->
+          <div class="scan-step__bar" *ngIf="i === activeScanStep" aria-hidden="true">
+            <div class="scan-step__bar-fill" [style.animation-duration]="step.duration + 'ms'"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ÉTAPE 2 : Navigation arbre ── -->
+    <div class="content-panel" *ngIf="state === 'navigating' && currentNode" aria-labelledby="question-title">
+      <header class="cp-header">
+        <div class="context-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          {{ currentTree?.title }}
+        </div>
+        <p class="cp-sub">Répondez aux questions pour affiner le diagnostic.</p>
+      </header>
+
+      <!-- Historique -->
+      <div class="history-log" *ngIf="diagnosticHistory.length > 0" aria-label="Étapes complétées">
+        <div class="history-item" *ngFor="let step of diagnosticHistory; let i = index">
+          <span class="history-item__index">{{ i + 1 }}</span>
+          <div class="history-item__body">
+            <span class="history-item__q">{{ step.question }}</span>
+            <span class="history-item__a">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M5 13l4 4L19 7"/>
+              </svg>
+              {{ step.answer }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cp-body">
+        <p class="step-label">Étape {{ diagnosticHistory.length + 1 }}</p>
+        <h3 id="question-title" class="question-text">{{ currentNode.text }}</h3>
+
+        <div class="options-list" role="group" aria-label="Choisissez une réponse">
+          <button
+            *ngFor="let option of currentNode.options"
+            class="option-btn"
+            (click)="selectOption(option)">
+            <span class="option-btn__label">{{ option.label }}</span>
+            <svg class="option-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <footer class="cp-footer cp-footer--left">
+        <button class="btn btn--ghost" (click)="resetState()">Annuler le diagnostic</button>
+      </footer>
+    </div>
+
+    <!-- ── ÉTAPE 3a : Résolu ── -->
+    <div class="content-panel result-panel result-panel--success" *ngIf="state === 'resolved'" role="status" aria-live="polite">
+      <div class="result-icon-wrap">
+        <div class="result-pulse result-pulse--success"></div>
+        <div class="result-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+      <h2 class="result-title">Problème résolu</h2>
+      <p class="result-body">
+        La procédure de diagnostic a permis de résoudre le problème en
+        <strong>{{ diagnosticHistory.length }} étape(s)</strong>.
+        Aucune intervention supplémentaire n'est requise.
+      </p>
+      <button class="btn btn--outline" (click)="resetState()">Lancer un nouveau diagnostic</button>
+    </div>
+
+    <!-- ── ÉTAPE 3b : Ticket requis ── -->
+    <div class="content-panel result-panel result-panel--warning" *ngIf="state === 'needs-ticket'" role="alert" aria-live="assertive">
+      <div class="result-icon-wrap">
+        <div class="result-pulse result-pulse--warning"></div>
+        <div class="result-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/>
+          </svg>
+        </div>
+      </div>
+      <h2 class="result-title">Intervention requise</h2>
+      <p class="result-body">
+        Le diagnostic automatisé n'a pas pu résoudre ce problème.
+        Un technicien IT doit intervenir. Un rapport complet sera joint au ticket.
+      </p>
+      <div class="result-actions">
+        <button class="btn btn--primary btn--lg" (click)="goToCreateTicket()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M16.5 6v.75a3.75 3.75 0 01-7.5 0V6m-4.125 1.5v12.375a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V7.5M6 7.5h12"/>
+          </svg>
+          Ouvrir un ticket support
+        </button>
+        <button class="btn btn--ghost" (click)="resetState()">Retour à l'accueil</button>
+      </div>
+    </div>
+
+  </main>
+</div>
