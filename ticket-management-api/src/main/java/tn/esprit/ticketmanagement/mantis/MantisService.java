@@ -416,4 +416,35 @@ public class MantisService {
             return false;
         }
     }
+
+    public void addNoteToIssue(Long mantisIssueId, String noteText) {
+        String url = mantisProperties.getBaseUrl() + "/api/rest/issues/" + mantisIssueId + "/notes";
+
+        // Construction du JSON demandé par l'API Mantis : {"text": "...", "view_state": {"name": "public"}}
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("text", noteText);
+
+        Map<String, String> viewState = new HashMap<>();
+        viewState.put("name", "public");
+        payload.put("view_state", viewState);
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(payload, buildHeaders());
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    String.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.error("Erreur HTTP lors de l'ajout du commentaire sur Mantis {}", mantisIssueId);
+            } else {
+                log.info("Commentaire synchronisé avec succès vers Mantis #{}", mantisIssueId);
+            }
+        } catch (RestClientResponseException ex) {
+            log.error("Erreur de l'API Mantis lors de l'ajout du commentaire {}: {}", ex.getRawStatusCode(), ex.getResponseBodyAsString());
+        }
+    }
 }

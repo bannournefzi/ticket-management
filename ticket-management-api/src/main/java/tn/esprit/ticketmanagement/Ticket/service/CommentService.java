@@ -1,6 +1,7 @@
 package tn.esprit.ticketmanagement.Ticket.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tn.esprit.ticketmanagement.Ticket.*;
 import tn.esprit.ticketmanagement.Ticket.dto.CommentDTO;
@@ -9,16 +10,20 @@ import tn.esprit.ticketmanagement.Ticket.entity.Ticket;
 import tn.esprit.ticketmanagement.Ticket.repository.CommentRepository;
 import tn.esprit.ticketmanagement.Ticket.repository.TicketRepository;
 import tn.esprit.ticketmanagement.User.entity.User;
+import tn.esprit.ticketmanagement.mantis.MantisService;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CommentService {
 
     private final CommentRepository commentRepository;
     private final TicketRepository ticketRepository;
+    private final MantisService mantisService;
+
 
     /**
      * Ajouter un commentaire à un ticket
@@ -27,13 +32,11 @@ public class CommentService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket non trouvé avec l'id: " + ticketId));
 
-        // Un utilisateur Métier ne peut pas créer de note interne
         boolean isInternal = Boolean.TRUE.equals(request.getInternalNote());
         if (isInternal && currentUser.isUser()) {
             throw new IllegalArgumentException("Les notes internes ne sont pas disponibles pour les utilisateurs Métier");
         }
 
-        // Vérifier si les commentaires sont désactivés pour les utilisateurs Métier
         boolean commentsEnabled = ticket.getCommentsEnabled() != null ? ticket.getCommentsEnabled() : true;
         if (!commentsEnabled && currentUser.isUser()) {
             throw new IllegalArgumentException("Les commentaires sont désactivés pour les utilisateurs Métier sur ce ticket");
@@ -46,7 +49,25 @@ public class CommentService {
                 .ticket(ticket)
                 .build();
 
+        // 1. Sauvegarde dans ta propre base de données
         Comment saved = commentRepository.save(comment);
+
+        // 2. NOUVEAU : SYNCHRONISATION VERS MANTIS
+        if (ticket.getMantisId() != null) {
+            try {
+                // On formate le message pour que les devs dans Mantis sachent qui a répondu
+                String mantisFormattedNote = "Nouveau commentaire depuis la plateforme de Support.\n\n"
+                        + "Auteur : " + currentUser.fullName() + "\n"
+                        + "Message :\n" + request.getContent();
+
+                mantisService.addNoteToIssue(ticket.getMantisId(), mantisFormattedNote);
+            } catch (Exception e) {
+                // On catch l'erreur pour ne pas bloquer l'enregistrement local si Mantis est éteint
+                log.error("Impossible de pousser le commentaire vers Mantis: {}", e.getMessage());
+            }
+        }
+
+        // 3. Retourne le DTO au frontend
         return convertToDTO(saved);
     }
 
