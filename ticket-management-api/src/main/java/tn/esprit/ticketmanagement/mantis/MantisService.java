@@ -1,5 +1,7 @@
 package tn.esprit.ticketmanagement.mantis;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -446,5 +448,32 @@ public class MantisService {
         } catch (RestClientResponseException ex) {
             log.error("Erreur de l'API Mantis lors de l'ajout du commentaire {}: {}", ex.getRawStatusCode(), ex.getResponseBodyAsString());
         }
+    }
+    public List<JsonNode> getMantisNotes(Long mantisIssueId) {
+        String url = mantisProperties.getBaseUrl() + "/api/rest/issues/" + mantisIssueId;
+
+        try {
+            HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(response.getBody());
+                JsonNode issues = root.path("issues");
+
+                if (issues.isArray() && issues.size() > 0) {
+                    JsonNode notes = issues.get(0).path("notes");
+                    if (notes.isArray()) {
+                        List<JsonNode> notesList = new ArrayList<>();
+                        notes.forEach(notesList::add);
+                        return notesList;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Impossible de récupérer les notes Mantis #{}: {}", mantisIssueId, e.getMessage());
+        }
+        return new ArrayList<>();
     }
 }

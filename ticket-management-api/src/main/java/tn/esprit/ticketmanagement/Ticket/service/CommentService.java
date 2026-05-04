@@ -1,5 +1,6 @@
 package tn.esprit.ticketmanagement.Ticket.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,9 @@ import tn.esprit.ticketmanagement.Ticket.repository.TicketRepository;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.mantis.MantisService;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,19 +81,67 @@ public class CommentService {
      * - BA/Admin : tous les commentaires (y compris notes internes)
      */
     public List<CommentDTO> getCommentsByTicket(Integer ticketId, User currentUser) {
-        List<Comment> comments;
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket non trouvé avec l'id: " + ticketId));
 
+        List<Comment> comments;
         if (currentUser.isUser()) {
-            // Métier ne voit pas les notes internes
             comments = commentRepository.findByTicketIdAndInternalNoteFalseOrderByCreatedDateAsc(ticketId);
         } else {
-            // BA et Admin voient tout
             comments = commentRepository.findByTicketIdOrderByCreatedDateAsc(ticketId);
         }
 
-        return comments.stream()
+        // 1. On mappe les commentaires de la BDD locale
+        List<CommentDTO> dtos = comments.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+
+        // 2. NOUVEAU : On récupère en LIVE les commentaires des développeurs sur Mantis
+        if (ticket.getMantisId() != null) {
+            List<JsonNode> mantisNotes = mantisService.getMantisNotes(ticket.getMantisId());
+
+            for (JsonNode note : mantisNotes) {
+                String text = note.path("text").asText();
+
+                // On ignore nos propres commentaires poussés vers Mantis pour ne pas faire de doublons !
+                if (text != null && text.contains("Nouveau commentaire depuis la plateforme")) {
+                    continue;
+                }
+
+                // On extrait le nom du développeur Mantis
+                String reporterName = note.path("reporter").path("real_name").asText();
+                if (reporterName.isBlank()) {
+                    reporterName = note.path("reporter").path("name").asText();
+                }
+
+                // On extrait la date de Mantis
+                LocalDateTime createdDate = LocalDateTime.now();
+                try {
+                    String dateStr = note.path("created_at").asText();
+                    // Parfois Mantis renvoie un format spécifique, on gère les ISO
+                    createdDate = LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME);
+                } catch (Exception ignored) { }
+
+                // On crée un CommentDTO "fictif" pour le frontend
+                CommentDTO mantisDto = CommentDTO.builder()
+                        .id(-note.path("id").asInt()) // ID négatif pour indiquer que c'est externe
+                        .content(text)
+                        .internalNote(false)
+                        .authorId(0)
+                        .authorFullName("Mantis Dev (" + reporterName + ")")
+                        .authorRole("DEVELOPER")
+                        .ticketId(ticketId)
+                        .createdDate(createdDate)
+                        .build();
+
+                dtos.add(mantisDto);
+            }
+        }
+
+        // 3. On trie le tout par date pour avoir une conversation logique (Local + Mantis)
+        dtos.sort(Comparator.comparing(CommentDTO::getCreatedDate));
+
+        return dtos;
     }
 
     /**
