@@ -3,26 +3,33 @@ import { Router } from '@angular/router';
 import { MeetingService } from '../../services/meeting.service';
 import { MeetingResponse, MeetingRequest } from '../../models/meeting.model';
 import { AuthService } from '../../auth/service/auth.service';
+import { UserSearchResponse } from 'src/app/models/user-search.model';
 @Component({
   selector: 'app-ba-meetings',
   templateUrl: './ba-meetings.component.html',
   styleUrls: ['./ba-meetings.component.scss']
 })
 export class BaMeetingsComponent implements OnInit {
+selectedUser: UserSearchResponse | null = null;
 
   meetings: MeetingResponse[] = [];
   showCreateModal = false;
   loading = false;
 
-  // Formulaire création
   form: MeetingRequest = {
-    title: '',
-    description: '',
-    userId: 0,
-    scheduledAt: '',
-    durationMinutes: 30,
-    type: 'SCHEDULED'
-  };
+  title: '',
+  description: '',
+  userId: 0,
+  scheduledAt: '',
+  durationMinutes: 30,
+  type: 'SCHEDULED'
+};
+
+onUserSelected(user: UserSearchResponse): void {
+  this.selectedUser = user;
+  this.form.userId = user?.id ?? 0;
+}
+
 
   constructor(
     private meetingService: MeetingService,
@@ -41,16 +48,21 @@ export class BaMeetingsComponent implements OnInit {
   }
 
   createScheduled(): void {
-    this.loading = true;
-    this.meetingService.createScheduled(this.form).subscribe({
-      next: () => {
-        this.showCreateModal = false;
-        this.loading = false;
-        this.loadMeetings();
-      },
-      error: () => { this.loading = false; }
-    });
+  if (!this.selectedUser) {
+    alert('Veuillez sélectionner un utilisateur.');
+    return;
   }
+  this.loading = true;
+  this.meetingService.createScheduled(this.form).subscribe({
+    next: () => {
+      this.showCreateModal = false;
+      this.loading = false;
+      this.selectedUser = null;
+      this.loadMeetings();
+    },
+    error: () => { this.loading = false; }
+  });
+}
 
   launchInstant(userId: number, ticketId: number): void {
     this.meetingService.createInstant(userId, ticketId).subscribe(meeting => {

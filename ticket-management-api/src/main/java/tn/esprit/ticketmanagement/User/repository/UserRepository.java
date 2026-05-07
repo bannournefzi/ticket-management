@@ -27,5 +27,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findByDepartementIsNull();
 
     List<User> findByRoles_Name(String roleName);
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.id != :excludeId
+    AND (
+        LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE %:query%
+        OR LOWER(u.email) LIKE %:query%
+    )
+    ORDER BY u.firstName ASC
+    LIMIT 10
+""")
+    List<User> searchByNameOrEmail(@Param("query") String query,
+                                   @Param("excludeId") Integer excludeId);
 
 }

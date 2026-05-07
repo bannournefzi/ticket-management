@@ -1,0 +1,131 @@
+<div class="shell">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+ 
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <div class="main">
+
+    <!-- NAVBAR -->
+  
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+      <div class="metier-calendar">
+
+        <!-- Header -->
+        <div class="cal-header">
+          <div class="header-left">
+            <div class="header-icon">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div>
+              <h2>Mon Calendrier</h2>
+              <p class="cal-sub">{{ weekLabel }}</p>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="view-switcher">
+              <button [class.active]="currentView === 'week'"   (click)="currentView='week'">Semaine</button>
+              <button [class.active]="currentView === 'day'"    (click)="currentView='day'">Jour</button>
+              <button [class.active]="currentView === 'agenda'" (click)="currentView='agenda'">Agenda</button>
+            </div>
+            <div class="nav-btns">
+              <button class="nav-btn" (click)="prevWeek()">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="nav-btn today-btn" (click)="goToday()">Aujourd'hui</button>
+              <button class="nav-btn" (click)="nextWeek()">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skeleton loader -->
+        <div class="skeleton-grid" *ngIf="loading">
+          <div class="skeleton-row" *ngFor="let r of [1,2,3,4]">
+            <div class="skeleton-cell" *ngFor="let c of [1,2,3,4,5,6]"></div>
+          </div>
+        </div>
+
+        <!-- Week View -->
+        <div class="cal-body" *ngIf="!loading && currentView === 'week'">
+          <div class="cal-grid">
+
+            <!-- Corner -->
+            <div class="time-corner"></div>
+
+            <!-- Day headers -->
+            <div class="day-header" *ngFor="let date of weekDates"
+                 [class.today]="isToday(date)">
+              <div class="day-name">{{ weekDays[weekDates.indexOf(date)] }}</div>
+              <div class="day-num">{{ date.getDate() }}</div>
+              <div class="today-dot" *ngIf="isToday(date)"></div>
+            </div>
+
+            <!-- Time rows -->
+            <ng-container *ngFor="let hour of hours">
+              <div class="time-label">{{ hour }}h00</div>
+              <div class="cal-cell" *ngFor="let date of weekDates">
+                <ng-container *ngFor="let m of getMeetingsForSlot(date, hour)">
+                  <div class="cal-event" [ngClass]="statusClass(m.status)"
+                       (click)="joinMeeting(m.meetingCode)">
+                    <div class="event-title">{{ m.title }}</div>
+                    <div class="event-time">
+                      {{ m.scheduledAt | date:'HH:mm' }} · {{ m.durationMinutes }}min
+                    </div>
+                    <button class="event-join"
+                            *ngIf="m.status === 'ACTIVE' || m.status === 'PENDING'">
+                      Rejoindre →
+                    </button>
+                  </div>
+                </ng-container>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+
+        <!-- Agenda View -->
+        <div class="agenda-body" *ngIf="!loading && currentView === 'agenda'">
+
+          <div class="agenda-empty" *ngIf="meetings.length === 0">
+            <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
+            <div class="empty-title">Aucune réunion planifiée</div>
+            <div class="empty-sub">Vos réunions apparaîtront ici</div>
+          </div>
+
+          <div class="agenda-item" *ngFor="let m of getAgendaMeetings()"
+               [ngClass]="'border-' + statusClass(m.status)">
+            <div class="agenda-date">
+              <div class="agenda-day">{{ m.scheduledAt | date:'dd' }}</div>
+              <div class="agenda-month">{{ m.scheduledAt | date:'MMM' }}</div>
+            </div>
+            <div class="agenda-content">
+              <div class="agenda-top">
+                <h4>{{ m.title }}</h4>
+                <span class="status-badge" [ngClass]="'badge-' + m.status.toLowerCase()">
+                  {{ m.status }}
+                </span>
+              </div>
+              <div class="agenda-meta">
+                <span><i class="fas fa-clock"></i> {{ m.scheduledAt | date:'HH:mm' }}</span>
+                <span><i class="fas fa-hourglass-half"></i> {{ m.durationMinutes }} min</span>
+                <span class="agenda-code">{{ m.meetingCode }}</span>
+              </div>
+            </div>
+            <button class="btn btn-success btn-sm"
+                    *ngIf="m.status !== 'CANCELLED' && m.status !== 'COMPLETED'"
+                    (click)="joinMeeting(m.meetingCode)">
+              <i class="fas fa-video"></i> Rejoindre
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -2,6 +2,8 @@ package tn.esprit.ticketmanagement.meeting;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import tn.esprit.ticketmanagement.Notification.NotificationType;
 import tn.esprit.ticketmanagement.Notification.PlatformNotificationService;
@@ -17,7 +19,8 @@ public class MeetingService {
 
     private final MeetingRepository meetingRepository;
     private final PlatformNotificationService notificationService;
-
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
     private static final String JITSI_BASE = "https://meet.jit.si/";
 
     public MeetingResponse createScheduledMeeting(MeetingRequest req, Integer baId) {
@@ -140,5 +143,29 @@ public class MeetingService {
                 .durationMinutes(m.getDurationMinutes())
                 .baId(m.getBaId()).userId(m.getUserId()).ticketId(m.getTicketId())
                 .build();
+    }
+
+    private void sendInvitationNotification(Meeting meeting, String organizerName) {
+        String msg = String.format(
+                "{\"title\":\"%s\",\"scheduledAt\":\"%s\",\"organizer\":\"%s\",\"code\":\"%s\",\"meetingId\":%d}",
+                meeting.getTitle(),
+                meeting.getScheduledAt(),
+                organizerName,
+                meeting.getMeetingCode(),
+                meeting.getId()
+        );
+
+        // WebSocket push structuré
+        messagingTemplate.convertAndSend(
+                "/topic/user/" + meeting.getUserId() + "/meeting", msg);
+
+        // Notification plateforme aussi
+        notificationService.createAndPush(
+                meeting.getUserId(),
+                NotificationType.NEW_MESSAGE,
+                "📅 Invitation réunion",
+                "Vous êtes invité à : " + meeting.getTitle() + " — Code : " + meeting.getMeetingCode(),
+                meeting.getMeetingCode()
+        );
     }
 }

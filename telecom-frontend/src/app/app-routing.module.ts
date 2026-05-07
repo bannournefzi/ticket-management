@@ -27,6 +27,7 @@ import { InteractiveTreeComponent } from './Metier/interactive-tree/interactive-
 import { MeetingRoomComponent } from './meetings/meeting-room/meeting-room.component';
 import { UserMeetingsComponent } from './meetings/user-meetings/user-meetings.component';
 import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.component';
+import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calendar.component';
 
 
 const routes: Routes = [
@@ -64,7 +65,8 @@ const routes: Routes = [
       { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
       { path: 'security/sessions', component: SessionManagementComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_ADMIN'] } },
       { path: 'metier/diagnostic', component: InteractiveTreeComponent,  canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
-
+{ path: 'metier/meeting-calendar', component: MetierCalendarComponent,
+  canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
 
       {
         path: 'admin', canActivate: [RoleGuard], data: { role: 'ROLE_ADMIN' },

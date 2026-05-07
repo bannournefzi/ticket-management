@@ -1,0 +1,54 @@
+<div class="user-selector">
+  <div class="field-label">Inviter un utilisateur</div>
+
+  <div class="search-wrapper">
+    <div class="search-box" [class.focused]="showDropdown" [class.has-value]="!!selected">
+      <div class="selected-chip" *ngIf="selected">
+        <div class="chip-avatar" [ngClass]="getAvatarColor(selected.initials)">
+          {{ selected.initials }}
+        </div>
+        <div class="chip-info">
+          <span class="chip-name">{{ selected.fullName }}</span>
+          <span class="chip-email">{{ selected.email }}</span>
+        </div>
+        <button class="chip-clear" (click)="clear()">✕</button>
+      </div>
+
+      <input
+        *ngIf="!selected"
+        [(ngModel)]="query"
+        (input)="onInput()"
+        (focus)="showDropdown = results.length > 0"
+        (blur)="onBlur()"
+        placeholder="Rechercher par nom, email, département..."
+        class="search-input"
+        autocomplete="off" />
+
+      <span class="search-icon" *ngIf="!selected">
+        <span *ngIf="!loading">🔍</span>
+        <span *ngIf="loading" class="spinner"></span>
+      </span>
+    </div>
+
+    <!-- Dropdown -->
+    <div class="dropdown" *ngIf="showDropdown">
+      <div class="dropdown-item" *ngFor="let user of results"
+           (mousedown)="select(user)">
+        <div class="item-avatar" [ngClass]="getAvatarColor(user.initials)">
+          {{ user.initials }}
+        </div>
+        <div class="item-info">
+          <div class="item-name">{{ user.fullName }}</div>
+          <div class="item-meta">{{ user.email }} · {{ user.department }}</div>
+        </div>
+        <span class="item-role" [ngClass]="'role-' + user.role.toLowerCase()">
+          {{ user.role }}
+        </span>
+      </div>
+
+      <div class="dropdown-empty" *ngIf="results.length === 0 && !loading && query.length >= 2">
+        Aucun utilisateur trouvé pour "{{ query }}"
+      </div>
+    </div>
+  </div>
+</div>

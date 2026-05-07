@@ -41,6 +41,8 @@ import { SessionManagementComponent } from './security/session-management/sessio
 import { InteractiveTreeComponent } from './Metier/interactive-tree/interactive-tree.component';
 import { UserMeetingsComponent } from './meetings/user-meetings/user-meetings.component';
 import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.component';
+import { UserSelectorComponent } from './meetings/user-selector/user-selector.component';
+import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calendar.component';
 
 
 @NgModule({
@@ -76,6 +78,8 @@ import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.componen
     InteractiveTreeComponent,
     UserMeetingsComponent,
     BaMeetingsComponent,
+    UserSelectorComponent,
+    MetierCalendarComponent,
     
   ],
   imports: [

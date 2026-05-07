@@ -38,4 +38,6 @@ export class MeetingService {
     const params = new HttpParams().set('role', role);
     return this.http.get<MeetingResponse[]>(`${this.api}/calendar`, { params });
   }
+
+  
 }

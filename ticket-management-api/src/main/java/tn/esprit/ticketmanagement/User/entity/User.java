@@ -182,4 +182,8 @@ public class User implements UserDetails, Principal {
     public String getName() {
         return email;
     }
+
+    public String getDepartment() {
+        return departement != null ? departement.name() : null;
+    }
 }
