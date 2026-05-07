@@ -39,6 +39,8 @@ import { GroupFormComponent } from './admin/group-management/group-form/group-fo
 import { GroupDetailComponent } from './admin/group-management/group-detail/group-detail.component';
 import { SessionManagementComponent } from './security/session-management/session-management.component';
 import { InteractiveTreeComponent } from './Metier/interactive-tree/interactive-tree.component';
+import { UserMeetingsComponent } from './meetings/user-meetings/user-meetings.component';
+import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.component';
 
 
 @NgModule({
@@ -72,6 +74,8 @@ import { InteractiveTreeComponent } from './Metier/interactive-tree/interactive-
     GroupDetailComponent,
     SessionManagementComponent,
     InteractiveTreeComponent,
+    UserMeetingsComponent,
+    BaMeetingsComponent,
     
   ],
   imports: [

@@ -1,0 +1,57 @@
+<div class="user-meetings">
+
+  <!-- Alerte temps réel -->
+  <div class="live-alert" *ngIf="liveAlert">
+    📞 {{ liveAlert }}
+    <button (click)="liveAlert = null">✕</button>
+  </div>
+
+  <h2>Mes réunions</h2>
+
+  <!-- Rejoindre via code -->
+  <div class="join-box">
+    <h4>Rejoindre une réunion</h4>
+    <div class="join-row">
+      <input
+        [(ngModel)]="meetingCode"
+        placeholder="Entrez le code (ex: a1b2c3d4)"
+        maxlength="8"
+        (input)="meetingCode = meetingCode.trim()"  />
+      <button
+        (click)="joinByCode()"
+        [disabled]="meetingCode.length < 8">
+        Rejoindre
+      </button>
+    </div>
+    <p class="join-error" *ngIf="joinError">{{ joinError }}</p>
+  </div>
+
+  <!-- Invitations en attente -->
+  <div class="section" *ngIf="pending.length">
+    <h3>Invitations reçues ({{ pending.length }})</h3>
+    <div class="invite-card" *ngFor="let m of pending">
+      <div class="invite-info">
+        <span class="badge badge-pending">En attente</span>
+        <strong>{{ m.title }}</strong>
+        <p>{{ m.scheduledAt | date: 'dd MMM yyyy — HH:mm' }}</p>
+        <p class="code-line">Code : <strong>{{ m.meetingCode }}</strong></p>
+      </div>
+      <button class="btn-join" (click)="joinDirect(m.meetingCode)">
+        Rejoindre
+      </button>
+    </div>
+  </div>
+
+  <!-- Toutes les réunions -->
+  <div class="section">
+    <h3>Historique</h3>
+    <div class="meeting-row" *ngFor="let m of meetings">
+      <span class="badge" [ngClass]="statusClass(m.status)">{{ m.status }}</span>
+      <span class="meeting-title">{{ m.title }}</span>
+      <span class="meeting-date">{{ m.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+      <button *ngIf="m.status === 'ACTIVE'" (click)="joinDirect(m.meetingCode)"
+              class="btn-join-sm">Rejoindre</button>
+    </div>
+    <p *ngIf="meetings.length === 0" class="empty">Aucune réunion.</p>
+  </div>
+</div>

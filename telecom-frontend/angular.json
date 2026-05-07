@@ -36,7 +36,7 @@
               "src/styles.scss",
               "node_modules/ngx-toastr/toastr.css"
             ],
-            "scripts": [],
+            "scripts": [    "node_modules/sockjs-client/dist/sockjs.min.js"],
             "allowedCommonJsDependencies": [        
               "@stomp/stompjs",
               "sockjs-client"

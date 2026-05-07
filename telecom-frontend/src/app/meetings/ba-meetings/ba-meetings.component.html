@@ -1,0 +1,91 @@
+<div class="ba-meetings">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h2>Gestion des réunions</h2>
+    <div class="header-actions">
+      <button class="btn-create" (click)="showCreateModal = true">
+        + Planifier
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-num">{{ upcoming.length }}</span>
+      <span class="stat-label">À venir</span>
+    </div>
+    <div class="stat-card active">
+      <span class="stat-num">{{ active.length }}</span>
+      <span class="stat-label">En cours</span>
+    </div>
+    <div class="stat-card done">
+      <span class="stat-num">{{ completed.length }}</span>
+      <span class="stat-label">Terminées</span>
+    </div>
+  </div>
+
+  <!-- Liste réunions -->
+  <div class="meetings-grid">
+    <div class="meeting-card" *ngFor="let m of meetings"
+         [class.is-active]="m.status === 'ACTIVE'">
+      <div class="card-top">
+        <span class="badge" [ngClass]="statusClass(m.status)">{{ m.status }}</span>
+        <span class="meeting-type">{{ m.type }}</span>
+      </div>
+      <h4>{{ m.title }}</h4>
+      <p class="meta" *ngIf="m.scheduledAt">
+        📅 {{ m.scheduledAt | date: 'dd MMM yyyy — HH:mm' }}
+      </p>
+      <p class="code-line">
+        Code : <strong>{{ m.meetingCode }}</strong>
+      </p>
+      <div class="card-actions">
+        <button class="btn-join"
+                *ngIf="m.status !== 'CANCELLED'"
+                (click)="joinRoom(m.meetingCode)">
+          Rejoindre
+        </button>
+        <button class="btn-cancel"
+                *ngIf="m.status === 'PENDING'"
+                (click)="cancel(m.id)">
+          Annuler
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="meetings.length === 0">
+      <p>Aucune réunion pour le moment.</p>
+    </div>
+  </div>
+
+  <!-- Modal création -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="showCreateModal = false">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h3>Planifier une réunion</h3>
+
+      <label>Titre</label>
+      <input [(ngModel)]="form.title" placeholder="Ex: Support Ticket #42" />
+
+      <label>Description</label>
+      <textarea [(ngModel)]="form.description" rows="3"></textarea>
+
+      <label>ID Utilisateur métier</label>
+      <input type="number" [(ngModel)]="form.userId" />
+
+      <label>Date & heure</label>
+      <input type="datetime-local" [(ngModel)]="form.scheduledAt" />
+
+      <label>Durée (minutes)</label>
+      <input type="number" [(ngModel)]="form.durationMinutes" />
+
+      <div class="modal-actions">
+        <button (click)="showCreateModal = false" class="btn-secondary">Annuler</button>
+        <button (click)="createScheduled()" class="btn-primary" [disabled]="loading">
+          {{ loading ? 'Création...' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

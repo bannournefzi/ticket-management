@@ -11,5 +11,6 @@ public enum NotificationType {
     NEW_MESSAGE,
     USER_CREATED,
     USER_UPDATED,
-    USER_DELETED
+    USER_DELETED,
+    VIDEO_CALL
 }

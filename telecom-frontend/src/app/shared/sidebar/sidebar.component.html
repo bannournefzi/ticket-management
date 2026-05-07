@@ -72,6 +72,12 @@
       <i class="fas fa-comment-dots"></i>
       <span class="nav-text">Messages</span>
     </a>
+
+    <a routerLink="/metier/meetings" routerLinkActive="active"
+   class="nav-link" [title]="isCollapsed ? 'Réunions' : ''">
+  <i class="fas fa-video"></i>
+  <span class="nav-text">Réunions</span>
+</a>
       <a routerLink="/metier/history" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Historique' : ''">
         <i class="fas fa-history"></i>
@@ -124,6 +130,12 @@
         <span class="nav-text">Calendrier SLA</span>
         <span class="nav-badge badge-danger" *ngIf="stats?.slaBreachedTickets">{{ stats?.slaBreachedTickets }}</span>
       </a>
+
+      <a routerLink="/meetings" routerLinkActive="active"
+   class="nav-link" [title]="isCollapsed ? 'Réunions' : ''">
+  <i class="fas fa-video"></i>
+  <span class="nav-text">Réunions</span>
+</a>
 
       <a routerLink="/knowledge-base" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Base de Connaissances' : ''">

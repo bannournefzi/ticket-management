@@ -24,8 +24,21 @@ import { GroupFormComponent } from './admin/group-management/group-form/group-fo
 import { GroupDetailComponent } from './admin/group-management/group-detail/group-detail.component';
 import { SessionManagementComponent } from './security/session-management/session-management.component';
 import { InteractiveTreeComponent } from './Metier/interactive-tree/interactive-tree.component';
+import { MeetingRoomComponent } from './meetings/meeting-room/meeting-room.component';
+import { UserMeetingsComponent } from './meetings/user-meetings/user-meetings.component';
+import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.component';
+
 
 const routes: Routes = [
+
+
+  { path: 'meetings',      component: BaMeetingsComponent,
+  canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
+{ path: 'metier/meetings', component: UserMeetingsComponent,
+  canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+{ path: 'meetings/room/:code', component: MeetingRoomComponent,
+  canActivate: [RoleGuard],
+  data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST'] } },
   // Public routes (no layout)
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },

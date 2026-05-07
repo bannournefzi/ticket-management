@@ -1,0 +1,23 @@
+<div class="meeting-room-wrapper">
+
+  <div *ngIf="loading" class="loading-state">
+    <p>Connexion à la salle...</p>
+  </div>
+
+  <div *ngIf="error" class="error-state">
+    <p>{{ error }}</p>
+    <button (click)="router.navigate(['/meetings'])">Retour</button>
+  </div>
+
+  <!-- Toujours présent dans le DOM pour que ViewChild fonctionne -->
+  <div [style.display]="!loading && !error ? 'flex' : 'none'"
+       class="room-layout"
+       style="flex-direction: column; height: 100vh;">
+    <div class="room-header">
+      <span class="title">{{ meeting?.title }}</span>
+      <span class="code-badge">Code : <strong>{{ meeting?.meetingCode }}</strong></span>
+    </div>
+    <div #jitsiContainer class="jitsi-frame" style="flex: 1;"></div>
+  </div>
+
+</div>
