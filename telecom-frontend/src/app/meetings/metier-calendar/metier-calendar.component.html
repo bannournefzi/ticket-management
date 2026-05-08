@@ -1,12 +1,11 @@
 <div class="shell">
 
-  <!-- ══════════════ SIDEBAR ══════════════ -->
- 
+  
 
   <!-- ══════════════ MAIN ══════════════ -->
   <div class="main">
 
-    <!-- NAVBAR -->
+    
   
 
     <!-- PAGE CONTENT -->
@@ -57,18 +56,18 @@
             <div class="time-corner"></div>
 
             <!-- Day headers -->
-            <div class="day-header" *ngFor="let date of weekDates"
-                 [class.today]="isToday(date)">
-              <div class="day-name">{{ weekDays[weekDates.indexOf(date)] }}</div>
-              <div class="day-num">{{ date.getDate() }}</div>
-              <div class="today-dot" *ngIf="isToday(date)"></div>
+            <div class="day-header" *ngFor="let day of weekDays"
+                [class.today]="isToday(day.date)">
+              <div class="day-name">{{ day.label }}</div>
+              <div class="day-num">{{ day.date.getDate() }}</div>
+              <div class="today-dot" *ngIf="isToday(day.date)"></div>
             </div>
 
             <!-- Time rows -->
             <ng-container *ngFor="let hour of hours">
               <div class="time-label">{{ hour }}h00</div>
-              <div class="cal-cell" *ngFor="let date of weekDates">
-                <ng-container *ngFor="let m of getMeetingsForSlot(date, hour)">
+              <div class="cal-cell" *ngFor="let day of weekDays">
+                <ng-container *ngFor="let m of getMeetingsForSlot(day.date, hour)">
                   <div class="cal-event" [ngClass]="statusClass(m.status)"
                        (click)="joinMeeting(m.meetingCode)">
                     <div class="event-title">{{ m.title }}</div>

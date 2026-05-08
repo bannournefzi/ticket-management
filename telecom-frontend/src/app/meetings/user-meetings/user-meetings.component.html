@@ -1,57 +1,136 @@
-<div class="user-meetings">
+<div class="shell">
 
-  <!-- Alerte temps réel -->
-  <div class="live-alert" *ngIf="liveAlert">
-    📞 {{ liveAlert }}
-    <button (click)="liveAlert = null">✕</button>
-  </div>
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <app-sidebar></app-sidebar>
 
-  <h2>Mes réunions</h2>
+  <!-- ══════════════ MAIN ══════════════ -->
+  <div class="main">
 
-  <!-- Rejoindre via code -->
-  <div class="join-box">
-    <h4>Rejoindre une réunion</h4>
-    <div class="join-row">
-      <input
-        [(ngModel)]="meetingCode"
-        placeholder="Entrez le code (ex: a1b2c3d4)"
-        maxlength="8"
-        (input)="meetingCode = meetingCode.trim()"  />
-      <button
-        (click)="joinByCode()"
-        [disabled]="meetingCode.length < 8">
-        Rejoindre
-      </button>
-    </div>
-    <p class="join-error" *ngIf="joinError">{{ joinError }}</p>
-  </div>
+    <!-- NAVBAR -->
+    <app-navbar></app-navbar>
 
-  <!-- Invitations en attente -->
-  <div class="section" *ngIf="pending.length">
-    <h3>Invitations reçues ({{ pending.length }})</h3>
-    <div class="invite-card" *ngFor="let m of pending">
-      <div class="invite-info">
-        <span class="badge badge-pending">En attente</span>
-        <strong>{{ m.title }}</strong>
-        <p>{{ m.scheduledAt | date: 'dd MMM yyyy — HH:mm' }}</p>
-        <p class="code-line">Code : <strong>{{ m.meetingCode }}</strong></p>
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+      <div class="user-meetings">
+
+        <!-- Live alert -->
+        <div class="live-alert" *ngIf="liveAlert">
+          <div class="alert-ring"><i class="fas fa-phone"></i></div>
+          <div class="alert-body">
+            <div class="alert-title">Réunion en cours</div>
+            <div class="alert-sub">{{ liveAlert }}</div>
+          </div>
+          <button class="btn btn-success btn-sm" (click)="joinByCode()">
+            <i class="fas fa-video"></i> Rejoindre
+          </button>
+          <button class="alert-close" (click)="liveAlert = null">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Page header -->
+        <div class="page-header">
+          <div class="header-left">
+            <div class="header-icon">
+              <i class="fas fa-video"></i>
+            </div>
+            <div>
+              <h2>Mes réunions</h2>
+              <div class="page-sub">Rejoignez ou consultez vos réunions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Join box -->
+        <div class="join-box">
+          <div class="join-header">
+            <div class="join-icon"><i class="fas fa-sign-in-alt"></i></div>
+            <div>
+              <h4>Rejoindre une réunion</h4>
+              <p>Entrez le code reçu par votre interlocuteur</p>
+            </div>
+          </div>
+          <div class="join-input-row">
+            <input
+              class="join-input"
+              [(ngModel)]="meetingCode"
+              placeholder="Entrez le code (ex: a1b2c3d4)"
+              maxlength="8"
+              (input)="meetingCode = meetingCode.trim()" />
+            <button
+              class="btn btn-primary"
+              (click)="joinByCode()"
+              [disabled]="meetingCode.length < 8">
+              <i class="fas fa-arrow-right"></i> Rejoindre
+            </button>
+          </div>
+          <p class="join-error" *ngIf="joinError">
+            <i class="fas fa-exclamation-circle"></i> {{ joinError }}
+          </p>
+        </div>
+
+        <!-- Invitations en attente -->
+        <div class="section" *ngIf="pending.length">
+          <div class="section-head">
+            <span class="section-title">Invitations reçues</span>
+            <span class="pill">{{ pending.length }}</span>
+          </div>
+          <div class="invite-list">
+            <div class="invite-card" *ngFor="let m of pending">
+              <div class="invite-avatar">
+                {{ m.title?.charAt(0) | uppercase }}
+              </div>
+              <div class="invite-info">
+                <div class="invite-title">{{ m.title }}</div>
+                <div class="invite-meta">
+                  <span class="badge badge-pending"><span class="dot"></span>En attente</span>
+                  <span>{{ m.scheduledAt | date: 'dd MMM yyyy — HH:mm' }}</span>
+                  <span class="invite-code">{{ m.meetingCode }}</span>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" (click)="joinDirect(m.meetingCode)">
+                <i class="fas fa-video"></i> Rejoindre
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique -->
+        <div class="section">
+          <div class="section-head">
+            <span class="section-title">Historique</span>
+            <span class="pill">{{ meetings.length }}</span>
+          </div>
+
+          <div class="history-list">
+            <div class="history-row" *ngFor="let m of meetings">
+              <div class="history-icon">
+                <i class="fas fa-video"></i>
+              </div>
+              <span class="history-title">{{ m.title }}</span>
+              <span class="badge" [ngClass]="statusClass(m.status)">
+                <span class="dot"></span>{{ m.status }}
+              </span>
+              <span class="history-date">
+                {{ m.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}
+              </span>
+              <button class="btn btn-success btn-sm"
+                      *ngIf="m.status === 'ACTIVE'"
+                      (click)="joinDirect(m.meetingCode)">
+                <i class="fas fa-video"></i> Rejoindre
+              </button>
+            </div>
+
+            <div class="empty" *ngIf="meetings.length === 0">
+              <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
+              <div class="empty-title">Aucune réunion</div>
+              <p>Vos réunions apparaîtront ici.</p>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <button class="btn-join" (click)="joinDirect(m.meetingCode)">
-        Rejoindre
-      </button>
     </div>
-  </div>
 
-  <!-- Toutes les réunions -->
-  <div class="section">
-    <h3>Historique</h3>
-    <div class="meeting-row" *ngFor="let m of meetings">
-      <span class="badge" [ngClass]="statusClass(m.status)">{{ m.status }}</span>
-      <span class="meeting-title">{{ m.title }}</span>
-      <span class="meeting-date">{{ m.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}</span>
-      <button *ngIf="m.status === 'ACTIVE'" (click)="joinDirect(m.meetingCode)"
-              class="btn-join-sm">Rejoindre</button>
-    </div>
-    <p *ngIf="meetings.length === 0" class="empty">Aucune réunion.</p>
   </div>
 </div>

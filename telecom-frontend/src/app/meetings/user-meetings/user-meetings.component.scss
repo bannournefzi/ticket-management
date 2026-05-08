@@ -1,58 +1,74 @@
 // ═══════════════════════════════════════════════
-// User (Métier) — Meeting page
+// Design tokens — light dashboard theme
 // ═══════════════════════════════════════════════
 :host {
-  --bg:           #0d0f14;
-  --bg2:          #13161e;
-  --surface:      #1e2330;
-  --surface2:     #252b3b;
-  --surface3:     #2d3447;
-  --border:       rgba(255,255,255,0.06);
-  --border2:      rgba(255,255,255,0.10);
-  --border3:      rgba(255,255,255,0.16);
-  --accent:       #4f8ef7;
-  --accent2:      #3d7de8;
-  --accent-glow:  rgba(79,142,247,0.12);
-  --green:        #22c55e;
-  --green-bg:     rgba(34,197,94,0.10);
-  --amber:        #f59e0b;
-  --amber-bg:     rgba(245,158,11,0.10);
-  --red:          #ef4444;
-  --red-bg:       rgba(239,68,68,0.10);
-  --purple:       #a78bfa;
-  --purple-bg:    rgba(167,139,250,0.10);
-  --text:         #f1f5f9;
-  --text2:        #94a3b8;
-  --text3:        #64748b;
-  --radius:       10px;
-  --radius-lg:    16px;
-  --radius-xl:    20px;
-  --transition:   all 0.2s cubic-bezier(0.4,0,0.2,1);
-
   display: block;
-  background: var(--bg);
-  min-height: 100vh;
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --bg:            #f8f9fc;
+  --card:          #ffffff;
+  --border:        #e8eaed;
+  --border-lt:     #f1f5f9;
+  --t1:            #1e293b;
+  --t2:            #64748b;
+  --t3:            #94a3b8;
+  --primary:       #6366f1;
+  --primary-light: #eef2ff;
+  --primary-dark:  #4f46e5;
+  --success:       #10b981;
+  --success-bg:    #ecfdf5;
+  --danger:        #ef4444;
+  --danger-bg:     #fef2f2;
+  --warning:       #f59e0b;
+  --warning-bg:    #fffbeb;
+  --purple:        #8b5cf6;
+  --purple-bg:     #f5f3ff;
+  --r:             12px;
+  --r-sm:          8px;
+  --shadow:        0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-hover:  0 4px 12px rgba(0,0,0,0.08);
 }
 
-// ── Layout ────────────────────────────────────
+// ═══════════════════════════════════════════════
+// Shell layout
+// ═══════════════════════════════════════════════
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.page-content {
+  flex: 1;
+  padding: 24px 28px;
+  background: var(--bg);
+}
+
 .user-meetings {
   max-width: 900px;
   margin: 0 auto;
-  padding: 28px 32px;
 }
 
-// ── Live alert ────────────────────────────────
+// ═══════════════════════════════════════════════
+// Live alert
+// ═══════════════════════════════════════════════
 .live-alert {
   display: flex;
   align-items: center;
   gap: 14px;
   background: var(--purple-bg);
-  border: 1px solid rgba(167,139,250,0.25);
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  margin-bottom: 20px;
   animation: slideDown 0.3s ease;
 
   @keyframes slideDown {
@@ -64,12 +80,13 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: var(--purple-bg);
-    border: 2px solid rgba(167,139,250,0.4);
+    background: rgba(139,92,246,0.12);
+    border: 2px solid rgba(139,92,246,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
+    color: var(--purple);
     flex-shrink: 0;
     animation: ring 1s ease-in-out infinite;
 
@@ -84,68 +101,101 @@
 
   .alert-body {
     flex: 1;
-    .alert-title { font-size: 14px; font-weight: 600; color: var(--purple); }
-    .alert-sub   { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    .alert-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--purple);
+    }
+
+    .alert-sub {
+      font-size: 12px;
+      color: var(--t2);
+      margin-top: 2px;
+    }
   }
 
   .alert-close {
     background: none;
     border: none;
-    color: var(--text3);
-    font-size: 18px;
+    color: var(--t3);
+    font-size: 16px;
     cursor: pointer;
-    padding: 4px;
-    border-radius: 6px;
-    transition: var(--transition);
-    &:hover { color: var(--text); background: var(--surface2); }
-  }
+    padding: 4px 6px;
+    border-radius: var(--r-sm);
+    transition: all 0.15s;
+    flex-shrink: 0;
 
-  .btn-join-alert {
-    background: var(--purple);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 9px 18px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: var(--transition);
-    &:hover { background: #9d7df0; }
+    &:hover {
+      color: var(--t1);
+      background: var(--border-lt);
+    }
   }
 }
 
-// ── Page header ───────────────────────────────
+// ═══════════════════════════════════════════════
+// Page header
+// ═══════════════════════════════════════════════
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 22px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    border: 1px solid rgba(99,102,241,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
 
   h2 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
-    color: var(--text);
-    margin-bottom: 4px;
+    color: var(--t1);
+    line-height: 1.2;
+    margin: 0;
   }
 
-  .page-sub { font-size: 13px; color: var(--text3); }
+  .page-sub {
+    font-size: 12px;
+    color: var(--t3);
+    margin-top: 2px;
+  }
 }
 
-// ── Join box ──────────────────────────────────
+// ═══════════════════════════════════════════════
+// Join box
+// ═══════════════════════════════════════════════
 .join-box {
-  background: var(--surface);
-  border: 1px solid rgba(79,142,247,0.2);
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  margin-bottom: 28px;
+  background: var(--card);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+  margin-bottom: 24px;
   position: relative;
   overflow: hidden;
 
+  // Subtle glow decoration
   &::after {
     content: '';
     position: absolute;
     top: -40px; right: -40px;
-    width: 200px; height: 200px;
+    width: 180px; height: 180px;
     border-radius: 50%;
-    background: var(--accent-glow);
+    background: var(--primary-light);
+    opacity: 0.5;
     pointer-events: none;
   }
 
@@ -153,103 +203,96 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 
     .join-icon {
       width: 36px;
       height: 36px;
-      border-radius: 10px;
-      background: var(--accent-glow);
-      border: 1px solid rgba(79,142,247,0.25);
+      border-radius: var(--r-sm);
+      background: var(--primary-light);
+      border: 1px solid rgba(99,102,241,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 15px;
+      color: var(--primary);
+      flex-shrink: 0;
     }
 
     h4 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      color: var(--text);
+      color: var(--t1);
+      margin: 0;
     }
 
     p {
       font-size: 12px;
-      color: var(--text3);
-      margin-top: 1px;
+      color: var(--t3);
+      margin: 2px 0 0;
     }
   }
 
   .join-input-row {
     display: flex;
     gap: 10px;
+    position: relative;
+    z-index: 1;
   }
 
   .join-input {
     flex: 1;
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 12px 18px;
-    color: var(--text);
-    font-size: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 10px 16px;
+    color: var(--t1);
+    font-size: 15px;
     font-family: 'SF Mono', 'Fira Code', monospace;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     outline: none;
-    transition: var(--transition);
+    transition: all 0.2s;
 
     &::placeholder {
-      color: var(--text3);
-      font-family: -apple-system, sans-serif;
+      color: var(--t3);
+      font-family: 'Inter', sans-serif;
       letter-spacing: 0;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     &:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
     }
-  }
-
-  .btn-join-main {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    padding: 12px 24px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: var(--transition);
-
-    &:hover:not(:disabled) { background: var(--accent2); transform: translateY(-1px); }
-    &:disabled { opacity: 0.4; cursor: not-allowed; }
   }
 
   .join-error {
     font-size: 12px;
-    color: var(--red);
+    color: var(--danger);
     margin-top: 8px;
     padding-left: 2px;
+
+    i { margin-right: 4px; }
   }
 }
 
-// ── Section ───────────────────────────────────
+// ═══════════════════════════════════════════════
+// Section
+// ═══════════════════════════════════════════════
 .section {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 
   .section-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    color: var(--text2);
+    color: var(--t2);
     text-transform: uppercase;
     letter-spacing: 0.07em;
   }
@@ -259,13 +302,15 @@
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 20px;
-    background: var(--accent-glow);
-    color: var(--accent);
-    border: 1px solid rgba(79,142,247,0.2);
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid rgba(99,102,241,0.2);
   }
 }
 
-// ── Invite cards ──────────────────────────────
+// ═══════════════════════════════════════════════
+// Invite cards
+// ═══════════════════════════════════════════════
 .invite-list {
   display: flex;
   flex-direction: column;
@@ -275,39 +320,33 @@
 .invite-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  transition: var(--transition);
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
 
   &:hover {
-    border-color: var(--border3);
-    border-left-color: var(--accent);
+    box-shadow: var(--shadow-hover);
     transform: translateX(2px);
   }
 
-  &.is-instant {
-    border-left-color: var(--green);
-    background: linear-gradient(90deg, rgba(34,197,94,0.04) 0%, var(--surface) 100%);
-  }
-
   .invite-avatar {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--accent-glow);
-    border: 1px solid rgba(79,142,247,0.3);
+    background: var(--primary-light);
+    border: 1px solid rgba(99,102,241,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
-    color: var(--accent);
+    color: var(--primary);
     flex-shrink: 0;
-    text-transform: uppercase;
   }
 
   .invite-info {
@@ -317,11 +356,11 @@
     .invite-title {
       font-size: 14px;
       font-weight: 600;
-      color: var(--text);
+      color: var(--t1);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     .invite-meta {
@@ -329,78 +368,66 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: var(--text3);
+      color: var(--t2);
+      flex-wrap: wrap;
     }
 
     .invite-code {
       font-family: 'SF Mono', 'Fira Code', monospace;
       font-size: 11px;
-      color: var(--accent);
-      background: var(--accent-glow);
+      color: var(--primary);
+      background: var(--primary-light);
       padding: 2px 8px;
       border-radius: 5px;
-      border: 1px solid rgba(79,142,247,0.15);
+      border: 1px solid rgba(99,102,241,0.15);
       letter-spacing: 0.05em;
     }
   }
-
-  .btn-join {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: var(--transition);
-    flex-shrink: 0;
-
-    &:hover { background: var(--accent2); }
-  }
 }
 
-// ── History ───────────────────────────────────
+// ═══════════════════════════════════════════════
+// History list
+// ═══════════════════════════════════════════════
 .history-list {
   display: flex;
   flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .history-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--border);
-  transition: var(--transition);
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-lt);
+  transition: all 0.15s;
 
   &:last-child { border-bottom: none; }
 
-  &:hover {
-    background: var(--surface);
-    margin: 0 -16px;
-    padding: 11px 16px;
-    border-radius: var(--radius);
-    border-bottom-color: transparent;
-  }
+  &:hover { background: var(--border-lt); }
 
   .history-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
-    background: var(--surface2);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-sm);
+    background: var(--primary-light);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
+    font-size: 13px;
+    color: var(--primary);
     flex-shrink: 0;
   }
 
   .history-title {
     flex: 1;
     font-size: 13px;
-    color: var(--text);
+    color: var(--t1);
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -408,17 +435,19 @@
 
   .history-date {
     font-size: 12px;
-    color: var(--text3);
+    color: var(--t3);
     white-space: nowrap;
   }
 }
 
-// ── Badges ────────────────────────────────────
+// ═══════════════════════════════════════════════
+// Badges
+// ═══════════════════════════════════════════════
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
+  gap: 4px;
+  padding: 3px 9px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
@@ -431,28 +460,108 @@
     background: currentColor;
   }
 
-  &-active    { background: var(--green-bg);  color: var(--green); }
-  &-pending   { background: var(--amber-bg);  color: var(--amber); }
-  &-done      { background: rgba(255,255,255,0.05); color: var(--text3); }
-  &-cancelled { background: var(--red-bg);    color: var(--red); }
+  &.badge-active    { background: var(--success-bg); color: var(--success); }
+  &.badge-pending   { background: var(--warning-bg); color: var(--warning); }
+  &.badge-done,
+  &.badge-completed { background: var(--border-lt);  color: var(--t3); }
+  &.badge-cancelled { background: var(--danger-bg);  color: var(--danger); }
 }
 
-// ── Empty ─────────────────────────────────────
+// ═══════════════════════════════════════════════
+// Empty state
+// ═══════════════════════════════════════════════
 .empty {
   text-align: center;
-  padding: 32px;
-  color: var(--text3);
-  font-size: 14px;
+  padding: 60px 24px;
+
+  .empty-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+    color: var(--primary);
+  }
+
+  .empty-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--t1);
+    margin-bottom: 6px;
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--t3);
+    margin: 0;
+  }
 }
 
-// ── Responsive ────────────────────────────────
+// ═══════════════════════════════════════════════
+// Buttons
+// ═══════════════════════════════════════════════
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+
+  &.btn-primary {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+
+    &:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+      transform: translateY(-1px);
+    }
+    &:active { transform: translateY(0); }
+  }
+
+  &.btn-success {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid rgba(16,185,129,0.25);
+
+    &:hover {
+      background: #d1fae5;
+      border-color: rgba(16,185,129,0.5);
+    }
+  }
+
+  &.btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: var(--r-sm);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Responsive
+// ═══════════════════════════════════════════════
 @media (max-width: 640px) {
-  .user-meetings { padding: 16px; }
-
-  .join-input-row { flex-direction: column; }
-  .btn-join-main  { width: 100%; text-align: center; }
-
-  .invite-card .invite-info .invite-title { font-size: 13px; }
-  .live-alert { flex-wrap: wrap; }
-  .btn-join-alert { width: 100%; text-align: center; margin-top: 8px; }
+  .page-content     { padding: 16px; }
+  .join-input-row   { flex-direction: column; }
+  .live-alert       { flex-wrap: wrap; }
+  .history-row      { flex-wrap: wrap; gap: 8px; }
+  .history-date     { width: 100%; }
 }
