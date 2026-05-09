@@ -523,15 +523,16 @@ Pour exécuter le projet localement, il est recommandé de disposer de :
 - **Node.js** et **npm** pour le frontend ;
 - **Java 17** pour le backend ;
 - **Maven Wrapper** fourni par le projet ;
-- **PostgreSQL** pour la base principale ;
-- **PostgreSQL avec pgvector** pour la partie IA ;
+- **PostgreSQL** sur le port **5432** pour la base principale ;
+- **PostgreSQL avec pgvector** sur le port **5433** pour la partie IA ;
 - **Ollama** si l’on souhaite activer les fonctionnalités intelligentes ;
 - éventuellement **MailDev** ou un serveur SMTP de test ;
 - éventuellement **MantisBT** pour tester l’intégration externe.
 
 ### 1. Cloner et se positionner dans le dépôt
 ```bash
-cd /home/runner/work/ticket-management/ticket-management
+git clone <url-du-depot>
+cd ticket-management
 ```
 
 ### 2. Préparer les services externes
@@ -543,8 +544,8 @@ Avant de démarrer l’application, il faut vérifier :
 
 ### 3. Lancer le backend
 ```bash
-cd /home/runner/work/ticket-management/ticket-management/ticket-management-api
-sh ./mvnw spring-boot:run
+cd ticket-management-api
+./mvnw spring-boot:run
 ```
 
 Le backend démarre sur le port **8088** avec le contexte :
@@ -559,7 +560,7 @@ http://localhost:8088/swagger-ui.html
 
 ### 4. Lancer le frontend
 ```bash
-cd /home/runner/work/ticket-management/ticket-management/telecom-frontend
+cd telecom-frontend
 npm install
 npm start
 ```
@@ -579,9 +580,9 @@ npm test
 
 #### Backend
 ```bash
-sh ./mvnw spring-boot:run
-sh ./mvnw clean package
-sh ./mvnw test
+./mvnw spring-boot:run
+./mvnw clean package
+./mvnw test
 ```
 
 ### 6. Remarque sur la validation observée
