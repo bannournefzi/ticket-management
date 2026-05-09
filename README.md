@@ -3,7 +3,7 @@
 ## Présentation du projet
 
 ### Contexte
-Ce dépôt correspond à une plateforme de gestion des tickets conçue dans une logique d’entreprise, avec une séparation claire entre une application web frontend développée en **Angular 16** et une API backend développée en **Spring Boot 3**. Le projet s’inscrit dans un contexte de transformation digitale du support interne, où la centralisation des demandes, la traçabilité des interventions et l’amélioration continue du service rendu sont des enjeux majeurs.
+Ce dépôt correspond à une plateforme de gestion des tickets conçue dans une logique d’entreprise, avec une séparation claire entre une application web frontend développée en **Angular 16.2** et une API backend développée en **Spring Boot 3.3.5**. Le projet s’inscrit dans un contexte de transformation digitale du support interne, où la centralisation des demandes, la traçabilité des interventions et l’amélioration continue du service rendu sont des enjeux majeurs.
 
 L’application couvre non seulement la gestion classique des incidents et demandes, mais intègre également des briques avancées telles que la **base de connaissances**, la **messagerie temps réel**, les **réunions**, les **notifications temps réel** et plusieurs fonctionnalités d’**intelligence artificielle** autour du diagnostic, du chatbot et de la structuration automatique des tickets.
 
@@ -324,7 +324,6 @@ L’utilisateur métier est l’émetteur principal des demandes. Il crée ses t
 ticket-management/
 ├── telecom-frontend/
 ├── ticket-management-api/
-├── AGENTS.md
 └── .gitignore
 ```
 
