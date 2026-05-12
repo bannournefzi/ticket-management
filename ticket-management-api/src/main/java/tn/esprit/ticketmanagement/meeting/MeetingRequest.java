@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class MeetingRequest {
     private String title;
     private String description;
-    private Integer userId;           // participant invité
+    private List<Integer> userIds;        // participant invité
     private Integer ticketId;
     private LocalDateTime scheduledAt;
     private Integer durationMinutes;

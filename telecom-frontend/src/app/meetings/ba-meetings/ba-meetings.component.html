@@ -125,13 +125,12 @@
         </div>
 
         <!-- Selected user confirm -->
-        <div class="selected-user-confirm" *ngIf="selectedUser">
-          <i class="fas fa-check-circle"></i>
-          <span>Invité :</span>
-          <strong>{{ selectedUser.fullName }}</strong>
-          <span class="email">{{ selectedUser.email }}</span>
-        </div>
-
+       <div class="selected-user-confirm" *ngIf="selectedUsers.length">
+  <div *ngFor="let u of selectedUsers">
+    <i class="fas fa-check-circle"></i>
+    <strong>{{ u.fullName }}</strong> — {{ u.email }}
+  </div>
+</div>
       </div>
     </div>
 
@@ -150,7 +149,7 @@
     <textarea [(ngModel)]="form.description" rows="3"
               placeholder="Détails de la réunion..."></textarea>
 
-    <app-user-selector (userSelected)="onUserSelected($event)"></app-user-selector>
+<app-user-selector (userSelected)="onUserSelected($event)"></app-user-selector>
 
     <label>Date &amp; heure</label>
     <input type="datetime-local" [(ngModel)]="form.scheduledAt" />

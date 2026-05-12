@@ -1,22 +1,23 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TroubleshootingTree, AiAnalysisResponse } from '../models/troubleshooting-tree.model';
+
+export interface AiAgentResponse {
+  reply: string;
+  action: 'CONTINUE' | 'RESOLVED' | 'CREATE_TICKET';
+  options?: string[];
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class TroubleshootingTreeService {
-  
-   private apiUrl = 'http://localhost:8088/api/v1/troubleshooting-trees';
+  private apiUrl = 'http://localhost:8088/api/v1/troubleshooting-trees';
 
   constructor(private http: HttpClient) {}
 
-   analyzeProblem(userDescription: string): Observable<AiAnalysisResponse> {
-    return this.http.post<AiAnalysisResponse>(`${this.apiUrl}/analyze-problem`, { userDescription });
-  }
-
-   getTreeById(id: string): Observable<TroubleshootingTree> {
-    return this.http.get<TroubleshootingTree>(`${this.apiUrl}/${id}`);
+  // L'IA nous répond maintenant avec un texte et une action !
+  analyzeProblem(userDescription: string): Observable<AiAgentResponse> {
+    return this.http.post<AiAgentResponse>(`${this.apiUrl}/analyze-problem`, { userDescription });
   }
 }

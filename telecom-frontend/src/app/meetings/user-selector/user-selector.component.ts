@@ -11,10 +11,11 @@ import { UserSearchResponse } from '../../models/user-search.model';
 export class UserSelectorComponent implements OnDestroy {
 
   @Output() userSelected = new EventEmitter<UserSearchResponse>();
+  @Output() userRemoved = new EventEmitter<UserSearchResponse>();
 
   query = '';
   results: UserSearchResponse[] = [];
-  selected: UserSearchResponse | null = null;
+  selectedUsers: UserSearchResponse[] = [];
   loading = false;
   showDropdown = false;
 
@@ -31,23 +32,25 @@ export class UserSelectorComponent implements OnDestroy {
 
   onInput(): void {
     this.loading = true;
-    this.selected = null;
     this.search$.next(this.query);
   }
 
   select(user: UserSearchResponse): void {
-    this.selected = user;
-    this.query = user.fullName;
-    this.showDropdown = false;
+    if (this.selectedUsers.find(u => u.id === user.id)) {
+      this.query = '';
+      this.showDropdown = false;
+      return;
+    }
+    this.selectedUsers.push(user);
     this.userSelected.emit(user);
-  }
-
-  clear(): void {
     this.query = '';
-    this.selected = null;
     this.results = [];
     this.showDropdown = false;
-    this.userSelected.emit(undefined as any);
+  }
+
+  remove(user: UserSearchResponse): void {
+    this.selectedUsers = this.selectedUsers.filter(u => u.id !== user.id);
+    this.userRemoved.emit(user);
   }
 
   getAvatarColor(initials: string): string {
@@ -56,9 +59,8 @@ export class UserSelectorComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void { this.search$.complete(); }
+
   onBlur(): void {
-  setTimeout(() => {
-    this.showDropdown = false;
-  }, 200);
-}
+    setTimeout(() => { this.showDropdown = false; }, 200);
+  }
 }

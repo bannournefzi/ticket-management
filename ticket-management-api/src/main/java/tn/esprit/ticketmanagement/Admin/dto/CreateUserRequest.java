@@ -16,4 +16,7 @@ public class CreateUserRequest {
     private String phone;
     private LocalDate dateOfBirth;
     private Departement departement;
+
+    private String mantisProject;
+
 }

@@ -1,20 +1,20 @@
-import { Component, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+  AfterViewChecked,
+  ChangeDetectorRef
+} from '@angular/core';
+import { Subject, takeUntil, finalize } from 'rxjs';
+import { TroubleshootingTreeService, AiAgentResponse } from '../../services/troubleshooting-tree.service';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { TroubleshootingTreeService } from '../../services/troubleshooting-tree.service';
-import { TroubleshootingTree, TreeNode, TreeOption } from '../../models/troubleshooting-tree.model';
 
-type ComponentState = 'idle' | 'scanning' | 'navigating' | 'resolved' | 'needs-ticket';
-
-interface DiagnosticStep {
-  question: string;
-  answer: string;
-}
-
-interface ScanStep {
-  label: string;
-  detail: string;
-  duration: number; // durée de la barre de progression en ms
+export interface ChatMessage {
+  sender: 'USER' | 'IA' | 'SYSTEM';
+  text: string;
+  timestamp: Date;
 }
 
 @Component({
@@ -22,210 +22,178 @@ interface ScanStep {
   templateUrl: './interactive-tree.component.html',
   styleUrls: ['./interactive-tree.component.scss']
 })
-export class InteractiveTreeComponent implements OnDestroy {
+export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChecked {
 
-  // ── State machine ──────────────────────────────────────────────────────────
-  state: ComponentState = 'idle';
-  userProblem = '';
+  @ViewChild('scrollMe') private scrollContainer!: ElementRef;
 
-  // ── Arbre ──────────────────────────────────────────────────────────────────
-  currentTree: TroubleshootingTree | null = null;
-  private currentNodeId: string | null = null;
-  diagnosticHistory: DiagnosticStep[] = [];
+  messages: ChatMessage[] = [];
+  currentOptions: string[] = [];
+  userInput = '';
+  isAiTyping = false;
+  isResolved = false;
+  hasError = false;
+  errorMessage = '';
 
-  // ── Scan animation ─────────────────────────────────────────────────────────
-  readonly scanSteps: ScanStep[] = [
-    { label: 'Analyse de la description',         detail: 'Traitement du langage naturel…',     duration: 900 },
-    { label: 'Identification du contexte IT',      detail: 'Classification du type de problème…', duration: 800 },
-    { label: 'Recherche de procédure adaptée',     detail: 'Correspondance dans la base de données…', duration: 950 },
-    { label: 'Chargement de l\'arbre de décision', detail: 'Préparation du guide interactif…',   duration: 700 },
-  ];
-  activeScanStep = 0;
+  // Compteur de tentatives infructueuses (pour affichage)
+  private attemptCount = 0;
 
-  // ── Coordination API / animation ───────────────────────────────────────────
-  private _scanDone = false;
-  private _pendingTreeId: string | null = null;
-  private _apiError = false;
-
-  private subscriptions = new Subscription();
-  private scanTimers: ReturnType<typeof setTimeout>[] = [];
+  // RxJS : destruction propre des subscriptions
+  private readonly destroy$ = new Subject<void>();
+  private shouldScroll = false;
 
   constructor(
-    private readonly treeService: TroubleshootingTreeService,
-    private readonly router: Router
+    private treeService: TroubleshootingTreeService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
-  // ── Getters ────────────────────────────────────────────────────────────────
-
-  get currentNode(): TreeNode | null {
-    if (!this.currentTree || !this.currentNodeId) return null;
-    return this.currentTree.treeJsonContent.nodes[this.currentNodeId] ?? null;
+  ngOnInit(): void {
+    this.addMessage('IA', 'Bonjour ! Je suis votre assistant de diagnostic IT. Quel type de problème rencontrez-vous ?');
+    this.currentOptions = [
+      '🌐 Problème Réseau / VPN',
+      '🔑 Mot de passe / Accès bloqué',
+      '💻 Lenteur ou crash du PC',
+      '🖨️ Imprimante / Périphérique',
+      '📦 Logiciel / Application',
+      '❓ Autre problème'
+    ];
   }
-
-  // ── Actions ────────────────────────────────────────────────────────────────
-
-  submitProblem(): void {
-    const problem = this.userProblem.trim();
-    if (!problem) return;
-
-    this._clearDiagnosticData();
-    this.state = 'scanning';
-    this.activeScanStep = 0;
-    this._scanDone = false;
-    this._pendingTreeId = null;
-    this._apiError = false;
-
-    this._startScanAnimation();
-    this._callAnalyzeApi(problem);
-  }
-
-  selectOption(option: TreeOption): void {
-    if (!this.currentNode) return;
-
-    this.diagnosticHistory.push({
-      question: this.currentNode.text,
-      answer: option.label
-    });
-
-    if (option.next) {
-      this.currentNodeId = option.next;
-    } else if (option.action === 'RESOLVED') {
-      this.state = 'resolved';
-    } else if (option.action === 'CREATE_TICKET') {
-      this.state = 'needs-ticket';
-    }
-  }
-
-  resetState(): void {
-    this._clearScanTimers();
-    this.state = 'idle';
-    this._clearDiagnosticData();
-    this.userProblem = '';
-  }
-
-  goToCreateTicket(): void {
-    this.router.navigate(['/create-ticket'], {
-      state: {
-        aiDescription: this._buildTechnicalSummary(),
-        aiCategory: this.currentTree?.title ?? 'Diagnostic Général'
-      }
-    });
-  }
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   ngOnDestroy(): void {
-    this._clearScanTimers();
-    this.subscriptions.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  // ── Privé : Animation de scan ──────────────────────────────────────────────
-
-  private _startScanAnimation(): void {
-    let elapsed = 0;
-
-    this.scanSteps.forEach((step, i) => {
-      const t = setTimeout(() => {
-        this.activeScanStep = i;
-      }, elapsed);
-      this.scanTimers.push(t);
-      elapsed += step.duration + 300; // durée barre + délai transition
-    });
-
-    // Toutes les étapes terminées
-    const doneTimer = setTimeout(() => {
-      this.activeScanStep = this.scanSteps.length; // force all done
-      this._scanDone = true;
-      this._resolveScanIfReady();
-    }, elapsed);
-
-    this.scanTimers.push(doneTimer);
-  }
-
-  private _resolveScanIfReady(): void {
-    if (!this._scanDone) return;
-
-    if (this._apiError) {
-      this.state = 'needs-ticket';
-      return;
+  ngAfterViewChecked(): void {
+    if (this.shouldScroll) {
+      this.scrollToBottom();
+      this.shouldScroll = false;
     }
+  }
 
-    if (this._pendingTreeId !== null) {
-      if (this._pendingTreeId === 'UNKNOWN') {
-        this.state = 'needs-ticket';
-      } else {
-        this._loadTree(this._pendingTreeId);
-      }
+  // ─── Envoi d'un message ────────────────────────────────────────────────────
+  selectOption(option: string): void {
+    this.sendMessage(option);
+  }
+
+  submitText(): void {
+    const trimmed = this.userInput.trim();
+    if (trimmed && !this.isAiTyping) {
+      this.sendMessage(trimmed);
+      this.userInput = '';
     }
-    // Si l'API n'a pas encore répondu → on attend (l'animation s'arrête sur la
-    // dernière étape, le spinner reste visible jusqu'à la réponse API)
   }
 
-  // ── Privé : Appel API ──────────────────────────────────────────────────────
+  // ─── Logique principale ────────────────────────────────────────────────────
+  private sendMessage(text: string): void {
+    if (this.isAiTyping) return;
 
-  private _callAnalyzeApi(problem: string): void {
-    const sub = this.treeService.analyzeProblem(problem).subscribe({
-      next: (response) => {
-        this._pendingTreeId = response.treeId;
-        this._resolveScanIfReady();
-      },
-      error: (err) => {
-        console.error('[InteractiveTree] Analyse échouée :', err);
-        this._apiError = true;
-        this._resolveScanIfReady();
-      }
-    });
+    this.hasError = false;
+    this.addMessage('USER', text);
+    this.currentOptions = [];
+    this.isAiTyping = true;
+    this.shouldScroll = true;
 
-    this.subscriptions.add(sub);
-  }
-
-  private _loadTree(treeId: string): void {
-    const sub = this.treeService.getTreeById(treeId).subscribe({
-      next: (tree) => {
-        this.currentTree = tree;
-        this.currentNodeId = tree.treeJsonContent.startNode;
-        this.state = 'navigating';
-      },
-      error: (err) => {
-        console.error('[InteractiveTree] Chargement arbre échoué :', err);
-        this.state = 'needs-ticket';
-      }
-    });
-
-    this.subscriptions.add(sub);
-  }
-
-  // ── Privé : Utilitaires ────────────────────────────────────────────────────
-
-  private _clearScanTimers(): void {
-    this.scanTimers.forEach(clearTimeout);
-    this.scanTimers = [];
-  }
-
-  private _clearDiagnosticData(): void {
-    this.currentTree = null;
-    this.currentNodeId = null;
-    this.diagnosticHistory = [];
-  }
-
-  private _buildTechnicalSummary(): string {
-    const lines = [
-      '====== RAPPORT DE DIAGNOSTIC IA ======',
-      '',
-      `Description employé : "${this.userProblem}"`,
-      ''
-    ];
-
-    if (this.currentTree) {
-      lines.push(`Catégorie identifiée : ${this.currentTree.title}`, '', 'Tests effectués :');
-      this.diagnosticHistory.forEach((s, i) => {
-        lines.push(`  Étape ${i + 1} — ${s.question}`, `           → ${s.answer}`);
+    this.treeService.analyzeProblem(text)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isAiTyping = false;
+          this.shouldScroll = true;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (response: AiAgentResponse) => {
+          this.handleAiResponse(response);
+        },
+        error: (err) => {
+          this.hasError = true;
+          this.errorMessage = err.status === 0
+            ? 'Le serveur IA est inaccessible. Vérifiez votre connexion réseau.'
+            : err.status >= 500
+              ? 'Le serveur IA est surchargé. Veuillez patienter et réessayer.'
+              : 'Une erreur inattendue s\'est produite. Veuillez réessayer.';
+          this.addMessage('SYSTEM', `⚠️ ${this.errorMessage}`);
+        }
       });
-      lines.push('', 'Résultat : Intervention technicienne requise.');
-    } else {
-      lines.push('Statut : Problème non reconnu — analyse manuelle requise.');
-    }
-
-    return lines.join('\n');
   }
+
+  private handleAiResponse(response: AiAgentResponse): void {
+    this.addMessage('IA', response.reply);
+    this.currentOptions = response.options ?? [];
+
+    switch (response.action) {
+      case 'CREATE_TICKET':
+        this.attemptCount++;
+        this.currentOptions = [];
+        this.addMessage('SYSTEM', '📋 Génération du rapport de diagnostic en cours...');
+        setTimeout(() => {
+          this.router.navigate(['/create-ticket'], {
+            queryParams: { description: this.buildDiagnosticReport() }
+          });
+        }, 2000);
+        break;
+
+      case 'RESOLVED':
+        this.currentOptions = [];
+        this.isResolved = true;
+        this.addMessage('SYSTEM', '✅ Incident résolu. Merci d\'avoir utilisé le diagnostic assisté.');
+        break;
+
+      case 'CONTINUE':
+      default:
+        // Rien à faire, les boutons sont déjà mis à jour
+        break;
+    }
+  }
+
+  // ─── Rapport de diagnostic professionnel ─────────────────────────────────
+  buildDiagnosticReport(): string {
+    const now = new Date().toLocaleString('fr-FR');
+    const conversation = this.messages
+      .filter(m => m.sender !== 'SYSTEM')
+      .map(m => {
+        const role = m.sender === 'USER' ? 'Utilisateur' : 'Technicien IA';
+        const time = m.timestamp.toLocaleTimeString('fr-FR');
+        return `  [${time}] ${role.padEnd(14)} : ${m.text}`;
+      })
+      .join('\n');
+
+    return `
+=======================================================
+   RAPPORT DE DIAGNOSTIC AUTOMATIQUE — NIVEAU 1
+=======================================================
+Date / Heure     : ${now}
+Généré par       : Agent IA Diagnostic (ITSM)
+Tentatives N1    : ${this.attemptCount}
+Statut           : Escalade N2 requise
+-------------------------------------------------------
+JOURNAL DE DIAGNOSTIC :
+
+${conversation}
+-------------------------------------------------------
+CONCLUSION :
+Le diagnostic de niveau 1 n'a pas permis de résoudre
+l'incident. Une intervention de niveau 2 est nécessaire.
+Merci de prendre en charge ce ticket en priorité.
+=======================================================
+`.trim();
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  private addMessage(sender: 'USER' | 'IA' | 'SYSTEM', text: string): void {
+    this.messages.push({ sender, text, timestamp: new Date() });
+    this.shouldScroll = true;
+  }
+
+  private scrollToBottom(): void {
+    try {
+      const el = this.scrollContainer.nativeElement;
+      el.scrollTop = el.scrollHeight;
+    } catch { /* ignore */ }
+  }
+
+  // Utilitaire template
+  trackByIndex = (index: number) => index;
 }

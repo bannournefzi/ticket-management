@@ -28,4 +28,6 @@ public class UserDTO {
     private Departement departement;
 
     private String username;
+    private String mantisProject;
+
 }

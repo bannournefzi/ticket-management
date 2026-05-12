@@ -69,6 +69,9 @@ public class User implements UserDetails, Principal {
     @Column(name = "profile_photo", columnDefinition = "bytea")
     private byte[] profilePhoto;
 
+    @Column(name = "mantis_project")
+    private String mantisProject;
+
     @Column(name = "profile_photo_type")
     private String profilePhotoType;
 
@@ -186,4 +189,5 @@ public class User implements UserDetails, Principal {
     public String getDepartment() {
         return departement != null ? departement.name() : null;
     }
+
 }

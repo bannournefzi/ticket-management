@@ -10,7 +10,7 @@ import { UserSearchResponse } from 'src/app/models/user-search.model';
   styleUrls: ['./ba-meetings.component.scss']
 })
 export class BaMeetingsComponent implements OnInit {
-selectedUser: UserSearchResponse | null = null;
+selectedUsers: UserSearchResponse[] = [];
 
   meetings: MeetingResponse[] = [];
   showCreateModal = false;
@@ -19,15 +19,17 @@ selectedUser: UserSearchResponse | null = null;
   form: MeetingRequest = {
   title: '',
   description: '',
-  userId: 0,
+  userIds: [],
+  ticketId: 0,
   scheduledAt: '',
   durationMinutes: 30,
   type: 'SCHEDULED'
 };
 
 onUserSelected(user: UserSearchResponse): void {
-  this.selectedUser = user;
-  this.form.userId = user?.id ?? 0;
+  if (this.selectedUsers.find(u => u.id === user.id)) return;
+  this.selectedUsers.push(user);
+  this.form.userIds = this.selectedUsers.map(u => u.id);
 }
 
 
@@ -48,7 +50,7 @@ onUserSelected(user: UserSearchResponse): void {
   }
 
   createScheduled(): void {
-  if (!this.selectedUser) {
+  if (this.selectedUsers.length === 0) {
     alert('Veuillez sélectionner un utilisateur.');
     return;
   }
@@ -57,7 +59,7 @@ onUserSelected(user: UserSearchResponse): void {
     next: () => {
       this.showCreateModal = false;
       this.loading = false;
-      this.selectedUser = null;
+      this.selectedUsers = [];
       this.loadMeetings();
     },
     error: () => { this.loading = false; }

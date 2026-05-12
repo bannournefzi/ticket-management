@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,8 @@ public class AdminService {
     private final PlatformNotificationService platformNotificationService;
     private final Emailservice emailService;
     private final TokenRepository tokenRepository;
+    private final JdbcTemplate jdbcTemplate;
+
 
 
 
@@ -84,6 +87,7 @@ public class AdminService {
                 .accountLocked(false)
                 .roles(new ArrayList<>(List.of(role)))
                 .departement(request.getDepartement())
+                .mantisProject(request.getMantisProject())
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -179,19 +183,34 @@ public class AdminService {
     }
     @Transactional
     public void deleteUser(Integer id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
+        }
 
-        // ✅ Supprimer les tokens en premier
-        tokenRepository.deleteAllByUser(user);
+        log.info("Début du nettoyage pour la suppression de l'utilisateur ID: {}", id);
 
-        // Clear les autres relations
-        user.getRoles().clear();
-        user.getChatsAsSender().clear();
-        user.getChatsAsRecipient().clear();
-        userRepository.save(user);
+        // 1. Nettoyage de l'historique des tickets
+        jdbcTemplate.update("DELETE FROM ticket_history WHERE changed_by = ?", id);
 
+        // 2. Nettoyage des commentaires
+        jdbcTemplate.update("DELETE FROM ticket_comments WHERE author_id = ?", id);
+
+        // 3. Nettoyage du Chat / Messages
+        jdbcTemplate.update("DELETE FROM messages WHERE sender_id = ?", id);
+        jdbcTemplate.update("DELETE FROM conversation WHERE sender_id = ? OR recipient_id = ?", id, id);
+
+        // 4. Détacher l'utilisateur des tickets existants
+        jdbcTemplate.update("UPDATE tickets SET assigned_to_id = NULL WHERE assigned_to_id = ?", id);
+        jdbcTemplate.update("UPDATE tickets SET creator_id = NULL WHERE creator_id = ?", id);
+
+        // 5. Nettoyer les rôles et les tokens de sécurité
+        jdbcTemplate.update("DELETE FROM users_roles WHERE users_id = ?", id);
+        jdbcTemplate.update("DELETE FROM token WHERE user_id = ?", id);
+
+        // 6. Suppression finale de l'utilisateur !
         userRepository.deleteById(id);
+
+        log.info("L'utilisateur ID: {} a été complètement supprimé.", id);
     }
 
     public UserStatsDTO getUserStats() {

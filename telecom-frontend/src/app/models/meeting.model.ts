@@ -1,7 +1,7 @@
 export interface MeetingRequest {
   title: string;
   description?: string;
-  userId: number;
+   userIds: number[];
   ticketId?: number;
   scheduledAt?: string;
   durationMinutes?: number;
@@ -19,6 +19,6 @@ export interface MeetingResponse {
   scheduledAt?: string;
   durationMinutes?: number;
   baId: number;
-  userId: number;
+userIds: number[];
   ticketId?: number;
 }

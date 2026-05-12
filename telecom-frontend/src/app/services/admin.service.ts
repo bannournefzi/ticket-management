@@ -16,6 +16,7 @@ export interface UserDTO {
   createdDate: string;
   departement?: string; 
   username?: string;
+  mantisProject?: string;
 }
 
 export interface UserStatsDTO {
@@ -46,6 +47,7 @@ export interface CreateUserRequest {
   phone: string;             
   departement?: string;
   dateOfBirth: string;
+  mantisProject?: string; 
 }
 
 @Injectable({

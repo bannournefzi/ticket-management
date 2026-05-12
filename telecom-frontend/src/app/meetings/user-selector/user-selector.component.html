@@ -1,21 +1,23 @@
 <div class="user-selector">
-  <div class="field-label">Inviter un utilisateur</div>
+  <div class="field-label">Inviter des utilisateurs</div>
 
   <div class="search-wrapper">
-    <div class="search-box" [class.focused]="showDropdown" [class.has-value]="!!selected">
-      <div class="selected-chip" *ngIf="selected">
-        <div class="chip-avatar" [ngClass]="getAvatarColor(selected.initials)">
-          {{ selected.initials }}
+    <div class="search-box" [class.focused]="showDropdown">
+
+      <!-- Chips -->
+      <div class="selected-chip" *ngFor="let u of selectedUsers">
+        <div class="chip-avatar" [ngClass]="getAvatarColor(u.initials)">
+          {{ u.initials }}
         </div>
         <div class="chip-info">
-          <span class="chip-name">{{ selected.fullName }}</span>
-          <span class="chip-email">{{ selected.email }}</span>
+          <span class="chip-name">{{ u.fullName }}</span>
+          <span class="chip-email">{{ u.email }}</span>
         </div>
-        <button class="chip-clear" (click)="clear()">✕</button>
+        <button class="chip-clear" (click)="remove(u)">✕</button>
       </div>
 
+      <!-- Input (toujours visible) -->
       <input
-        *ngIf="!selected"
         [(ngModel)]="query"
         (input)="onInput()"
         (focus)="showDropdown = results.length > 0"
@@ -24,7 +26,7 @@
         class="search-input"
         autocomplete="off" />
 
-      <span class="search-icon" *ngIf="!selected">
+      <span class="search-icon">
         <span *ngIf="!loading">🔍</span>
         <span *ngIf="loading" class="spinner"></span>
       </span>

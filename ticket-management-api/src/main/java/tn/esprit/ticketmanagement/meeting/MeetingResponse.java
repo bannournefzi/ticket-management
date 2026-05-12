@@ -2,6 +2,7 @@ package tn.esprit.ticketmanagement.meeting;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class MeetingResponse {
@@ -15,6 +16,6 @@ public class MeetingResponse {
     private LocalDateTime scheduledAt;
     private Integer durationMinutes;
     private Integer baId;
-    private Integer userId;
+    private List<Integer> userIds;
     private Integer ticketId;
 }

@@ -38,6 +38,11 @@ export interface Ticket {
   convertedToKB?: boolean;
 }
 
+export interface MantisProject {
+  id: number;
+  name: string;
+}
+
 export interface Attachment {
   id: number;
   fileName: string;
