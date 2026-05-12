@@ -1,4 +1,5 @@
 import { Component, OnInit, HostListener } from '@angular/core';
+import { ToastrService } from 'ngx-toastr';
 import { TicketService } from '../../services/ticket.service';
 import { CommentService } from '../../services/CommentService';
 import { AuthService } from '../../auth/service/auth.service';
@@ -8,7 +9,8 @@ import { FormsModule } from '@angular/forms';
 import {
   Ticket,
   TicketHistory,
-  TicketStatus
+  TicketStatus,
+  MantisProject
 } from '../../models/ticket.model';
 import { TicketComment, CreateCommentRequest } from '../../models/TicketComment';
 
@@ -138,7 +140,8 @@ export class BaTicketManagementComponent implements OnInit {
     private ticketService: TicketService,
     private commentService: CommentService,
     private authService: AuthService,
-    private kbService: KnowledgeBaseService
+    private kbService: KnowledgeBaseService,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
@@ -415,19 +418,53 @@ export class BaTicketManagementComponent implements OnInit {
   //  MANTIS
   // ══════════════════════════════════════════
 
-  pushSelectedToMantis(): void {
-    if (!this.selectedTicket) return;
-    this.ticketService.pushToMantis(this.selectedTicket.id).subscribe({
-      next: (updated) => {
-        this.selectedTicket = updated;
-        const idx = this.allTickets.findIndex(t => t.id === updated.id);
-        if (idx !== -1) this.allTickets[idx] = updated;
-        this.applyFilters();
-        this.showSuccess(`Ticket #${updated.id} envoyé vers Mantis (#${updated.mantisId})`);
-      },
-      error: (err) => this.showError(err.error?.message || 'Erreur envoi vers Mantis')
-    });
+  
+
+  mantisProjects: MantisProject[] = [];
+selectedMantisProjectId: number | null = null;
+isMantisModalOpen = false;
+
+openMantisModal(ticket: Ticket): void {
+  this.selectedTicket = ticket;
+  this.isDetailModalOpen = false;
+  this.isMantisModalOpen = true;
+  this.selectedMantisProjectId = this.mantisProjects.length ? this.mantisProjects[0].id : null;
+  this.ticketService.getMantisProjects().subscribe({
+    next: (projects) => {
+      this.mantisProjects = projects;
+      this.selectedMantisProjectId = projects.length ? projects[0].id : null;
+    },
+    error: () => {
+      this.isMantisModalOpen = false;
+      this.toastr.error('Impossible de charger les projets Mantis');
+    }
+  });
+}
+
+confirmPushToMantis(): void {
+  console.log('projectId =', this.selectedMantisProjectId);
+
+  if (!this.selectedTicket) return;
+  if (!this.selectedMantisProjectId) {
+    this.toastr.error('Aucun projet Mantis sélectionné');
+    return;
   }
+
+  this.ticketService.pushToMantis(this.selectedTicket.id, this.selectedMantisProjectId).subscribe({
+    next: (updated) => {
+      this.selectedTicket = updated;
+      this.isMantisModalOpen = false;
+      this.toastr.success(`Ticket #${updated.id} envoyé vers Mantis`);
+      this.loadTickets();
+    },
+    error: (err) => {
+      this.isMantisModalOpen = false;
+      const backendMsg = err.error?.error || err.error?.message || err.message || '';
+      this.toastr.error(backendMsg || 'Erreur envoi vers Mantis');
+      console.error('Mantis push error:', err);
+    }
+  });
+}
 
   // ══════════════════════════════════════════
   //  CONFIG SAFE ACCESSORS (FIX #2 & #5)

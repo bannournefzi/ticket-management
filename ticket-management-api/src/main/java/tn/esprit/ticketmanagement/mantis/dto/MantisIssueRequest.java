@@ -1,6 +1,5 @@
 package tn.esprit.ticketmanagement.mantis.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,12 +13,18 @@ public class MantisIssueRequest {
     private MantisRef category;
     private MantisRef priority;
     private MantisRef severity;
-
+    private MantisRef reporter;
 
     @Data
     @Builder
     public static class MantisRef {
         private Long id;
         private String name;
+    }
+
+    @Data
+    @Builder
+    public static class IssueWrapper {
+        private MantisIssueRequest issue;
     }
 }

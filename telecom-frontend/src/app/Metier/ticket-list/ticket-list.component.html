@@ -94,6 +94,7 @@
             <th class="col-sla" (click)="sortBy('slaStatus')">
               SLA <i class="fas" [ngClass]="getSortIcon('slaStatus')"></i>
             </th>
+            <th class="col-creator">Créé par</th>
             <th class="col-assignee">Assigné à</th>
             <th class="col-date" (click)="sortBy('createdDate')">
               Créé <i class="fas" [ngClass]="getSortIcon('createdDate')"></i>
@@ -142,6 +143,11 @@
                 <i [class]="getSLAIcon(ticket.slaStatus)"></i>
                 {{ getSLAShortLabel(ticket.slaStatus) }}
               </span>
+            </td>
+
+            <td class="td-creator">
+              <span class="creator-avatar">{{ getInitial(ticket.creatorFullName) }}</span>
+              <span class="creator-name">{{ ticket.creatorFullName }}</span>
             </td>
 
             <td class="td-assignee">

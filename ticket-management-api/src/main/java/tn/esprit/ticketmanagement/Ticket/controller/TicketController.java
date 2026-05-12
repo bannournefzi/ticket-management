@@ -25,6 +25,10 @@ import tn.esprit.ticketmanagement.Ticket.enums.TicketStatus;
 import tn.esprit.ticketmanagement.Ticket.service.TicketService;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.enums.Departement;
+import tn.esprit.ticketmanagement.mantis.MantisService;
+import tn.esprit.ticketmanagement.mantis.dto.MantisProjectDTO;
+import tn.esprit.ticketmanagement.mantis.dto.PushToMantisRequest;
+import tn.esprit.ticketmanagement.mantis.MantisService;
 
 import java.util.List;
 import java.util.Map;
@@ -36,6 +40,8 @@ import java.util.Map;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final MantisService mantisService;
+
 
     // ══════════════════════════════════════════
     //  CRÉATION
@@ -48,6 +54,11 @@ public class TicketController {
             @AuthenticationPrincipal User currentUser) {
         ticketService.uploadAttachments(ticketId, files, currentUser);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/mantis/projects")
+    public ResponseEntity<List<MantisProjectDTO>> getMantisProjects(@AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(mantisService.getProjectsForUser(currentUser));
     }
 
     @PostMapping
@@ -117,6 +128,7 @@ public class TicketController {
     @GetMapping("/filter")
     @Operation(summary = "Filtrage avancé avec pagination et recherche")
     public ResponseEntity<Page<TicketDTO>> filterTickets(
+            @AuthenticationPrincipal User currentUser,
             @RequestParam(required = false) TicketStatus status,
             @RequestParam(required = false) TicketPriority priority,
             @RequestParam(required = false) Departement departement,
@@ -129,18 +141,21 @@ public class TicketController {
                     direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ticketService.filterTickets(
                 status, priority, departement, category, search,
-                assigneeId, unassignedOnly, slaBreached, pageable));
+                assigneeId, unassignedOnly, slaBreached, currentUser, pageable));
     }
 
     @GetMapping("/filter/simple")
     @Operation(summary = "Filtrage simple (compatibilité ancien frontend)")
     public ResponseEntity<List<TicketDTO>> filterTicketsSimple(
+            @AuthenticationPrincipal User currentUser,
             @RequestParam(required = false) TicketStatus status,
             @RequestParam(required = false) TicketPriority priority,
             @RequestParam(required = false) Departement departement) {
         return ResponseEntity.ok(
-                ticketService.filterTicketsSimple(status, priority, departement));
+                ticketService.filterTicketsSimple(status, priority, departement, currentUser));
     }
+
+
 
     // ══════════════════════════════════════════
     //  ASSIGNATION
@@ -218,11 +233,11 @@ public class TicketController {
 
 
     @PatchMapping("/{ticketId}/push-to-mantis")
-    @Operation(summary = "Envoyer un ticket local vers Mantis")
     public ResponseEntity<TicketDTO> pushToMantis(
             @PathVariable Integer ticketId,
+            @RequestBody @Valid PushToMantisRequest request,
             @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(ticketService.pushToMantis(ticketId, currentUser));
+        return ResponseEntity.ok(ticketService.pushToMantis(ticketId, request.getProjectId(), currentUser));
     }
 
     @GetMapping("/{ticketId}/attachments/{attachmentId}")

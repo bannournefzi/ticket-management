@@ -43,13 +43,15 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-import tn.esprit.ticketmanagement.group.repository.GroupRepository;
 import tn.esprit.ticketmanagement.group.entity.Group;
 import tn.esprit.ticketmanagement.group.entity.GroupMembership;
 import tn.esprit.ticketmanagement.group.repository.GroupMembershipRepository;
+import tn.esprit.ticketmanagement.group.repository.GroupRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -129,162 +131,43 @@ public class TicketService {
     // ══════════════════════════════════════════
 
     private List<Integer> getVisibleUserIds(User currentUser) {
-        List<Integer> visibleIds = new ArrayList<>();
-
-        // 1. You always see your own tickets
-        visibleIds.add(currentUser.getId());
-
-        // 2. Admin sees everything
-        if (currentUser.isAdmin()) {
-            log.info("Admin {} sees all tickets", currentUser.fullName());
+        // Admin and BA see everything
+        if (currentUser.isAdmin() || currentUser.isBusinessAnalyst()) {
+            log.info("{} {} sees all tickets", currentUser.isAdmin() ? "Admin" : "BA", currentUser.fullName());
             return ticketRepository.findAll().stream()
                     .map(t -> t.getCreator().getId())
                     .distinct()
                     .collect(Collectors.toList());
         }
 
-        // 3. Get all groups user was ever a member of (including past memberships)
-        List<Group> groupsUserBelongedTo = groupMembershipRepository.findAllGroupsByUser(currentUser);
+        // Normal users: see tickets from users in the same CURRENT groups
+        List<Group> currentGroups = groupMembershipRepository.findActiveGroupsByUser(currentUser);
 
-        log.info("User {} (role: {}) belongs to {} groups: {}",
-                currentUser.fullName(),
-                currentUser.isBusinessAnalyst() ? "BA" : (currentUser.isUser() ? "USER" : "OTHER"),
-                groupsUserBelongedTo.size(),
-                groupsUserBelongedTo.stream().map(Group::getName).toList());
-
-        if (groupsUserBelongedTo.isEmpty()) {
-            log.info("User {} has no group memberships, seeing only own tickets", currentUser.fullName());
-            return visibleIds.stream().distinct().collect(Collectors.toList());
+        if (currentGroups.isEmpty()) {
+            log.info("User {} has no active groups, seeing only own tickets", currentUser.fullName());
+            return List.of(currentUser.getId());
         }
 
-        // 4. Get all tickets where groupAtCreation is one of those groups
-        // CRITICAL: MUST have groupAtCreation NOT NULL in the query
-        List<Ticket> ticketsInUserGroups;
-        if (groupsUserBelongedTo.isEmpty()) {
-            ticketsInUserGroups = List.of();
-        } else {
-            ticketsInUserGroups = ticketRepository.findByGroupAtCreationIn(groupsUserBelongedTo);
-            // DOUBLE CHECK: Remove any tickets that somehow have null group
-            final List<Ticket> filtered = ticketsInUserGroups.stream()
-                    .filter(t -> t.getGroupAtCreation() != null)
-                    .collect(Collectors.toList());
-            if (filtered.size() != ticketsInUserGroups.size()) {
-                log.warn(">>> FILTERED OUT {} tickets with null group!", ticketsInUserGroups.size() - filtered.size());
-                ticketsInUserGroups = filtered;
-            }
+        Set<Integer> ids = new HashSet<>();
+        ids.add(currentUser.getId());
+        for (Group group : currentGroups) {
+            group.getMembers().stream().map(User::getId).forEach(ids::add);
         }
 
-        // CRITICAL: Log EACH ticket to debug
-        for (Ticket t : ticketsInUserGroups) {
-            log.info(">>> TICKET #{} - groupAtCreation: {} - creator: {}",
-                    t.getId(),
-                    t.getGroupAtCreation() != null ? t.getGroupAtCreation().getName() : "NULL",
-                    t.getCreator() != null ? t.getCreator().getEmail() : "NULL");
-        }
-
-        log.info("User {} - querying groups: {} - found {} tickets with group (AFTER FILTER)",
-                currentUser.fullName(),
-                groupsUserBelongedTo.stream().map(Group::getName).toList(),
-                ticketsInUserGroups.size());
-
-        // 5. Filter: only include if:
-        //    - ticket HAS a group (groupAtCreation is NOT null)
-        //    - creator was in that group AT TIME OF TICKET CREATION
-        //    - AND current user (BA) was also in that group AT TIME OF TICKET CREATION
-        int includedCount = 0;
-        int excludedNoGroup = 0;
-        for (Ticket ticket : ticketsInUserGroups) {
-            // Explicit check: if ticket has NO group, skip it completely
-            if (ticket.getGroupAtCreation() == null) {
-                excludedNoGroup++;
-                log.info(">>> EXCLUDING ticket #{} - has NO group", ticket.getId());
-                continue;
-            }
-
-            if (ticket.getCreator() != null) {
-                LocalDateTime ticketTime = ticket.getCreatedDate();
-
-                // Check if CREATOR was a member of this group at ticket creation time
-                boolean creatorWasMember = groupMembershipRepository.wasMemberAt(
-                        ticket.getCreator().getId(),
-                        ticket.getGroupAtCreation().getId(),
-                        ticketTime);
-
-                // Check if CURRENT USER (BA) was a member of this group at ticket creation time
-                boolean currentUserWasMember = groupMembershipRepository.wasMemberAt(
-                        currentUser.getId(),
-                        ticket.getGroupAtCreation().getId(),
-                        ticketTime);
-
-                if (creatorWasMember && currentUserWasMember) {
-                    visibleIds.add(ticket.getCreator().getId());
-                    includedCount++;
-                    log.info("Including ticket #{} from user {} in group {} (created: {})",
-                            ticket.getId(), ticket.getCreator().fullName(),
-                            ticket.getGroupAtCreation().getName(), ticketTime);
-                } else if (!currentUserWasMember) {
-                    log.debug("Excluding ticket #{} - current user {} was not in group {} at {}",
-                            ticket.getId(), currentUser.fullName(),
-                            ticket.getGroupAtCreation().getName(), ticketTime);
-                } else {
-                    log.debug("Excluding ticket #{} - creator {} was not in group {} at {}",
-                            ticket.getId(), ticket.getCreator().fullName(),
-                            ticket.getGroupAtCreation().getName(), ticketTime);
-                }
-            }
-        }
-
-        log.info("User {} - excluded {} tickets with no group from {} total",
-                currentUser.fullName(), excludedNoGroup, ticketsInUserGroups.size());
-
-        // 6. IMPORTANT: Tickets with NO group (groupAtCreation = null) should ONLY be visible to:
-        //    - The creator themselves
-        //    - Admins
-        //    NON-ADMIN users should NOT see other users' tickets with no group
-        List<Ticket> ticketsWithNoGroup = ticketRepository.findByGroupAtCreationIsNull();
-        log.info("User {} found {} tickets with no group", currentUser.fullName(), ticketsWithNoGroup.size());
-
-        // FIX: Only add own tickets from no-group. Don't add other users' no-group tickets!
-        // A non-admin user should NEVER see another user's ticket that has no group.
-        // Only the creator themselves or admins can see tickets with no group.
-        boolean hasOwnNoGroupTicket = ticketsWithNoGroup.stream()
-                .anyMatch(t -> t.getCreator().getId().equals(currentUser.getId()));
-        if (hasOwnNoGroupTicket) {
-            log.info("User {} has their own ticket with no group - will see only their own", currentUser.fullName());
-            // Add only own ticket ID to visible list
-            visibleIds.add(currentUser.getId());
-        } else {
-            log.info("User {} has NO tickets with no group", currentUser.fullName());
-        }
-
-        log.info("User {} will see {} tickets from {} unique creators: {}",
-                currentUser.fullName(), includedCount, visibleIds.size(), visibleIds);
-
-        // Return a list without duplicate IDs
-        List<Integer> result = visibleIds.stream().distinct().collect(Collectors.toList());
-        log.info(">>> FINAL RESULT: User {} can see creator IDs: {}", currentUser.fullName(), result);
+        List<Integer> result = new ArrayList<>(ids);
+        log.info("User {} (USER) can see tickets from {} users in groups: {}",
+                currentUser.fullName(), result.size(),
+                currentGroups.stream().map(Group::getName).toList());
         return result;
     }
 
     @Transactional(readOnly = true)
     public Page<TicketDTO> getAllTickets(Pageable pageable, User currentUser) {
-        if (currentUser.isAdmin()) {
+        if (currentUser.isAdmin() || currentUser.isBusinessAnalyst()) {
             return ticketRepository.findAll(pageable).map(this::convertToDTO);
         } else {
-            // For non-admins, only show tickets they should have access to
             List<Integer> visibleIds = getVisibleUserIds(currentUser);
-
-            // Get current user's active groups for filtering
-            List<GroupMembership> activeMemberships = groupMembershipRepository.findByUserAndLeftAtIsNull(currentUser);
-            List<Group> currentGroups = activeMemberships.stream()
-                    .map(GroupMembership::getGroup)
-                    .collect(Collectors.toList());
-
-            // Filter by creator AND groupAtCreation:
-            // - Show tickets with group in user's current groups
-            // - Show tickets with NO group ONLY for self (not other users)
-            return ticketRepository.findByCreatorIdInAndGroupAtCreationInOrNull(visibleIds, currentGroups, currentUser.getId(), pageable)
-                    .map(this::convertToDTO);
+            return ticketRepository.findByCreatorIdIn(visibleIds, pageable).map(this::convertToDTO);
         }
     }
 
@@ -293,7 +176,7 @@ public class TicketService {
         Ticket ticket = findTicketOrThrow(id);
 
         // Check if user has access to this ticket
-        if (!currentUser.isAdmin()) {
+        if (!currentUser.isAdmin() && !currentUser.isBusinessAnalyst()) {
             List<Integer> visibleIds = getVisibleUserIds(currentUser);
             if (!visibleIds.contains(ticket.getCreator().getId())) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous n'avez pas accès à ce ticket");
@@ -305,21 +188,11 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public Page<TicketDTO> getMyTickets(User currentUser, Pageable pageable) {
-        if (currentUser.isAdmin()) {
-            // Admin sees all tickets
+        if (currentUser.isAdmin() || currentUser.isBusinessAnalyst()) {
             return ticketRepository.findAll(pageable).map(this::convertToDTO);
         } else {
-            // Users and BAs see tickets from users in their groups
             List<Integer> visibleIds = getVisibleUserIds(currentUser);
-
-            // Get current user's active groups for filtering
-            List<GroupMembership> activeMemberships = groupMembershipRepository.findByUserAndLeftAtIsNull(currentUser);
-            List<Group> currentGroups = activeMemberships.stream()
-                    .map(GroupMembership::getGroup)
-                    .collect(Collectors.toList());
-
-            return ticketRepository.findByCreatorIdInAndGroupAtCreationInOrNull(visibleIds, currentGroups, currentUser.getId(), pageable)
-                    .map(this::convertToDTO);
+            return ticketRepository.findByCreatorIdIn(visibleIds, pageable).map(this::convertToDTO);
         }
     }
 
@@ -337,22 +210,13 @@ public class TicketService {
     public List<TicketDTO> getMyTicketsAsList(User currentUser) {
         List<Ticket> tickets;
 
-        if (currentUser.isAdmin()) {
-            // Admin sees all tickets
+        if (currentUser.isAdmin() || currentUser.isBusinessAnalyst()) {
             tickets = ticketRepository.findAll();
-            log.info("Admin {} fetching all {} tickets", currentUser.fullName(), tickets.size());
+            log.info("{} {} fetching all {} tickets", currentUser.isAdmin() ? "Admin" : "BA", currentUser.fullName(), tickets.size());
         } else {
-            // Users and BAs see tickets from users in their groups
             List<Integer> visibleIds = getVisibleUserIds(currentUser);
-
-            // Get current user's active groups for filtering
-            List<GroupMembership> activeMemberships = groupMembershipRepository.findByUserAndLeftAtIsNull(currentUser);
-            List<Group> currentGroups = activeMemberships.stream()
-                    .map(GroupMembership::getGroup)
-                    .collect(Collectors.toList());
-
-            tickets = ticketRepository.findByCreatorIdInAndGroupAtCreationInOrNull(visibleIds, currentGroups, currentUser.getId());
-            log.info("User/BA {} fetching {} tickets from their groups", currentUser.fullName(), tickets.size());
+            tickets = ticketRepository.findByCreatorIdIn(visibleIds);
+            log.info("User {} fetching {} tickets from their groups", currentUser.fullName(), tickets.size());
         }
 
 return tickets.stream()
@@ -381,7 +245,7 @@ return tickets.stream()
                                          Departement departement, TicketCategory category,
                                          String search, Integer assigneeId,
                                          Boolean unassignedOnly, Boolean slaBreached,
-                                         Pageable pageable) {
+                                         User currentUser, Pageable pageable) {
 
         Specification<Ticket> spec = Specification.allOf();
         spec = spec.and(TicketSpecification.hasStatus(status));
@@ -398,16 +262,28 @@ return tickets.stream()
             spec = spec.and(TicketSpecification.isSLABreached());
         }
 
+        // Regular users: restrict to group-visible tickets
+        if (!currentUser.isAdmin() && !currentUser.isBusinessAnalyst()) {
+            List<Integer> visibleIds = getVisibleUserIds(currentUser);
+            spec = spec.and((root, query, cb) -> root.get("creator").get("id").in(visibleIds));
+        }
+
         return ticketRepository.findAll(spec, pageable).map(this::convertToDTO);
     }
 
     @Transactional(readOnly = true)
     public List<TicketDTO> filterTicketsSimple(TicketStatus status, TicketPriority priority,
-                                               Departement departement) {
+                                                Departement departement, User currentUser) {
         Specification<Ticket> spec = Specification.allOf();
         spec = spec.and(TicketSpecification.hasStatus(status));
         spec = spec.and(TicketSpecification.hasPriority(priority));
         spec = spec.and(TicketSpecification.hasDepartement(departement));
+
+        // Regular users: restrict to group-visible tickets
+        if (!currentUser.isAdmin() && !currentUser.isBusinessAnalyst()) {
+            List<Integer> visibleIds = getVisibleUserIds(currentUser);
+            spec = spec.and((root, query, cb) -> root.get("creator").get("id").in(visibleIds));
+        }
 
         return ticketRepository.findAll(spec).stream()
                 .map(this::convertToDTO)
@@ -808,14 +684,23 @@ return tickets.stream()
                 .build();
     }
 
-    public TicketDTO pushToMantis(Integer ticketId, User currentUser) {
+    public TicketDTO pushToMantis(Integer ticketId, Long projectId, User currentUser) {
+        log.info(">> pushToMantis START: ticketId={}, projectId={}, user={}", ticketId, projectId, currentUser.getEmail());
         Ticket ticket = findTicketOrThrow(ticketId);
+        log.info(">> Ticket found: id={}, title={}, mantisId={}", ticket.getId(), ticket.getTitle(), ticket.getMantisId());
 
         Long mantisId = ticket.getMantisId();
         if (mantisId == null) {
-            mantisId = mantisService.createIssue(ticket.getTitle(), ticket.getDescription());
+            log.info(">> Calling mantisService.createIssue()...");
+            mantisId = mantisService.createIssue(
+                    ticket.getTitle(),
+                    ticket.getDescription(),
+                    projectId,
+                    currentUser.getUsername()
+            );
+            log.info(">> createIssue SUCCESS: mantisId={}", mantisId);
             ticket.setMantisId(mantisId);
-            ticket.setMantisProjectId(mantisProperties.getProjectId());
+            ticket.setMantisProjectId(projectId);
 
             recordHistory(ticket, null, null, "mantis",
                     null, String.valueOf(mantisId),

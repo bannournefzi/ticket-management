@@ -12,8 +12,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.mantis.dto.MantisIssueRequest;
 import tn.esprit.ticketmanagement.mantis.dto.MantisIssueResponse;
+import tn.esprit.ticketmanagement.mantis.dto.MantisProjectDTO;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,38 +34,83 @@ public class MantisService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }
+    public List<MantisProjectDTO> getProjectsForUser(User currentUser) {
+        String url = mantisProperties.getBaseUrl() + "/api/rest/projects";
+        HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
 
-    public Long createIssue(String title, String description) {
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                url, HttpMethod.GET, entity, JsonNode.class);
+
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            return List.of();
+        }
+
+        List<MantisProjectDTO> projects = new ArrayList<>();
+        JsonNode arr = response.getBody().path("projects");
+        if (arr.isArray()) {
+            for (JsonNode p : arr) {
+                projects.add(new MantisProjectDTO(
+                        p.path("id").asLong(),
+                        p.path("name").asText()
+                ));
+            }
+        }
+
+        return projects;
+    }
+
+    public Long createIssue(String title, String description, Long projectId, String reporterUsername) {
         String url = mantisProperties.getBaseUrl() + "/api/rest/issues";
 
-        MantisIssueRequest request = MantisIssueRequest.builder()
-                .summary(title)
-                .description(description)
-                .project(MantisIssueRequest.MantisRef.builder()
-                        .id(mantisProperties.getProjectId())
-                        .build())
-                .category(MantisIssueRequest.MantisRef.builder()
-                        .name("General")
-                        .build())
-                .build();
+        // Build the JSON body as raw Maps (NO DTOs — avoids ALL Jackson mapping issues)
+        Map<String, Object> project = new HashMap<>();
+        project.put("id", projectId);
+
+        Map<String, Object> category = new HashMap<>();
+        category.put("name", "General");
+
+        Map<String, Object> issueData = new HashMap<>();
+        issueData.put("summary", title);
+        issueData.put("description", description);
+        issueData.put("project", project);
+        issueData.put("category", category);
+
+        Map<String, Object> body = issueData;
 
         try {
-            HttpEntity<MantisIssueRequest> entity = new HttpEntity<>(request, buildHeaders());
-            ResponseEntity<MantisIssueResponse> response =
-                    restTemplate.exchange(url, HttpMethod.POST, entity, MantisIssueResponse.class);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, buildHeaders());
 
-            if (!response.getStatusCode().is2xxSuccessful()
-                    || response.getBody() == null
-                    || response.getBody().getIssue() == null
-                    || response.getBody().getIssue().getId() == null) {
-                throw new IllegalStateException("Mantis create issue returned empty body");
+            ObjectMapper mapper = new ObjectMapper();
+            log.info(">>> Mantis POST body: {}", mapper.writeValueAsString(body));
+
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    url, HttpMethod.POST, entity, JsonNode.class);
+
+            int statusCode = response.getStatusCode().value();
+            String responseStr = response.getBody() != null ? mapper.writeValueAsString(response.getBody()) : "null";
+            log.info(">>> Mantis response status={}, body={}", statusCode, responseStr);
+
+            if (response.getBody() != null) {
+                JsonNode issue = response.getBody().get("issue");
+                if (issue == null || !issue.has("id")) {
+                    issue = response.getBody();
+                }
+                if (issue != null && issue.has("id")) {
+                    Long id = issue.get("id").asLong();
+                    log.info(">>> Mantis issue created SUCCESS: id={}", id);
+                    return id;
+                }
             }
 
-            return response.getBody().getIssue().getId();
+            throw new RuntimeException("Mantis n'a pas retourné d'ID. Status: " + statusCode + ", Response: " + responseStr);
 
         } catch (RestClientResponseException ex) {
-            log.error("Mantis error {}: {}", ex.getRawStatusCode(), ex.getResponseBodyAsString());
-            throw ex;
+            String errorBody = ex.getResponseBodyAsString();
+            log.error(">>> Mantis HTTP error {}: {}", ex.getRawStatusCode(), errorBody);
+            throw new RuntimeException("Mantis erreur HTTP " + ex.getRawStatusCode() + ": " + errorBody, ex);
+        } catch (Exception ex) {
+            log.error(">>> Mantis unexpected error: {}", ex.getMessage(), ex);
+            throw new RuntimeException("Erreur inattendue Mantis: " + ex.getMessage(), ex);
         }
     }
 
@@ -230,30 +277,30 @@ public class MantisService {
             return new ArrayList<>();
         }
     }
-    
+
     public Map<String, String> getUserDetails(String username) {
         log.info("Fetching details for user: {}", username);
         Map<String, String> details = new HashMap<>();
-        
+
         try {
             // Try to find user by getting issues where they are reporter or handler
             int page = 1;
             int pageSize = 50;
             boolean found = false;
-            
+
             while (!found && page <= 3) {
                 String url = mantisProperties.getBaseUrl() + "/api/rest/issues?page_size=" + pageSize + "&page=" + page;
                 HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-                
+
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     String body = response.getBody();
-                    
-                    // Look for the user in reporters
+
+                    // 1. Look for the user in reporters
                     String reporterRegex = "\"reporter\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
                     java.util.regex.Pattern reporterDetailPattern = java.util.regex.Pattern.compile(reporterRegex);
                     java.util.regex.Matcher reporterMatcher = reporterDetailPattern.matcher(body);
-                    
+
                     if (reporterMatcher.find()) {
                         String realName = reporterMatcher.group(1);
                         String email = reporterMatcher.group(2);
@@ -265,13 +312,13 @@ public class MantisService {
                         }
                         found = true;
                     }
-                    
-                    // Look for the user in handlers
+
+                    // 2. Look for the user in handlers
                     if (!found) {
                         String handlerRegex = "\"handler\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
                         java.util.regex.Pattern handlerDetailPattern = java.util.regex.Pattern.compile(handlerRegex);
                         java.util.regex.Matcher handlerMatcher = handlerDetailPattern.matcher(body);
-                        
+
                         if (handlerMatcher.find()) {
                             String realName = handlerMatcher.group(1);
                             String email = handlerMatcher.group(2);
@@ -284,7 +331,18 @@ public class MantisService {
                             found = true;
                         }
                     }
-                    
+
+                    // 3. NOUVEAU : Maintenant qu'on l'a trouvé, on récupère le nom du projet !
+                    if (found) {
+                        java.util.regex.Pattern projectPattern = java.util.regex.Pattern.compile("\"project\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"([^\"]*)\"");
+                        java.util.regex.Matcher projectMatcher = projectPattern.matcher(body);
+                        if (projectMatcher.find()) {
+                            details.put("project", projectMatcher.group(1));
+                        } else {
+                            details.put("project", "Projet Principal"); // Valeur par défaut si non trouvé
+                        }
+                    }
+
                     if (!body.contains("\"issues\"") || body.contains("\"issues\":[]")) {
                         break;
                     }
@@ -293,10 +351,10 @@ public class MantisService {
                     break;
                 }
             }
-            
+
             log.info("User details for {}: {}", username, details);
             return details;
-            
+
         } catch (RestClientResponseException ex) {
             log.error("Failed to fetch user details: {}", ex.getRawStatusCode());
             return details;

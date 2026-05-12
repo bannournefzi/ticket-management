@@ -305,28 +305,36 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   onUsernameChange(): void {
-    const selectedUser = this.mantisUsersMap[this.newUser.username];
+    
+    const selectedUser: any = this.mantisUsersMap[this.newUser.username]; 
+    
     if (selectedUser) {
       if (selectedUser.realName && selectedUser.realName.trim()) {
-        const parts = selectedUser.realName.trim().split(' ');
-        if (parts.length >= 2) {
-          this.newUser.firstName = parts[0];
-          this.newUser.lastName = parts.slice(1).join(' ');
-        } else {
-          this.newUser.firstName = parts[0] || '';
-          this.newUser.lastName = '';
-        }
+        this.newUser.firstName = selectedUser.realName.trim();
+      } else {
+        this.newUser.firstName = this.newUser.username;
       }
+
       if (selectedUser.email && selectedUser.email.trim()) {
         this.newUser.email = selectedUser.email.trim();
       }
+
+      // NOUVEAU : On récupère le projet de Mantis
+      if (selectedUser.project && selectedUser.project.trim()) {
+        this.newUser.mantisProject = selectedUser.project.trim();
+      } else {
+        this.newUser.mantisProject = 'Non assigné';
+      }
+    } else {
+      this.newUser.firstName = '';
+      this.newUser.email = '';
+      this.newUser.mantisProject = '';
     }
   }
 
   createUser(): void {
    if (
   !this.newUser.firstName ||
-  !this.newUser.lastName ||
   !this.newUser.email ||
   !this.newUser.password ||
   (this.newUser.role === 'ROLE_BUSINESS_ANALYST' && !this.newUser.username)
@@ -459,7 +467,8 @@ getRoleLabel(role: string): string {
     username: '',
     firstName: '', lastName: '', email: '',
     password: '', phone: '', dateOfBirth: '',
-    role: 'ROLE_USER', departement: undefined
+    role: 'ROLE_USER', departement: undefined,
+    mantisProject: ''
   };
 }
 

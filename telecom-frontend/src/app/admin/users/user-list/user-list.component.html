@@ -259,6 +259,17 @@
             </span>
           </div>
         </div>
+
+        <div class="info-block" *ngIf="viewedUser.roles.includes('ROLE_BUSINESS_ANALYST') && viewedUser.mantisProject">
+          <label><i class="fas fa-project-diagram"></i> Projet Mantis</label>
+          <p>{{ viewedUser.mantisProject }}</p>
+        </div>
+
+             <div class="info-block" *ngIf="viewedUser.mantisProject">
+          <label><i class="fas fa-project-diagram"></i> Projet Mantis</label>
+          <p>{{ viewedUser.mantisProject }}</p>
+        </div>
+
         <div class="info-block">
           <label><i class="fas fa-toggle-on"></i> Statut</label>
           <span class="status-pill" [class.status-active]="viewedUser.enabled" [class.status-inactive]="!viewedUser.enabled">
@@ -306,10 +317,6 @@
         <div class="form-group">
           <label>Prénom</label>
           <input type="text" class="form-input" [(ngModel)]="editedUser.firstName" placeholder="Prénom" />
-        </div>
-        <div class="form-group">
-          <label>Nom</label>
-          <input type="text" class="form-input" [(ngModel)]="editedUser.lastName" placeholder="Nom" />
         </div>
         <div class="form-group full-width">
           <label>Email</label>
@@ -374,20 +381,33 @@
             <option value="">-- Sélectionner un utilisateur --</option>
             <option *ngFor="let user of mantisUsers" [value]="user">{{ user }}</option>
           </select>
-          <small class="form-hint">Sélectionnez un utilisateur de MantisBT</small>
+          <small class="form-hint">Sélectionnez un utilisateur existant dans MantisBT</small>
         </div>
+
+        <div class="form-group full-width" *ngIf="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username">
+          <label>Projet assigné dans MantisBT <i class="fas fa-lock" style="color: #94a3b8; font-size: 0.8rem;"></i></label>
+          <input type="text" class="form-input input-readonly" 
+                 [(ngModel)]="newUser.mantisProject" 
+                 readonly placeholder="Calcul du projet en cours..." />
+        </div>
+
+        <!-- Prénom -->
         <div class="form-group">
           <label>Prénom *</label>
-          <input type="text" class="form-input" [(ngModel)]="newUser.firstName" placeholder="Prénom" />
+          <input type="text" class="form-input" [(ngModel)]="newUser.firstName" placeholder="Prénom" 
+                 [readonly]="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username"
+                 [class.input-readonly]="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username" />
         </div>
-        <div class="form-group">
-          <label>Nom *</label>
-          <input type="text" class="form-input" [(ngModel)]="newUser.lastName" placeholder="Nom" />
-        </div>
+
+        <!-- Email -->
         <div class="form-group full-width">
           <label>Email *</label>
-          <input type="email" class="form-input" [(ngModel)]="newUser.email" placeholder="email@example.com" />
+          <input type="email" class="form-input" [(ngModel)]="newUser.email" placeholder="email@example.com" 
+                 [readonly]="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username"
+                 [class.input-readonly]="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username" />
         </div>
+
+        <!-- Le reste reste inchangé... -->
         <div class="form-group full-width">
           <label>Mot de passe *</label>
           <div class="password-field">
@@ -419,6 +439,7 @@
         <div class="form-group full-width">
           <label>Rôle</label>
           <div class="role-selector">
+            <!-- (Garde tes boutons radios pour les rôles ici) -->
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_ADMIN'">
               <input type="radio" name="newRole" value="ROLE_ADMIN" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
               <div class="role-card role-admin"><i class="fas fa-crown"></i><span>Admin</span></div>
@@ -428,10 +449,9 @@
               <div class="role-card role-it"><i class="fas fa-tools"></i><span>Business Analyst</span></div>
             </label>
             <label class="role-option" [class.selected]="newUser.role === 'ROLE_USER'">
-  <input type="radio" name="newRole" value="ROLE_USER" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
-  <div class="role-card role-user"><i class="fas fa-user"></i><span>User</span></div>
-</label>
-
+              <input type="radio" name="newRole" value="ROLE_USER" [(ngModel)]="newUser.role" (change)="onRoleChange()" />
+              <div class="role-card role-user"><i class="fas fa-user"></i><span>User</span></div>
+            </label>
           </div>
         </div>
       </div>

@@ -245,6 +245,7 @@ $radius:       8px;
 .col-priority { width: 100px; }
 .col-category { width: 120px; }
 .col-sla      { width: 130px; }
+.col-creator  { width: 160px; }
 .col-assignee { width: 130px; }
 .col-date     { width: 80px; }
 .col-actions  { width: 80px; }
@@ -308,6 +309,35 @@ $radius:       8px;
 }
 
 // Assignee cell
+.td-creator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.creator-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: $accent-light;
+  color: $accent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.creator-name {
+  font-size: 13px;
+  color: $text-1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .td-assignee {
   white-space: nowrap;
   display: flex;

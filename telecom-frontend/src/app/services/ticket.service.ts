@@ -11,10 +11,16 @@ import {
   TicketCategory,
   PageResponse
 } from '../models/ticket.model';
+export interface MantisProject {
+  id: number;
+  name: string;
+}
 import { map } from 'rxjs/operators';     
 @Injectable({
   providedIn: 'root'
 })
+
+
 export class TicketService {
 
   private baseUrl = 'http://localhost:8088/api/v1/tickets';
@@ -30,6 +36,8 @@ export class TicketService {
   createTicket(request: CreateTicketRequest): Observable<Ticket> {
     return this.http.post<Ticket>(this.baseUrl, request);
   }
+
+  
 
   // ══════════════════════════════════════════
   //  LECTURE — PAGINÉE
@@ -167,8 +175,11 @@ export class TicketService {
     return this.http.get<TicketStatus[]>(`${this.baseUrl}/${ticketId}/transitions`);
   }
 
-  pushToMantis(ticketId: number): Observable<Ticket> {
-  return this.http.patch<Ticket>(`${this.baseUrl}/${ticketId}/push-to-mantis`, {});
+  pushToMantis(ticketId: number, projectId: number): Observable<Ticket> {
+  return this.http.patch<Ticket>(`${this.baseUrl}/${ticketId}/push-to-mantis`, { projectId });
+}
+getMantisProjects(): Observable<MantisProject[]> {
+  return this.http.get<MantisProject[]>(`${this.baseUrl}/mantis/projects`);
 }
 
 uploadAttachments(ticketId: number, files: File[]): Observable<void> {

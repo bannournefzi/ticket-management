@@ -37,18 +37,6 @@
     </div>
   </div>
 
-  <!-- Alertes -->
-  <div class="alert alert-success" *ngIf="successMessage">
-    <i class="fas fa-check-circle"></i>
-    <span>{{ successMessage }}</span>
-    <button class="alert-close" (click)="successMessage = null"><i class="fas fa-times"></i></button>
-  </div>
-  <div class="alert alert-error" *ngIf="errorMessage">
-    <i class="fas fa-exclamation-circle"></i>
-    <span>{{ errorMessage }}</span>
-    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
-  </div>
-
   <!-- Formulaire de création -->
   <div class="main-card">
 
