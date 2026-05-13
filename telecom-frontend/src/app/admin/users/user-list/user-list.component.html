@@ -390,7 +390,7 @@
 
         <!-- Prénom -->
         <div class="form-group">
-          <label>Prénom *</label>
+          <label>Nom</label>
           <input type="text" class="form-input" [(ngModel)]="newUser.firstName" placeholder="Prénom" 
                  [readonly]="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username"
                  [class.input-readonly]="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username" />
