@@ -278,12 +278,12 @@ public class MantisService {
         }
     }
 
-    public Map<String, String> getUserDetails(String username) {
+    public Map<String, Object> getUserDetails(String username) {
         log.info("Fetching details for user: {}", username);
-        Map<String, String> details = new HashMap<>();
+        Map<String, Object> details = new HashMap<>();
+        List<String> projects = new ArrayList<>();
 
         try {
-            // Try to find user by getting issues where they are reporter or handler
             int page = 1;
             int pageSize = 50;
             boolean found = false;
@@ -296,7 +296,6 @@ public class MantisService {
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     String body = response.getBody();
 
-                    // 1. Look for the user in reporters
                     String reporterRegex = "\"reporter\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
                     java.util.regex.Pattern reporterDetailPattern = java.util.regex.Pattern.compile(reporterRegex);
                     java.util.regex.Matcher reporterMatcher = reporterDetailPattern.matcher(body);
@@ -313,7 +312,6 @@ public class MantisService {
                         found = true;
                     }
 
-                    // 2. Look for the user in handlers
                     if (!found) {
                         String handlerRegex = "\"handler\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
                         java.util.regex.Pattern handlerDetailPattern = java.util.regex.Pattern.compile(handlerRegex);
@@ -332,14 +330,13 @@ public class MantisService {
                         }
                     }
 
-                    // 3. NOUVEAU : Maintenant qu'on l'a trouvé, on récupère le nom du projet !
-                    if (found) {
-                        java.util.regex.Pattern projectPattern = java.util.regex.Pattern.compile("\"project\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"([^\"]*)\"");
-                        java.util.regex.Matcher projectMatcher = projectPattern.matcher(body);
-                        if (projectMatcher.find()) {
-                            details.put("project", projectMatcher.group(1));
-                        } else {
-                            details.put("project", "Projet Principal"); // Valeur par défaut si non trouvé
+                    // Extract ALL unique project names from all issues, not just the first
+                    java.util.regex.Pattern projectAllPattern = java.util.regex.Pattern.compile("\"project\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"([^\"]+)\"");
+                    java.util.regex.Matcher projectAllMatcher = projectAllPattern.matcher(body);
+                    while (projectAllMatcher.find()) {
+                        String projectName = projectAllMatcher.group(1);
+                        if (projectName != null && !projectName.isBlank() && !projects.contains(projectName)) {
+                            projects.add(projectName);
                         }
                     }
 
@@ -352,7 +349,14 @@ public class MantisService {
                 }
             }
 
-            log.info("User details for {}: {}", username, details);
+            // Store the full list of projects
+            if (!projects.isEmpty()) {
+                details.put("projects", projects);
+            } else {
+                details.put("projects", List.of("Aucun projet trouvé"));
+            }
+
+            log.info("User details for {}: {} ({} projects)", username, details, projects.size());
             return details;
 
         } catch (RestClientResponseException ex) {

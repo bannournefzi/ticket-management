@@ -17,6 +17,21 @@ export interface UserDTO {
   departement?: string; 
   username?: string;
   mantisProject?: string;
+  mantisProjects?: string[];
+}
+
+export interface CreateUserRequest {
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: string;
+  phone: string;             
+  departement?: string;
+  dateOfBirth: string;
+  mantisProject?: string;
+  mantisProjects?: string[];
 }
 
 export interface UserStatsDTO {
@@ -108,7 +123,7 @@ export class AdminService {
     return this.http.get<string[]>(`${this.baseUrl}/mantis-users`);
   }
 
-  getMantisUsersWithDetails(): Observable<{ [key: string]: { realName?: string; email?: string } }> {
-    return this.http.get<{ [key: string]: { realName?: string; email?: string } }>(`${this.baseUrl}/mantis-users/details`);
+  getMantisUsersWithDetails(): Observable<{ [key: string]: { realName?: string; email?: string; projects?: string[] } }> {
+    return this.http.get<{ [key: string]: { realName?: string; email?: string; projects?: string[] } }>(`${this.baseUrl}/mantis-users/details`);
   }
 }

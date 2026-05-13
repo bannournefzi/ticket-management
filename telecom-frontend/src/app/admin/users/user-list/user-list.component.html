@@ -260,14 +260,11 @@
           </div>
         </div>
 
-        <div class="info-block" *ngIf="viewedUser.roles.includes('ROLE_BUSINESS_ANALYST') && viewedUser.mantisProject">
-          <label><i class="fas fa-project-diagram"></i> Projet Mantis</label>
-          <p>{{ viewedUser.mantisProject }}</p>
-        </div>
-
-             <div class="info-block" *ngIf="viewedUser.mantisProject">
-          <label><i class="fas fa-project-diagram"></i> Projet Mantis</label>
-          <p>{{ viewedUser.mantisProject }}</p>
+        <div class="info-block" *ngIf="viewedUser.mantisProjects && viewedUser.mantisProjects.length > 0">
+          <label><i class="fas fa-project-diagram"></i> Projets Mantis</label>
+          <div class="projects-list">
+            <span class="project-badge" *ngFor="let p of viewedUser.mantisProjects">{{ p }}</span>
+          </div>
         </div>
 
         <div class="info-block">
@@ -385,10 +382,10 @@
         </div>
 
         <div class="form-group full-width" *ngIf="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.username">
-          <label>Projet assigné dans MantisBT <i class="fas fa-lock" style="color: #94a3b8; font-size: 0.8rem;"></i></label>
-          <input type="text" class="form-input input-readonly" 
-                 [(ngModel)]="newUser.mantisProject" 
-                 readonly placeholder="Calcul du projet en cours..." />
+          <label>Projets assignés dans MantisBT</label>
+          <div class="projects-list">
+            <span class="project-badge" *ngFor="let p of newUser.mantisProjects">{{ p }}</span>
+          </div>
         </div>
 
         <!-- Prénom -->

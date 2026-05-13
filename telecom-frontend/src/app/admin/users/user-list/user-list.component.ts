@@ -17,7 +17,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   stats: UserStatsDTO | null = null;
   userPhotos: Map<number, string> = new Map();
   mantisUsers: string[] = [];
-  mantisUsersMap: { [key: string]: { realName?: string; email?: string } } = {};
+  mantisUsersMap: { [key: string]: { realName?: string; email?: string; projects?: string[] } } = {};
 
   // Filters
   searchQuery = '';
@@ -211,10 +211,21 @@ export class UserListComponent implements OnInit, OnDestroy {
   // -- View Modal --
 
   openViewModal(user: UserDTO): void {
-    this.viewedUser = user;
-    this.isViewModalOpen = true;
+  // 1. Essaie de matcher par username MantisBT
+  let mantisInfo = user.username ? this.mantisUsersMap[user.username] : null;
+
+  // 2. Fallback : matcher par email si username ne matche pas
+  if (!mantisInfo && user.email) {
+    mantisInfo = Object.values(this.mantisUsersMap)
+      .find(m => m.email === user.email) ?? null;
   }
 
+  this.viewedUser = {
+    ...user,
+    mantisProjects: mantisInfo?.projects ?? []
+  };
+  this.isViewModalOpen = true;
+}
   closeViewModal(): void {
     this.isViewModalOpen = false;
     this.viewedUser = null;
@@ -319,16 +330,19 @@ export class UserListComponent implements OnInit, OnDestroy {
         this.newUser.email = selectedUser.email.trim();
       }
 
-      // NOUVEAU : On récupère le projet de Mantis
-      if (selectedUser.project && selectedUser.project.trim()) {
-        this.newUser.mantisProject = selectedUser.project.trim();
+      // Set the first project as the primary project, and store all projects
+      if (selectedUser.projects && selectedUser.projects.length > 0) {
+        this.newUser.mantisProject = selectedUser.projects[0].trim();
+        this.newUser.mantisProjects = [...selectedUser.projects];
       } else {
         this.newUser.mantisProject = 'Non assigné';
+        this.newUser.mantisProjects = ['Non assigné'];
       }
     } else {
       this.newUser.firstName = '';
       this.newUser.email = '';
       this.newUser.mantisProject = '';
+      this.newUser.mantisProjects = [];
     }
   }
 
@@ -468,7 +482,7 @@ getRoleLabel(role: string): string {
     firstName: '', lastName: '', email: '',
     password: '', phone: '', dateOfBirth: '',
     role: 'ROLE_USER', departement: undefined,
-    mantisProject: ''
+    mantisProject: '', mantisProjects: []
   };
 }
 

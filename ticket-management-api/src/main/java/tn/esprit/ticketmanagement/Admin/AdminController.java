@@ -100,12 +100,12 @@ public class AdminController {
     }
 
     @GetMapping("/mantis-users/details")
-    public ResponseEntity<Map<String, Map<String, String>>> getMantisUsersWithDetails() {
+    public ResponseEntity<Map<String, Object>> getMantisUsersWithDetails() {
         List<String> usernames = mantisService.getAllUsernames();
-        Map<String, Map<String, String>> usersWithDetails = new HashMap<>();
+        Map<String, Object> usersWithDetails = new HashMap<>();
         
         for (String username : usernames) {
-            Map<String, String> details = mantisService.getUserDetails(username);
+            Map<String, Object> details = mantisService.getUserDetails(username);
             usersWithDetails.put(username, details);
         }
         

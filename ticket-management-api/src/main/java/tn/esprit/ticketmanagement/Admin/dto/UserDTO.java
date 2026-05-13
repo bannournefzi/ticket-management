@@ -29,5 +29,6 @@ public class UserDTO {
 
     private String username;
     private String mantisProject;
+    private List<String> mantisProjects;
 
 }

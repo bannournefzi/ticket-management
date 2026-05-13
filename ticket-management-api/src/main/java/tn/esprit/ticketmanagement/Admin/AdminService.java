@@ -264,7 +264,7 @@ public class AdminService {
     }
 
     private UserDTO convertToDTO(User user) {
-        return UserDTO.builder()
+        UserDTO.UserDTOBuilder builder = UserDTO.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
@@ -279,7 +279,15 @@ public class AdminService {
                 .createdDate(user.getCreatedDate())
                 .departement(user.getDepartement())
                 .username(user.getUsername())
-                .build();
+                .mantisProject(user.getMantisProject());
+
+        if (user.getMantisProject() != null && !user.getMantisProject().isBlank()) {
+            builder.mantisProjects(List.of(user.getMantisProject().split("\\s*,\\s*")));
+        } else {
+            builder.mantisProjects(List.of());
+        }
+
+        return builder.build();
     }
 
 
