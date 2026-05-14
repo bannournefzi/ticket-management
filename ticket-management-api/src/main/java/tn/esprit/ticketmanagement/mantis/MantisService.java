@@ -59,7 +59,7 @@ public class MantisService {
         return projects;
     }
 
-    public Long createIssue(String title, String description, Long projectId, String reporterUsername) {
+    public Long createIssue(String title, String description, Long projectId, String reporterUsername, List<String> tags) {
         String url = mantisProperties.getBaseUrl() + "/api/rest/issues";
 
         // Build the JSON body as raw Maps (NO DTOs — avoids ALL Jackson mapping issues)
@@ -74,6 +74,22 @@ public class MantisService {
         issueData.put("description", description);
         issueData.put("project", project);
         issueData.put("category", category);
+
+        // Add tags if present (Mantis API expects: "tags": [{"name": "tag1"}, {"name": "tag2"}])
+        if (tags != null && !tags.isEmpty()) {
+            List<Map<String, String>> tagList = tags.stream()
+                    .filter(tag -> tag != null && !tag.isBlank())
+                    .map(tag -> {
+                        Map<String, String> tagObj = new HashMap<>();
+                        tagObj.put("name", tag.trim());
+                        return tagObj;
+                    })
+                    .collect(Collectors.toList());
+            if (!tagList.isEmpty()) {
+                issueData.put("tags", tagList);
+                log.info(">>> Adding {} tags to Mantis issue: {}", tagList.size(), tags);
+            }
+        }
 
         Map<String, Object> body = issueData;
 
