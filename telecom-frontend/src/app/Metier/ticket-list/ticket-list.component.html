@@ -65,43 +65,52 @@
     <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
   </div>
 
+  <!-- ═══ SKELETON LOADER ═══ -->
+  <div class="skeleton-wrap" *ngIf="isLoading">
+    <div class="skeleton-header"></div>
+    <div class="skeleton-row" *ngFor="let _ of [1,2,3,4,5,6,7,8]">
+      <div class="skeleton-cell skeleton-id"></div>
+      <div class="skeleton-cell skeleton-title"></div>
+      <div class="skeleton-cell skeleton-status"></div>
+      <div class="skeleton-cell skeleton-priority"></div>
+      <div class="skeleton-cell skeleton-category"></div>
+      <div class="skeleton-cell skeleton-sla"></div>
+      <div class="skeleton-cell skeleton-creator"></div>
+      <div class="skeleton-cell skeleton-assignee"></div>
+      <div class="skeleton-cell skeleton-date"></div>
+      <div class="skeleton-cell skeleton-actions"></div>
+    </div>
+  </div>
+
   <!-- ═══ TABLE ═══ -->
-  <div class="table-wrap" *ngIf="!isLoading">
+  <div class="table-card" *ngIf="!isLoading">
     <div class="table-meta">
-      <span class="table-count">{{ filteredTickets.length }} ticket(s)</span>
+      <span class="table-count">
+        <i class="fas fa-list-ul"></i>
+        {{ filteredTickets.length }} ticket{{ filteredTickets.length > 1 ? 's' : '' }}
+      </span>
       <span class="sort-hint">Cliquez sur un en-tête pour trier</span>
     </div>
 
     <div class="table-scroll">
       <table class="tickets-table">
+
+        <!-- ── THEAD ── -->
         <thead>
           <tr>
-            <th class="col-id" (click)="sortBy('id')">
-              #ID <i class="fas" [ngClass]="getSortIcon('id')"></i>
-            </th>
-            <th class="col-title" (click)="sortBy('title')">
-              Titre <i class="fas" [ngClass]="getSortIcon('title')"></i>
-            </th>
-            <th class="col-status" (click)="sortBy('status')">
-              Statut <i class="fas" [ngClass]="getSortIcon('status')"></i>
-            </th>
-            <th class="col-priority" (click)="sortBy('priority')">
-              Priorité <i class="fas" [ngClass]="getSortIcon('priority')"></i>
-            </th>
-            <th class="col-category" (click)="sortBy('category')">
-              Catégorie <i class="fas" [ngClass]="getSortIcon('category')"></i>
-            </th>
-            <th class="col-sla" (click)="sortBy('slaStatus')">
-              SLA <i class="fas" [ngClass]="getSortIcon('slaStatus')"></i>
-            </th>
-            <th class="col-creator">Créé par</th>
-            <th class="col-assignee">Assigné à</th>
-            <th class="col-date" (click)="sortBy('createdDate')">
-              Créé <i class="fas" [ngClass]="getSortIcon('createdDate')"></i>
-            </th>
+            <th class="col-id" (click)="sortBy('id')">#<i class="fas sort-icon" [ngClass]="getSortIcon('id')"></i></th>
+            <th class="col-title" (click)="sortBy('title')">Titre<i class="fas sort-icon" [ngClass]="getSortIcon('title')"></i></th>
+            <th class="col-status" (click)="sortBy('status')">Statut<i class="fas sort-icon" [ngClass]="getSortIcon('status')"></i></th>
+            <th class="col-priority" (click)="sortBy('priority')">Priorité<i class="fas sort-icon" [ngClass]="getSortIcon('priority')"></i></th>
+            <th class="col-category" (click)="sortBy('category')">Catégorie<i class="fas sort-icon" [ngClass]="getSortIcon('category')"></i></th>
+            <th class="col-sla" (click)="sortBy('slaStatus')">SLA<i class="fas sort-icon" [ngClass]="getSortIcon('slaStatus')"></i></th>
+            <th class="col-people">Créé par / Assigné à</th>
+            <th class="col-date" (click)="sortBy('createdDate')">Créé<i class="fas sort-icon" [ngClass]="getSortIcon('createdDate')"></i></th>
             <th class="col-actions">Actions</th>
           </tr>
         </thead>
+
+        <!-- ── TBODY ── -->
         <tbody>
           <tr *ngFor="let ticket of paginatedTickets"
               [class.row-sla-breached]="ticket.slaStatus === 'BREACHED'"
@@ -109,141 +118,172 @@
               (click)="openViewModal(ticket)"
               class="ticket-row">
 
+            <!-- #ID -->
             <td class="td-id">#{{ ticket.id }}</td>
 
+            <!-- TITRE + tags sur même ligne -->
             <td class="td-title">
-              <span class="title-text">{{ ticket.title }}</span>
-              <div class="row-tags" *ngIf="ticket.tags && ticket.tags.length > 0">
-                <span class="mini-tag" *ngFor="let tag of ticket.tags | slice:0:3">{{ tag }}</span>
-                <span class="mini-tag more-tag" *ngIf="ticket.tags.length > 3">+{{ ticket.tags.length - 3 }}</span>
+              <div class="title-line">
+                <span class="title-text">{{ ticket.title }}</span>
+                <span class="tag-chip" *ngFor="let tag of (ticket.tags | slice:0:2)">{{ tag }}</span>
+                <span class="tag-chip tag-more" *ngIf="ticket.tags && ticket.tags.length > 2">+{{ ticket.tags.length - 2 }}</span>
               </div>
             </td>
 
-            <td>
-              <span class="status-badge" [ngClass]="getStatusClass(ticket.status)">
+            <!-- STATUT -->
+            <td class="td-status">
+              <span class="status-pill" [ngClass]="getStatusClass(ticket.status)">
                 {{ getStatusLabel(ticket.status) }}
               </span>
             </td>
 
-            <td>
-              <span class="badge-priority" [ngClass]="getPriorityClass(ticket.priority)"
-                    [title]="getPriorityConfig(ticket.priority).label">
+            <!-- PRIORITÉ -->
+            <td class="td-priority">
+              <span class="priority-badge" [ngClass]="getPriorityClass(ticket.priority)">
                 <i [class]="getPriorityConfig(ticket.priority).icon"></i>
-                {{ getPriorityConfig(ticket.priority).label }}
+                <span class="priority-label">{{ getPriorityConfig(ticket.priority).label }}</span>
               </span>
             </td>
 
+            <!-- CATÉGORIE -->
             <td class="td-category">
               <i [class]="getCategoryConfig(ticket.category).icon"></i>
-              {{ getCategoryConfig(ticket.category).label }}
+              <span>{{ getCategoryConfig(ticket.category).label }}</span>
             </td>
 
-            <td>
-              <span class="sla-cell" [ngClass]="getSLACellClass(ticket.slaStatus)">
-                <i [class]="getSLAIcon(ticket.slaStatus)"></i>
+            <!-- SLA -->
+            <td class="td-sla">
+              <span class="sla-chip" [ngClass]="getSLACellClass(ticket.slaStatus)">
+                <i class="fas fa-clock"></i>
                 {{ getSLAShortLabel(ticket.slaStatus) }}
               </span>
             </td>
 
-            <td class="td-creator">
-              <span class="creator-avatar">{{ getInitial(ticket.creatorFullName) }}</span>
-              <span class="creator-name">{{ ticket.creatorFullName }}</span>
-            </td>
-
-            <td class="td-assignee">
-              <span *ngIf="ticket.assignedToFullName" class="assignee-chip-sm">
-                {{ ticket.assignedToFullName.charAt(0) }}
-              </span>
-              <span *ngIf="!ticket.assignedToFullName" class="unassigned-text">—</span>
-            </td>
-
-            <td class="td-date">
-              {{ getTimeAgo(ticket.createdDate) }}
-            </td>
-
-            <td class="td-actions" (click)="$event.stopPropagation()">
-              <button class="btn-action-menu" (click)="toggleDropdown(ticket.id, $event)">
-                <i class="fas fa-ellipsis-h"></i>
-              </button>
-              <div class="dropdown-menu" *ngIf="openDropdownId === ticket.id">
-                <button class="dropdown-item" (click)="openViewModal(ticket)">
-                  <i class="fas fa-eye"></i> Voir détails
-                </button>
-                <button class="dropdown-item" (click)="openPriorityModal(ticket)" *ngIf="canChangePriority(ticket)">
-                  <i class="fas fa-flag"></i> Changer priorité
-                </button>
+            <!-- CRÉÉ PAR / ASSIGNÉ À — colonne combinée en 2 sous-lignes compactes -->
+            <td class="td-people">
+              <!-- Créateur -->
+              <div class="people-row">
+                <span class="user-avatar avatar-creator" [title]="ticket.creatorFullName">
+                  {{ getInitial(ticket.creatorFullName) }}
+                </span>
+                <div class="people-info">
+                  <span class="people-label">Créateur</span>
+                  <span class="people-name">{{ ticket.creatorFullName }}</span>
+                </div>
+              </div>
+              <!-- Assigné -->
+              <div class="people-row people-row-assign">
+                <ng-container *ngIf="ticket.assignedToFullName; else unassignedTpl">
+                  <span class="user-avatar avatar-assign" [title]="ticket.assignedToFullName">
+                    {{ ticket.assignedToFullName.charAt(0) }}
+                  </span>
+                  <div class="people-info">
+                    <span class="people-label">Assigné</span>
+                    <span class="people-name">{{ ticket.assignedToFullName }}</span>
+                  </div>
+                </ng-container>
+                <ng-template #unassignedTpl>
+                  <span class="unassigned-avatar"><i class="fas fa-user-slash"></i></span>
+                  <div class="people-info">
+                    <span class="people-label">Assigné</span>
+                    <span class="unassigned-text">Non assigné</span>
+                  </div>
+                </ng-template>
               </div>
             </td>
+
+            <!-- DATE -->
+            <td class="td-date" [title]="ticket.createdDate | date:'dd/MM/yyyy HH:mm'">
+              <div class="date-block">
+                <i class="fas fa-clock date-icon"></i>
+                <span class="date-relative">{{ getTimeAgo(ticket.createdDate) }}</span>
+                <span class="date-full">{{ ticket.createdDate | date:'dd/MM/yy' }}</span>
+              </div>
+            </td>
+
+            <!-- ACTIONS — always visible -->
+            <td class="td-actions" (click)="$event.stopPropagation()">
+              <div class="action-group">
+                <button class="action-btn action-view"
+                        (click)="openViewModal(ticket); $event.stopPropagation()"
+                        title="Voir détails">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn action-priority"
+                        (click)="openPriorityModal(ticket); $event.stopPropagation()"
+                        *ngIf="canChangePriority(ticket)"
+                        title="Changer priorité">
+                  <i class="fas fa-flag"></i>
+                </button>
+                <div class="action-more" (click)="toggleDropdown(ticket.id, $event)">
+                  <button class="action-btn" title="Plus d'options">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <div class="dropdown-menu" *ngIf="openDropdownId === ticket.id">
+                    <button class="dropdown-item" (click)="openViewModal(ticket)">
+                      <i class="fas fa-eye"></i> Voir détails
+                    </button>
+                    <button class="dropdown-item" (click)="openPriorityModal(ticket)" *ngIf="canChangePriority(ticket)">
+                      <i class="fas fa-flag"></i> Changer priorité
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </td>
+
           </tr>
         </tbody>
       </table>
     </div>
 
+    <!-- Empty state -->
+    <div class="empty-state-inline" *ngIf="filteredTickets.length === 0">
+      <div class="empty-illustration"><i class="fas fa-inbox"></i></div>
+      <h3 class="empty-title">{{ hasActiveFilters ? 'Aucun résultat' : 'Aucun ticket' }}</h3>
+      <p class="empty-desc">{{ hasActiveFilters ? 'Essayez de modifier vos filtres.' : 'Vous n\'avez pas encore de ticket.' }}</p>
+      <a routerLink="/create-ticket" class="empty-cta" *ngIf="!hasActiveFilters">
+        <i class="fas fa-plus"></i> Créer un ticket
+      </a>
+    </div>
+
     <!-- Pagination -->
-    <div class="pagination-bar">
-      <div class="page-info">
-        {{ getPageStart() }}-{{ getPageEnd() }} sur {{ filteredTickets.length }}
-      </div>
+    <div class="pagination-bar" *ngIf="filteredTickets.length > 0">
+      <div class="page-info">{{ getPageStart() }}–{{ getPageEnd() }} sur {{ filteredTickets.length }}</div>
       <div class="page-controls" *ngIf="totalPages > 1">
-        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)">
-          <i class="fas fa-angle-double-left"></i>
-        </button>
-        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
-          <i class="fas fa-chevron-left"></i>
-        </button>
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)"><i class="fas fa-angle-double-left"></i></button>
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="fas fa-chevron-left"></i></button>
         <span class="page-numbers">
-          <button *ngFor="let p of getPages()" class="page-num" [class.active]="p === currentPage" (click)="goToPage(p)">
-            {{ p }}
-          </button>
+          <button *ngFor="let p of getPages()" class="page-num" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
         </span>
-        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)">
-          <i class="fas fa-angle-double-right"></i>
-        </button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"><i class="fas fa-chevron-right"></i></button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)"><i class="fas fa-angle-double-right"></i></button>
       </div>
     </div>
   </div>
 
-  <!-- Loading -->
-  <div class="loading-state" *ngIf="isLoading">
-    <i class="fas fa-spinner fa-spin fa-2x"></i>
-    <span>Chargement...</span>
-  </div>
-
-  <!-- Empty -->
-  <div class="empty-state" *ngIf="!isLoading && filteredTickets.length === 0">
-    <i class="fas fa-inbox"></i>
-    <h3>Aucun ticket</h3>
-    <p>{{ hasActiveFilters ? 'Aucun résultat pour vos filtres.' : 'Vous n\'avez pas encore de ticket.' }}</p>
-    <a routerLink="/create-ticket" class="btn-create" *ngIf="!hasActiveFilters">
-      <i class="fas fa-plus"></i> Créer un ticket
-    </a>
+  <!-- Empty state full -->
+  <div class="empty-state-full" *ngIf="!isLoading && filteredTickets.length === 0 && !hasActiveFilters">
+    <div class="empty-illustration"><i class="fas fa-ticket-alt"></i></div>
+    <h3 class="empty-title">Aucun ticket pour le moment</h3>
+    <p class="empty-desc">Créez votre premier ticket pour commencer.</p>
+    <a routerLink="/create-ticket" class="empty-cta"><i class="fas fa-plus"></i> Créer un ticket</a>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- MODAL DÉTAIL TICKET                                 -->
-<!-- ═══════════════════════════════════════════════════ -->
+<!-- ═══ MODAL DÉTAIL ═══ -->
 <div class="modal-overlay" *ngIf="isViewModalOpen" (click)="closeViewModal()">
   <div class="modal-container modal-detail" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-title-row">
         <i class="fas fa-ticket-alt"></i>
         <h2>#{{ viewedTicket?.id }}</h2>
-        <span class="status-badge" [ngClass]="getStatusClass(viewedTicket?.status || '')">
-          {{ getStatusLabel(viewedTicket?.status || '') }}
-        </span>
-        <span class="sla-badge" *ngIf="viewedTicket?.slaStatus"
-              [ngClass]="getSLAClass(viewedTicket?.slaStatus)">
+        <span class="status-badge" [ngClass]="getStatusClass(viewedTicket?.status || '')">{{ getStatusLabel(viewedTicket?.status || '') }}</span>
+        <span class="sla-badge" *ngIf="viewedTicket?.slaStatus" [ngClass]="getSLAClass(viewedTicket?.slaStatus)">
           <i [class]="getSLAIcon(viewedTicket?.slaStatus)"></i>
           {{ getSLALabel(viewedTicket?.slaStatus) }}
         </span>
       </div>
-      <button class="modal-close" (click)="closeViewModal()">
-        <i class="fas fa-times"></i>
-      </button>
+      <button class="modal-close" (click)="closeViewModal()"><i class="fas fa-times"></i></button>
     </div>
 
     <div class="modal-body" *ngIf="viewedTicket">
@@ -255,14 +295,13 @@
           <i class="fas fa-comments"></i> Commentaires
           <span class="tab-count" *ngIf="comments.length > 0">{{ comments.length }}</span>
         </button>
-        <button class="modal-tab" [class.active]="activeTab === 'history'"
-                (click)="activeTab = 'history'; loadHistory(viewedTicket!.id)">
+        <button class="modal-tab" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'; loadHistory(viewedTicket!.id)">
           <i class="fas fa-history"></i> Historique
           <span class="tab-count" *ngIf="ticketHistory.length > 0">{{ ticketHistory.length }}</span>
         </button>
       </div>
 
-      <!-- TAB 1: Détails -->
+      <!-- TAB DÉTAILS -->
       <div *ngIf="activeTab === 'details'">
         <h3 class="detail-title">{{ viewedTicket.title }}</h3>
         <div class="detail-badges">
@@ -298,9 +337,7 @@
           </div>
           <div class="detail-info" *ngIf="viewedTicket.dueDate">
             <label><i class="fas fa-clock"></i> Échéance SLA</label>
-            <p [ngClass]="getSLAClass(viewedTicket.slaStatus)">
-              {{ viewedTicket.dueDate | date:'dd/MM/yyyy HH:mm' }}
-            </p>
+            <p [ngClass]="getSLAClass(viewedTicket.slaStatus)">{{ viewedTicket.dueDate | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
           <div class="detail-info" *ngIf="viewedTicket.resolvedDate">
             <label><i class="fas fa-check-circle"></i> Résolu le</label>
@@ -311,8 +348,6 @@
             <p>{{ viewedTicket.assignedToFullName }}</p>
           </div>
         </div>
-
-        <!-- Pièces jointes -->
         <div class="detail-attachments" *ngIf="viewedTicket.attachments && viewedTicket.attachments.length > 0">
           <label><i class="fas fa-paperclip"></i> Pièces jointes ({{ viewedTicket.attachments.length }})</label>
           <div class="attachment-list">
@@ -320,7 +355,7 @@
               <i [class]="getFileIcon(att.contentType)"></i>
               <span class="attachment-name">{{ att.fileName }}</span>
               <span class="attachment-size">{{ formatFileSize(att.sizeBytes) }}</span>
-              <button class="btn-download" (click)="downloadAttachment(viewedTicket!.id, att.id, att.fileName)" title="Télécharger">
+              <button class="btn-download" (click)="downloadAttachment(viewedTicket!.id, att.id, att.fileName)">
                 <i class="fas fa-download"></i>
               </button>
             </div>
@@ -328,7 +363,7 @@
         </div>
       </div>
 
-      <!-- TAB 2: Commentaires -->
+      <!-- TAB COMMENTAIRES -->
       <div *ngIf="activeTab === 'comments'">
         <div class="comments-list">
           <div class="comment-item" *ngFor="let c of comments" [class.internal-note]="c.internalNote">
@@ -339,29 +374,18 @@
                 <span class="comment-role">{{ getCommentRoleLabel(c.authorRole) }}</span>
               </div>
               <span class="comment-date">{{ getTimeAgo(c.createdDate) }}</span>
-              <span class="internal-badge" *ngIf="c.internalNote">
-                <i class="fas fa-lock"></i> Interne
-              </span>
-              <button class="comment-delete" *ngIf="canDeleteComment(c)" (click)="deleteComment(c)">
-                <i class="fas fa-trash"></i>
-              </button>
+              <span class="internal-badge" *ngIf="c.internalNote"><i class="fas fa-lock"></i> Interne</span>
+              <button class="comment-delete" *ngIf="canDeleteComment(c)" (click)="deleteComment(c)"><i class="fas fa-trash"></i></button>
             </div>
             <p class="comment-body">{{ c.content }}</p>
           </div>
-          <div class="empty-msg" *ngIf="comments.length === 0 && !isLoadingComments">
-            <i class="fas fa-comments"></i> Aucun commentaire
-          </div>
-          <div class="empty-msg" *ngIf="isLoadingComments">
-            <i class="fas fa-spinner fa-spin"></i> Chargement...
-          </div>
+          <div class="empty-msg" *ngIf="comments.length === 0 && !isLoadingComments"><i class="fas fa-comments"></i> Aucun commentaire</div>
+          <div class="empty-msg" *ngIf="isLoadingComments"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>
         </div>
-
-        <!-- Comment disabled message for Metier -->
         <div class="comment-disabled-msg" *ngIf="!isCommentsEnabled && isUserMetier()">
           <i class="fas fa-lock"></i>
           <span>Les commentaires sont désactivés pour les utilisateurs Métier sur ce ticket.</span>
         </div>
-
         <div class="comment-form" *ngIf="isCommentsEnabled">
           <textarea class="comment-input" [(ngModel)]="newComment"
                     placeholder="Écrire un commentaire… (Ctrl+Entrée pour envoyer)"
@@ -371,8 +395,7 @@
               <input type="checkbox" [(ngModel)]="isInternalNote" />
               <i class="fas fa-lock"></i> Note interne
             </label>
-            <button class="btn-send" (click)="sendComment()"
-                    [disabled]="isSendingComment || !newComment.trim()">
+            <button class="btn-send" (click)="sendComment()" [disabled]="isSendingComment || !newComment.trim()">
               <i class="fas fa-spinner fa-spin" *ngIf="isSendingComment"></i>
               <i class="fas fa-paper-plane" *ngIf="!isSendingComment"></i>
             </button>
@@ -380,7 +403,7 @@
         </div>
       </div>
 
-      <!-- TAB 3: Historique -->
+      <!-- TAB HISTORIQUE -->
       <div *ngIf="activeTab === 'history'">
         <div class="history-timeline" *ngIf="ticketHistory.length > 0">
           <div class="history-item" *ngFor="let h of ticketHistory">
@@ -399,66 +422,42 @@
                 </span>
                 <span class="history-new" *ngIf="!h.oldValue && h.newValue">→ {{ h.newValue }}</span>
               </div>
-              <p class="history-comment" *ngIf="h.comment">
-                <i class="fas fa-quote-left"></i> {{ h.comment }}
-              </p>
+              <p class="history-comment" *ngIf="h.comment"><i class="fas fa-quote-left"></i> {{ h.comment }}</p>
             </div>
           </div>
         </div>
-        <div class="empty-msg" *ngIf="ticketHistory.length === 0 && !isLoadingHistory">
-          <i class="fas fa-history"></i> Aucun historique
-        </div>
-        <div class="empty-msg" *ngIf="isLoadingHistory">
-          <i class="fas fa-spinner fa-spin"></i> Chargement...
-        </div>
+        <div class="empty-msg" *ngIf="ticketHistory.length === 0 && !isLoadingHistory"><i class="fas fa-history"></i> Aucun historique</div>
+        <div class="empty-msg" *ngIf="isLoadingHistory"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- MODAL CHANGEMENT PRIORITÉ                          -->
-<!-- ═══════════════════════════════════════════════════ -->
+<!-- ═══ MODAL PRIORITÉ ═══ -->
 <div class="modal-overlay" *ngIf="isPriorityModalOpen" (click)="closePriorityModal()">
   <div class="modal-container modal-sm" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title-row">
-        <i class="fas fa-flag"></i>
-        <h2>Modifier la priorité</h2>
-      </div>
-      <button class="modal-close" (click)="closePriorityModal()">
-        <i class="fas fa-times"></i>
-      </button>
+      <div class="modal-title-row"><i class="fas fa-flag"></i><h2>Modifier la priorité</h2></div>
+      <button class="modal-close" (click)="closePriorityModal()"><i class="fas fa-times"></i></button>
     </div>
-
     <div class="modal-body" *ngIf="priorityTicket">
-      <p class="priority-context">
-        Ticket <strong>#{{ priorityTicket.id }}</strong> — {{ priorityTicket.title }}
-      </p>
+      <p class="priority-context">Ticket <strong>#{{ priorityTicket.id }}</strong> — {{ priorityTicket.title }}</p>
       <div class="priority-remaining-hint">
         <i class="fas fa-info-circle"></i>
-        {{ getRemainingChanges(priorityTicket) }} modification{{ getRemainingChanges(priorityTicket) > 1 ? 's' : '' }}
-        restante{{ getRemainingChanges(priorityTicket) > 1 ? 's' : '' }} cette semaine
+        {{ getRemainingChanges(priorityTicket) }} modification{{ getRemainingChanges(priorityTicket) > 1 ? 's' : '' }} restante{{ getRemainingChanges(priorityTicket) > 1 ? 's' : '' }} cette semaine
       </div>
       <div class="priority-options">
-        <button *ngFor="let p of priorities"
-                class="priority-option"
-                [class.selected]="newPriority === p"
-                [ngClass]="getPriorityClass(p)"
-                (click)="newPriority = p">
+        <button *ngFor="let p of priorities" class="priority-option" [class.selected]="newPriority === p"
+                [ngClass]="getPriorityClass(p)" (click)="newPriority = p">
           <i [class]="getPriorityConfig(p).icon"></i>
           <span>{{ getPriorityConfig(p).label }}</span>
           <i class="fas fa-check check-icon" *ngIf="newPriority === p"></i>
         </button>
       </div>
     </div>
-
     <div class="modal-footer">
       <button class="btn-ghost" (click)="closePriorityModal()">Annuler</button>
-      <button class="btn-primary" (click)="confirmPriorityChange()"
-              [disabled]="newPriority === priorityTicket?.priority">
-        Confirmer
-      </button>
+      <button class="btn-primary" (click)="confirmPriorityChange()" [disabled]="newPriority === priorityTicket?.priority">Confirmer</button>
     </div>
   </div>
 </div>
