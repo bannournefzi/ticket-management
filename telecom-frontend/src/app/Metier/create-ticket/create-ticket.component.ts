@@ -341,7 +341,7 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
 
   loadComments(id: number): void {
     this.isLoadingComments = true;
-    this.commentService.getComments(id).subscribe({
+    this.commentService.getComments(id, 'INTERNAL').subscribe({
       next: (d) => { this.comments = d; this.isLoadingComments = false; }, error: () => { this.isLoadingComments = false; }
     });
   }
@@ -349,7 +349,7 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   sendComment(): void {
     if (!this.newComment.trim() || !this.viewedTicket) return;
     this.isSendingComment = true;
-    this.commentService.addComment(this.viewedTicket.id, { content: this.newComment.trim(), internalNote: this.isInternalNote }).subscribe({
+    this.commentService.addComment(this.viewedTicket.id, { content: this.newComment.trim(), internalNote: this.isInternalNote, source: 'INTERNAL' }).subscribe({
       next: (c) => { this.comments.push(c); this.newComment = ''; this.isInternalNote = false; this.isSendingComment = false; },
       error: () => { this.isSendingComment = false; }
     });

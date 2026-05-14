@@ -14,6 +14,7 @@ public class CommentDTO {
     private Integer id;
     private String content;
     private Boolean internalNote;
+    private String source;
 
     // Auteur
     private Integer authorId;

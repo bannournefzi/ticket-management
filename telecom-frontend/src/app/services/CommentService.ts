@@ -12,8 +12,12 @@ export class CommentService {
 
   constructor(private http: HttpClient) {}
 
-  getComments(ticketId: number): Observable<TicketComment[]> {
-    return this.http.get<TicketComment[]>(`${this.baseUrl}/${ticketId}/comments`);
+  getComments(ticketId: number, source?: 'INTERNAL' | 'MANTIS'): Observable<TicketComment[]> {
+    let params = '';
+    if (source) {
+      params = `?source=${source}`;
+    }
+    return this.http.get<TicketComment[]>(`${this.baseUrl}/${ticketId}/comments${params}`);
   }
 
   addComment(ticketId: number, request: CreateCommentRequest): Observable<TicketComment> {

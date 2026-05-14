@@ -17,4 +17,9 @@ public class CreateCommentRequest {
      * Si true, le commentaire est une note interne (visible BA/Admin uniquement)
      */
     private Boolean internalNote = false;
+
+    /**
+     * Source du commentaire : "INTERNAL" (plateforme uniquement) ou "MANTIS" (synchronisé Mantis)
+     */
+    private String source = "INTERNAL";
 }

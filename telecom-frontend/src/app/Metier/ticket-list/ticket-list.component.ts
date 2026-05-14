@@ -341,7 +341,7 @@ export class TicketListComponent implements OnInit {
 
   loadComments(ticketId: number): void {
     this.isLoadingComments = true;
-    this.commentService.getComments(ticketId).subscribe({
+    this.commentService.getComments(ticketId, 'INTERNAL').subscribe({
       next: (data) => { this.comments = data; this.isLoadingComments = false; },
       error: () => { this.isLoadingComments = false; }
     });
@@ -356,7 +356,8 @@ export class TicketListComponent implements OnInit {
     this.isSendingComment = true;
     const request: CreateCommentRequest = {
       content: this.newComment.trim(),
-      internalNote: this.isInternalNote
+      internalNote: this.isInternalNote,
+      source: 'INTERNAL'
     };
     this.commentService.addComment(this.viewedTicket.id, request).subscribe({
       next: (comment) => {

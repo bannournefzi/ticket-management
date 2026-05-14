@@ -380,8 +380,20 @@
 
       <!-- TAB 2: Commentaires -->
       <div *ngIf="activeTab === 'comments'">
-        <!-- BA Toggle -->
-        <div class="comments-toggle" *ngIf="isUserBA() && selectedTicket">
+        <!-- Sub-tabs for BA -->
+        <div class="comment-subtabs" *ngIf="isUserBA()">
+          <button class="comment-subtab" [class.active]="commentTab === 'internal'" (click)="switchCommentTab('internal')">
+            <i class="fas fa-comments"></i> Discussion Interne
+            <span class="subtab-badge" *ngIf="comments.length > 0">{{ comments.length }}</span>
+          </button>
+          <button class="comment-subtab" [class.active]="commentTab === 'mantis'" (click)="switchCommentTab('mantis')">
+            <i class="fas fa-share-alt"></i> Discussion Mantis
+            <span class="subtab-badge mantis-badge" *ngIf="mantisComments.length > 0">{{ mantisComments.length }}</span>
+          </button>
+        </div>
+
+        <!-- BA Toggle (only in internal tab) -->
+        <div class="comments-toggle" *ngIf="isUserBA() && selectedTicket && commentTab === 'internal'">
           <span class="toggle-label">
             <i class="fas fa-comments"></i> Autoriser les utilisateurs Métier à commenter
           </span>
@@ -390,11 +402,12 @@
             <span class="slider"></span>
           </label>
         </div>
-        
-        <div class="comments-list">
-          <div class="comment-item" *ngFor="let c of comments" [class.internal-note]="c.internalNote">
+
+        <!-- Internal Comments List -->
+        <div class="comments-list" *ngIf="commentTab === 'internal'">
+          <div class="comment-item" *ngFor="let c of comments" [class.internal-note]="c.internalNote" [class.mantis-comment]="c.source === 'MANTIS'">
             <div class="comment-header">
-              <span class="comment-avatar">{{ getInitial(c.authorFullName) }}</span>
+              <span class="comment-avatar" [class.mantis-avatar]="c.source === 'MANTIS' || c.authorRole === 'DEVELOPER'">{{ getInitial(c.authorFullName) }}</span>
               <div class="comment-meta">
                 <span class="comment-author">{{ c.authorFullName }}</span>
                 <span class="comment-role">{{ getCommentRoleLabel(c.authorRole) }}</span>
@@ -403,6 +416,9 @@
               <span class="internal-badge" *ngIf="c.internalNote">
                 <i class="fas fa-lock"></i> Interne
               </span>
+              <span class="source-badge source-internal" *ngIf="c.source === 'INTERNAL' && !c.internalNote">
+                <i class="fas fa-comment"></i> Interne
+              </span>
               <button class="comment-delete" *ngIf="canDeleteComment(c)" (click)="deleteComment(c)">
                 <i class="fas fa-trash"></i>
               </button>
@@ -410,27 +426,54 @@
             <p class="comment-body">{{ c.content }}</p>
           </div>
           <div class="empty-msg" *ngIf="comments.length === 0 && !isLoadingComments">
-            <i class="fas fa-comments"></i> Aucun commentaire
+            <i class="fas fa-comments"></i> Aucun commentaire interne
           </div>
           <div class="empty-msg" *ngIf="isLoadingComments">
             <i class="fas fa-spinner fa-spin"></i> Chargement...
           </div>
         </div>
-        
-        <!-- Comment form disabled message -->
-        <div class="comment-disabled-msg" *ngIf="!isCommentsEnabled && !isUserBA()">
-          <i class="fas fa-lock"></i>
-          <span>Les commentaires sont désactivés pour les utilisateurs Métier sur ce ticket.</span>
+
+        <!-- Mantis Comments List (BA only) -->
+        <div class="comments-list" *ngIf="commentTab === 'mantis'">
+          <div class="comment-item mantis-item" *ngFor="let c of mantisComments">
+            <div class="comment-header">
+              <span class="comment-avatar" [class.mantis-avatar]="true">{{ getInitial(c.authorFullName) }}</span>
+              <div class="comment-meta">
+                <span class="comment-author">{{ c.authorFullName }}</span>
+                <span class="comment-role">{{ c.authorRole === 'DEVELOPER' ? 'Développeur' : getCommentRoleLabel(c.authorRole) }}</span>
+              </div>
+              <span class="comment-date">{{ getTimeAgo(c.createdDate) }}</span>
+              <span class="source-badge source-mantis">
+                <i class="fas fa-share-alt"></i> Mantis
+              </span>
+              <button class="comment-delete" *ngIf="canDeleteComment(c)" (click)="deleteComment(c)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+            <p class="comment-body">{{ c.content }}</p>
+          </div>
+          <div class="empty-msg" *ngIf="mantisComments.length === 0">
+            <i class="fas fa-share-alt"></i> Aucun commentaire Mantis
+          </div>
         </div>
-        
+
+        <!-- Comment form -->
         <div class="comment-form" *ngIf="isCommentsEnabled || isUserBA()">
+          <div class="comment-form-header" *ngIf="isUserBA()">
+            <span class="form-source-label" *ngIf="commentTab === 'internal'">
+              <i class="fas fa-comment"></i> Commentaire interne (non synchronisé)
+            </span>
+            <span class="form-source-label mantis-label" *ngIf="commentTab === 'mantis'">
+              <i class="fas fa-share-alt"></i> Commentaire Mantis (synchronisé)
+            </span>
+          </div>
           <div class="comment-form-input">
             <span class="comment-form-avatar">{{ getInitial('Moi') }}</span>
             <textarea [(ngModel)]="newComment" rows="3"
-                      placeholder="Écrire un commentaire..." class="comment-textarea"></textarea>
+                      [placeholder]="commentTab === 'mantis' ? 'Écrire un commentaire qui sera synchronisé vers Mantis...' : 'Écrire un commentaire interne...'" class="comment-textarea"></textarea>
           </div>
           <div class="comment-form-actions">
-            <label class="internal-toggle">
+            <label class="internal-toggle" *ngIf="commentTab === 'internal'">
               <input type="checkbox" [(ngModel)]="isInternalNote"/>
               <span><i class="fas fa-lock"></i> Note interne</span>
             </label>

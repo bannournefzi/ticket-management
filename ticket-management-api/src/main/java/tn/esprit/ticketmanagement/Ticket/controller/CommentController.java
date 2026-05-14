@@ -36,14 +36,16 @@ public class CommentController {
     }
 
     /**
-     * Récupérer les commentaires d'un ticket
+     * Recuperer les commentaires d'un ticket
+     * @param source Optionnel : "INTERNAL" (discussion interne) ou "MANTIS" (discussion Mantis)
      */
     @GetMapping
     public ResponseEntity<List<CommentDTO>> getComments(
             @PathVariable Integer ticketId,
+            @RequestParam(required = false) String source,
             @AuthenticationPrincipal User currentUser
     ) {
-        return ResponseEntity.ok(commentService.getCommentsByTicket(ticketId, currentUser));
+        return ResponseEntity.ok(commentService.getCommentsByTicket(ticketId, currentUser, source));
     }
 
     /**

@@ -45,6 +45,15 @@ public class Comment {
     @Column(nullable = false)
     private Boolean internalNote = false;
 
+    /**
+     * Source du commentaire :
+     * "INTERNAL" = discussion interne plateforme (non synchronisé Mantis)
+     * "MANTIS"   = discussion synchronisée avec Mantis
+     */
+    @Column(name = "source", length = 20)
+    @Builder.Default
+    private String source = "INTERNAL";
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;

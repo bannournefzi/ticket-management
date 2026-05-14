@@ -62,6 +62,8 @@ export class BaTicketManagementComponent implements OnInit {
 
   // ── Comments ──────────────────────────────────────────────────────────
   comments: TicketComment[] = [];
+  mantisComments: TicketComment[] = [];
+  commentTab: 'internal' | 'mantis' = 'internal';
   newComment = '';
   isInternalNote    = false;
   isLoadingComments = false;
@@ -280,16 +282,20 @@ export class BaTicketManagementComponent implements OnInit {
     this.isDetailModalOpen = true;
     this.activeTab         = 'details';
     this.comments          = [];
+    this.mantisComments    = [];
+    this.commentTab        = 'internal';
     this.newComment        = '';
     this.isInternalNote    = false;
     this.ticketHistory     = [];
     this.loadComments(ticket.id);
+    this.loadMantisComments(ticket.id);
   }
 
   closeDetailModal(): void {
     this.isDetailModalOpen = false;
     this.selectedTicket    = null;
     this.comments          = [];
+    this.mantisComments    = [];
     this.ticketHistory     = [];
   }
 
@@ -299,22 +305,41 @@ export class BaTicketManagementComponent implements OnInit {
 
   loadComments(ticketId: number): void {
     this.isLoadingComments = true;
-    this.commentService.getComments(ticketId).subscribe({
+    this.commentService.getComments(ticketId, 'INTERNAL').subscribe({
       next: (data) => { this.comments = data; this.isLoadingComments = false; },
       error: ()     => { this.isLoadingComments = false; }
     });
   }
 
+  loadMantisComments(ticketId: number): void {
+    this.commentService.getComments(ticketId, 'MANTIS').subscribe({
+      next: (data) => { this.mantisComments = data; },
+      error: ()     => {}
+    });
+  }
+
+  switchCommentTab(tab: 'internal' | 'mantis'): void {
+    this.commentTab = tab;
+    this.newComment = '';
+    this.isInternalNote = false;
+  }
+
   sendComment(): void {
     if (!this.newComment.trim() || !this.selectedTicket) return;
     this.isSendingComment = true;
+    const source = this.commentTab === 'mantis' ? 'MANTIS' : 'INTERNAL';
     const req: CreateCommentRequest = {
       content:      this.newComment.trim(),
-      internalNote: this.isInternalNote
+      internalNote: this.isInternalNote,
+      source:       source
     };
     this.commentService.addComment(this.selectedTicket.id, req).subscribe({
       next: (c) => {
-        this.comments.push(c);
+        if (this.commentTab === 'mantis') {
+          this.mantisComments.push(c);
+        } else {
+          this.comments.push(c);
+        }
         this.newComment       = '';
         this.isInternalNote   = false;
         this.isSendingComment = false;
@@ -326,7 +351,10 @@ export class BaTicketManagementComponent implements OnInit {
   deleteComment(c: TicketComment): void {
     if (!this.selectedTicket || !confirm('Supprimer ce commentaire ?')) return;
     this.commentService.deleteComment(this.selectedTicket.id, c.id).subscribe({
-      next: () => { this.comments = this.comments.filter(x => x.id !== c.id); }
+      next: () => {
+        this.comments = this.comments.filter(x => x.id !== c.id);
+        this.mantisComments = this.mantisComments.filter(x => x.id !== c.id);
+      }
     });
   }
 
