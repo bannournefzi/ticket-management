@@ -681,4 +681,37 @@ confirmPushToMantis(): void {
     if (this.currentPage > total) this.currentPage = total;
     if (this.currentPage < 1)     this.currentPage = 1;
   }
+
+  exportToExcel(): void {
+  const headers = ['ID', 'Mantis ID', 'Titre', 'Statut', 'Priorité', 'Catégorie', 
+                   'SLA', 'Créateur', 'Assigné à', 'Département', 'Créé le', 'Tags'];
+
+  const rows = this.filteredTickets.map(t => [
+    t.id,
+    t.mantisId || '',
+    t.title,
+    this.statusLabels[t.status] || t.status,
+    this.getPriorityConfig(t.priority).label,
+    this.getCategoryConfig(t.category).label,
+    this.getSLALabel(t.slaStatus),
+    t.creatorFullName || '',
+    t.assignedToFullName || 'Non assigné',
+    t.departement || '',
+    t.createdDate ? new Date(t.createdDate).toLocaleDateString('fr-FR') : '',
+    (t.tags || []).join(', ')
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+    .join('\n');
+
+  const BOM = '\uFEFF'; // Pour que Excel ouvre correctement l'UTF-8
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tickets_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 }

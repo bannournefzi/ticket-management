@@ -23,6 +23,19 @@ $radius:       8px;
   background: $bg;
   min-height: 100vh;
 }
+.btn-export {
+  background: #217346;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  &:hover { background: #1a5c38; }
+}
 
 // ============================================
 // HEADER

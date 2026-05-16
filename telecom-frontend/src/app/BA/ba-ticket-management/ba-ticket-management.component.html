@@ -50,6 +50,10 @@
         <option value="ON_TRACK">OK</option>
         <option value="MET">Résolu à temps</option>
       </select>
+      <button class="btn-export" (click)="exportToExcel()" title="Exporter en Excel">
+  <i class="fas fa-file-excel"></i> Export XLS
+</button>
+
       <button class="btn-refresh" (click)="loadTickets()" [disabled]="isLoading">
         <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
       </button>
