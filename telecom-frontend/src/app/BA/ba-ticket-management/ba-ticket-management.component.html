@@ -80,6 +80,9 @@
             <th class="col-id" (click)="sortBy('id')">
               #ID <i class="fas" [ngClass]="getSortIcon('id')"></i>
             </th>
+            <th class="col-mantis" (click)="sortBy('mantisId')">
+              Mantis <i class="fas" [ngClass]="getSortIcon('mantisId')"></i>
+            </th>
             <th class="col-title" (click)="sortBy('title')">
               Titre <i class="fas" [ngClass]="getSortIcon('title')"></i>
             </th>
@@ -116,6 +119,13 @@
               class="ticket-row">
 
             <td class="td-id">#{{ ticket.id }}</td>
+
+            <td class="td-mantis">
+              <span class="mantis-badge" *ngIf="ticket.mantisId">
+                <i class="fas fa-share-alt"></i> #{{ ticket.mantisId }}
+              </span>
+              <span class="no-mantis" *ngIf="!ticket.mantisId">—</span>
+            </td>
 
             <td class="td-title">
               <span class="title-text">{{ ticket.title }}</span>

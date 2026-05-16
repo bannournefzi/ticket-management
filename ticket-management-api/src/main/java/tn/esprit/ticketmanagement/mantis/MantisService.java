@@ -75,6 +75,18 @@ public class MantisService {
         issueData.put("project", project);
         issueData.put("category", category);
 
+        // Set the reporter to the actual user (not the API token owner)
+        if (reporterUsername != null && !reporterUsername.isBlank()) {
+            Map<String, Object> reporter = new HashMap<>();
+            reporter.put("name", reporterUsername);
+            issueData.put("reporter", reporter);
+            log.info(">>> Setting Mantis reporter: {}", reporterUsername);
+
+            if (!checkUserExistsInMantis(reporterUsername)) {
+                log.warn(">>> Reporter '{}' may not exist in Mantis — Mantis may fall back to API token user", reporterUsername);
+            }
+        }
+
         // Add tags if present (Mantis API expects: "tags": [{"name": "tag1"}, {"name": "tag2"}])
         if (tags != null && !tags.isEmpty()) {
             List<Map<String, String>> tagList = tags.stream()

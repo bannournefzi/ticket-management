@@ -1,73 +1,75 @@
 // ============================================
 // VARIABLES
 // ============================================
-$tt-blue: #0075be;
-$tt-cyan: #00a99d;
-$tt-green: #8cc63f;
-$primary: #1a1a2e;
+$tt-blue:       #0075be;
+$tt-cyan:       #00a99d;
+$tt-green:      #8cc63f;
+$primary:       #1a1a2e;
 $primary-light: #16213e;
-$accent: #0075be;
-$text-dark: #1a1a1a;
-$text-medium: #555555;
-$text-light: #888888;
-$border: #e0e0e0;
-$bg-light: #f8f9fb;
-$bg-input: #f4f5f7;
-$danger: #dc3545;
-$success: #2e7d32;
+$accent:        #0075be;
+$text-dark:     #1a1a1a;
+$text-medium:   #555555;
+$text-light:    #888888;
+$border:        #e0e0e0;
+$bg-light:      #f8f9fb;
+$bg-input:      #f4f5f7;
+$danger:        #dc3545;
+$success:       #2e7d32;
 
 // ============================================
-// PAGE LAYOUT - SPLIT SCREEN
+// PAGE — full-screen picture background
 // ============================================
 .login-page {
   display: flex;
   min-height: 100vh;
-  background: #ffffff;
+
+  // ✅ TT billboard image replaces the video
+  background-image:
+    linear-gradient(135deg, rgba(0, 20, 60, 0.72) 0%, rgba(5, 5, 20, 0.65) 100%),
+    url('https://tunisie-telegraph.com/wp-content/uploads/2025/04/affiches-11-scaled.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 // ============================================
-// LEFT SIDE - BRANDING
+// LEFT SIDEBAR — slimmer + glassmorphism
 // ============================================
 .login-branding {
-  flex: 0 0 500px;
-  background: $primary;
+  flex: 0 0 380px;           // ← was 500px, now slimmer
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 
- 
+  // Frosted-glass panel over the shared background
+  background: rgba(2, 11, 40, 0.45);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
 
-  // Geometric circle top-right
+  // Subtle right border to separate from form area
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+
+  // Geometric ring — top right
   &::after {
     content: '';
     position: absolute;
-    width: 400px;
-    height: 400px;
+    width: 320px;
+    height: 320px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 50%;
-    top: -100px;
-    right: -100px;
+    top: -80px;
+    right: -80px;
+    pointer-events: none;
     z-index: 1;
   }
-}
-
-.branding-overlay {
-  position: absolute;
-  bottom: -150px;
-  left: -150px;
-  width: 500px;
-  height: 500px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  border-radius: 50%;
-  z-index: 1;
 }
 
 .branding-content {
   position: relative;
   z-index: 2;
-  padding: 60px 48px;
+  padding: 52px 36px;        // tighter padding for slimmer sidebar
   width: 100%;
   height: 100%;
   display: flex;
@@ -76,26 +78,26 @@ $success: #2e7d32;
 }
 
 // ============================================
-// LOGO TUNISIE TELECOM
+// LOGO
 // ============================================
 .branding-logo {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 48px;
+  gap: 14px;
+  margin-bottom: 40px;
 }
 
 .tt-logo-img {
-  width: 52px;
-  height: 52px;
+  width: 44px;               // slightly smaller
+  height: 44px;
   object-fit: contain;
-  
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
 }
 
 .logo-divider {
   width: 1px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
+  height: 36px;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .logo-app-name {
@@ -105,7 +107,7 @@ $success: #2e7d32;
 }
 
 .app-name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.2px;
@@ -113,49 +115,53 @@ $success: #2e7d32;
 }
 
 .app-type {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
   letter-spacing: 1.5px;
   font-weight: 600;
 }
 
-// Texte
+// ============================================
+// HEADLINE + SUBTITLE
+// ============================================
 .branding-title {
-  font-size: 32px;
+  font-size: 26px;           // was 32px
   font-weight: 800;
   color: #ffffff;
-  margin: 0 0 16px;
-  letter-spacing: -0.5px;
-  line-height: 1.25;
+  margin: 0 0 14px;
+  letter-spacing: -0.4px;
+  line-height: 1.28;
 }
 
 .branding-subtitle {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 48px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 40px;
   line-height: 1.7;
-  max-width: 360px;
+  max-width: 300px;
 }
 
-// Features
+// ============================================
+// FEATURES
+// ============================================
 .branding-features {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .feature-item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .feature-icon {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -163,7 +169,7 @@ $success: #2e7d32;
   flex-shrink: 0;
 
   i {
-    font-size: 16px;
+    font-size: 14px;
     color: $tt-cyan;
   }
 }
@@ -174,40 +180,42 @@ $success: #2e7d32;
   gap: 2px;
 
   strong {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.88);
   }
 
   span {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.35);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.32);
     line-height: 1.4;
   }
 }
 
-// Footer branding
+// ============================================
+// SIDEBAR FOOTER
+// ============================================
 .branding-footer {
   margin-top: auto;
-  padding-top: 48px;
+  padding-top: 40px;
 }
 
 .footer-line {
-  width: 40px;
+  width: 36px;
   height: 2px;
   background: rgba(255, 255, 255, 0.1);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .branding-footer p {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.18);
   margin: 0;
   letter-spacing: 0.3px;
 }
 
 // ============================================
-// RIGHT SIDE - FORM WITH BACKGROUND IMAGE
+// RIGHT SIDE — form sits on top of background
 // ============================================
 .login-form-section {
   flex: 1;
@@ -216,47 +224,30 @@ $success: #2e7d32;
   justify-content: center;
   padding: 48px;
   position: relative;
-  overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.15);
-    z-index: 1;
-  }
-}
-.login-bg-video {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
-  transform: translate(-50%, -50%);
-  object-fit: cover;
-  z-index: 0;
 }
 
+// ============================================
+// FORM CARD — same glassmorphism as before
+// ============================================
 .form-wrapper {
   width: 100%;
   max-width: 420px;
   position: relative;
-  z-index: 2; // ✅ Au-dessus de l'overlay
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 20px;
   padding: 44px 40px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-// Mobile logo
+// ============================================
+// MOBILE LOGO
+// ============================================
 .mobile-logo {
   display: none;
   text-align: center;
@@ -280,7 +271,9 @@ $success: #2e7d32;
   color: #ffffff;
 }
 
-// Header
+// ============================================
+// FORM HEADER
+// ============================================
 .form-header {
   margin-bottom: 36px;
 }
@@ -301,7 +294,7 @@ $success: #2e7d32;
 }
 
 // ============================================
-// FORM INPUTS
+// FORM INPUTS — unchanged from original
 // ============================================
 .login-form {
   display: flex;
@@ -331,12 +324,16 @@ $success: #2e7d32;
 .forgot-link {
   font-size: 12px;
   color: $accent;
-  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
   font-weight: 600;
+  padding: 0;
   transition: color 0.2s;
 
   &:hover {
     color: darken($accent, 10%);
+    text-decoration: underline;
   }
 }
 
@@ -353,6 +350,10 @@ $success: #2e7d32;
     background: #ffffff;
     border-color: $accent;
     box-shadow: 0 0 0 4px rgba($accent, 0.08);
+
+    .input-icon {
+      color: $accent;
+    }
   }
 
   &.input-error {
@@ -372,10 +373,6 @@ $success: #2e7d32;
   color: #bbb;
   transition: color 0.3s;
   z-index: 1;
-
-  .input-focus & {
-    color: $accent;
-  }
 }
 
 .input-field {
@@ -403,14 +400,8 @@ $success: #2e7d32;
 }
 
 @keyframes fadeScale {
-  from {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .toggle-password {
@@ -424,13 +415,9 @@ $success: #2e7d32;
   transition: color 0.2s;
   z-index: 1;
 
-  &:hover {
-    color: $text-medium;
-  }
+  &:hover { color: $text-medium; }
 
-  i {
-    font-size: 15px;
-  }
+  i { font-size: 15px; }
 }
 
 .input-hint {
@@ -442,20 +429,12 @@ $success: #2e7d32;
   font-weight: 500;
   animation: slideDown 0.2s ease;
 
-  i {
-    font-size: 11px;
-  }
+  i { font-size: 11px; }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 // ============================================
@@ -497,14 +476,14 @@ $success: #2e7d32;
     transform: rotate(45deg) scale(0);
     transition: transform 0.2s;
   }
+}
 
-  input:checked ~ & {
-    background: $accent;
-    border-color: $accent;
+.checkbox-container input:checked ~ .checkmark {
+  background: $accent;
+  border-color: $accent;
 
-    &::after {
-      transform: rotate(45deg) scale(1);
-    }
+  &::after {
+    transform: rotate(45deg) scale(1);
   }
 }
 
@@ -530,8 +509,8 @@ $success: #2e7d32;
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  25%       { transform: translateX(-4px); }
+  75%       { transform: translateX(4px); }
 }
 
 .error-icon {
@@ -577,13 +556,9 @@ $success: #2e7d32;
   padding: 2px;
   transition: color 0.2s;
 
-  &:hover {
-    color: $danger;
-  }
+  &:hover { color: $danger; }
 
-  i {
-    font-size: 12px;
-  }
+  i { font-size: 12px; }
 }
 
 // ============================================
@@ -600,9 +575,9 @@ $success: #2e7d32;
   margin-top: 4px;
 
   &:hover:not(:disabled) {
-    background: lighten($primary, 5%);
+    background: lighten($primary, 8%);
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba($primary, 0.25);
+    box-shadow: 0 8px 24px rgba($primary, 0.3);
   }
 
   &:active:not(:disabled) {
@@ -633,10 +608,10 @@ $success: #2e7d32;
     color: #ffffff;
     transition: transform 0.3s;
   }
+}
 
-  .btn-login:hover & i {
-    transform: translateX(3px);
-  }
+.btn-login:hover .btn-content i {
+  transform: translateX(3px);
 }
 
 .btn-loading {
@@ -648,7 +623,7 @@ $success: #2e7d32;
   span {
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
   }
 }
 
@@ -663,80 +638,7 @@ $success: #2e7d32;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// ============================================
-// DIVIDER
-// ============================================
-.form-divider {
-  display: flex;
-  align-items: center;
-  margin: 28px 0;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid $border;
-  }
-
-  span {
-    padding: 0 16px;
-    font-size: 12px;
-    color: #bbb;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-}
-
-// ============================================
-// REGISTER
-// ============================================
-.register-section {
-  text-align: center;
-}
-
-.register-text {
-  font-size: 14px;
-  color: $text-light;
-  margin: 0 0 12px;
-}
-
-.btn-register {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 13px 24px;
-  background: transparent;
-  border: 2px solid $border;
-  border-radius: 12px;
-  color: $text-dark;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s;
-
-  i {
-    font-size: 14px;
-    color: $text-light;
-    transition: color 0.3s;
-  }
-
-  &:hover {
-    border-color: $accent;
-    color: $accent;
-    background: rgba($accent, 0.03);
-
-    i {
-      color: $accent;
-    }
-  }
+  to { transform: rotate(360deg); }
 }
 
 // ============================================
@@ -768,26 +670,22 @@ $success: #2e7d32;
 // ============================================
 @media (max-width: 1024px) {
   .login-branding {
-    flex: 0 0 420px;
+    flex: 0 0 320px;
   }
 
   .branding-content {
-    padding: 48px 36px;
+    padding: 40px 28px;
   }
 
   .branding-title {
-    font-size: 28px;
-  }
-
-  .tt-logo-img {
-    width: 44px;
-    height: 44px;
+    font-size: 22px;
   }
 }
 
 @media (max-width: 768px) {
   .login-page {
     flex-direction: column;
+    background-attachment: scroll;
   }
 
   .login-branding {

@@ -1,14 +1,13 @@
 <div class="login-page">
 
- <!-- Côté Gauche - Branding -->
+  <!-- Côté Gauche - Branding (slim + transparent) -->
   <div class="login-branding">
     <div class="branding-content">
-      
-      <!-- Logo Tunisie Telecom -->
+
       <div class="branding-logo">
-        <img 
-          src="https://e7.pngegg.com/pngimages/620/4/png-clipart-tunisie-telecom-wynsys-sfax-telecommunication-telecom-tower-text-logo.png" 
-          alt="Tunisie Telecom" 
+        <img
+          src="https://www.vhv.rs/dpng/d/328-3285590_simple-mobile-logo-telecommunications-logonoidcom-tunisie-telecom-logo.png"
+          alt="Tunisie Telecom"
           class="tt-logo-img"
         />
         <div class="logo-divider"></div>
@@ -18,14 +17,12 @@
         </div>
       </div>
 
-      <!-- Texte Principal -->
       <h1 class="branding-title">Gérez vos projets<br>en toute simplicité</h1>
       <p class="branding-subtitle">
-        Une solution centralisée pour le suivi des tickets, 
+        Une solution centralisée pour le suivi des tickets,
         la collaboration entre équipes et le pilotage de vos projets.
       </p>
 
-      <!-- Features -->
       <div class="branding-features">
         <div class="feature-item">
           <div class="feature-icon">
@@ -36,7 +33,6 @@
             <span>Suivi en temps réel de vos demandes</span>
           </div>
         </div>
-
         <div class="feature-item">
           <div class="feature-icon">
             <i class="fas fa-users-cog"></i>
@@ -46,7 +42,6 @@
             <span>Travail d'équipe entre Business Analysts et Métier</span>
           </div>
         </div>
-
         <div class="feature-item">
           <div class="feature-icon">
             <i class="fas fa-chart-line"></i>
@@ -58,7 +53,6 @@
         </div>
       </div>
 
-      <!-- Footer branding -->
       <div class="branding-footer">
         <div class="footer-line"></div>
         <p>&copy; 2026 Tunisie Telecom - Tous droits réservés</p>
@@ -70,31 +64,28 @@
   <!-- Côté Droit - Formulaire -->
   <div class="login-form-section">
 
-    <video #bgVideo class="login-bg-video" autoplay muted loop playsinline preload="auto">
-  <source src="/assets/videooo.mp4" type="video/mp4">
-</video>
     <div class="form-wrapper">
 
-      <!-- Header Mobile (visible seulement sur mobile) -->
+      <!-- Mobile logo -->
       <div class="mobile-logo">
         <div class="logo-circle-sm">
           <span class="logo-tt-sm">TT</span>
         </div>
       </div>
 
-      <!-- Welcome -->
       <div class="form-header">
         <h2 class="form-title">Welcome</h2>
         <p class="form-subtitle">Connectez-vous à votre espace de travail</p>
       </div>
 
-      <!-- Formulaire -->
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
 
         <!-- Email -->
         <div class="input-group">
           <label for="email" class="input-label">Adresse email</label>
-          <div class="input-wrapper" [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" [class.input-focus]="emailFocused">
+          <div class="input-wrapper"
+               [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+               [class.input-focus]="emailFocused">
             <i class="fas fa-envelope input-icon"></i>
             <input
               id="email"
@@ -106,7 +97,7 @@
               (blur)="emailFocused = false"
               autocomplete="email"
             />
-            <i class="fas fa-check-circle input-valid" 
+            <i class="fas fa-check-circle input-valid"
                *ngIf="loginForm.get('email')?.valid && loginForm.get('email')?.touched"></i>
           </div>
           <span class="input-hint" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
@@ -120,10 +111,12 @@
           <div class="label-row">
             <label for="password" class="input-label">Mot de passe</label>
             <button type="button" class="forgot-link" (click)="goToForgotPassword()">
-  Mot de passe oublié ?
-</button>
+              Mot de passe oublié ?
+            </button>
           </div>
-          <div class="input-wrapper" [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" [class.input-focus]="passwordFocused">
+          <div class="input-wrapper"
+               [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+               [class.input-focus]="passwordFocused">
             <i class="fas fa-lock input-icon"></i>
             <input
               id="password"
@@ -168,7 +161,7 @@
           </button>
         </div>
 
-        <!-- Submit Button -->
+        <!-- Submit -->
         <button
           type="submit"
           class="btn-login"
@@ -185,22 +178,6 @@
         </button>
 
       </form>
-
-      <!-- Divider
-      <div class="form-divider">
-        <span>ou</span>
-      </div> -->
-
-      <!-- Register Link
-      <div class="register-section">
-        <p class="register-text">
-          Vous n'avez pas encore de compte ?
-        </p>
-        <a routerLink="/register" class="btn-register">
-          <i class="fas fa-user-plus"></i>
-          Créer un compte
-        </a>
-      </div> -->
 
       <!-- Security Badge -->
       <div class="security-badge">

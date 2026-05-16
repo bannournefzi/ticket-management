@@ -194,6 +194,7 @@ export class BaTicketManagementComponent implements OnInit {
       if (q && !(
         t.title.toLowerCase().includes(q) ||
         t.id.toString().includes(q) ||
+        (t.mantisId?.toString() || '').includes(q) ||
         (t.creatorFullName && t.creatorFullName.toLowerCase().includes(q)) ||
         (t.tags && t.tags.some(tag => tag.toLowerCase().includes(q)))
       )) return false;

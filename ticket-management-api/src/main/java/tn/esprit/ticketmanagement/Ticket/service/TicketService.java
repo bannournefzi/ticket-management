@@ -692,11 +692,12 @@ return tickets.stream()
         Long mantisId = ticket.getMantisId();
         if (mantisId == null) {
             log.info(">> Calling mantisService.createIssue() with tags: {}", ticket.getTags());
+            log.info("REPORTER SENT TO MANTIS = '{}'", currentUser.username);
             mantisId = mantisService.createIssue(
                     ticket.getTitle(),
                     ticket.getDescription(),
                     projectId,
-                    currentUser.getUsername(),
+                    currentUser.username,
                     ticket.getTags()
             );
             log.info(">> createIssue SUCCESS: mantisId={}", mantisId);

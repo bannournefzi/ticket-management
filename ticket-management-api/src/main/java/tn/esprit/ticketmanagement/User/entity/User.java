@@ -45,7 +45,7 @@ public class User implements UserDetails, Principal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String username;
+    public String username;
     private String password;
 
     private String firstName;
