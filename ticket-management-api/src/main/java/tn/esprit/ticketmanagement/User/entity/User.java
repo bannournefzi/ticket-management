@@ -137,6 +137,10 @@ public class User implements UserDetails, Principal {
         return firstName + " " + lastName;
     }
 
+    public String getMantisUsername() {
+        return username;
+    }
+
     /* =========================
        Security implementations
        ========================= */

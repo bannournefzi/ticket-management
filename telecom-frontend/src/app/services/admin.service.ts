@@ -42,6 +42,9 @@ export interface UpdateUserRequest {
   phone: string;
   departement?: string;
   dateOfBirth: string;
+  username?: string;
+  mantisProject?: string;
+  mantisProjects?: string[];
 }
 
 export interface UserStatsDTO {

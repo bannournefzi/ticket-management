@@ -104,6 +104,21 @@ toggleProject(projectName: string, event: Event): void {
   this.newUser.mantisProject = this.newUser.mantisProjects[0] || '';
 }
 
+toggleEditProject(projectName: string, event: Event): void {
+  const checked = (event.target as HTMLInputElement).checked;
+  if (!this.editedUser) return;
+  if (!this.editedUser.mantisProjects) this.editedUser.mantisProjects = [];
+
+  if (checked) {
+    if (!this.editedUser.mantisProjects.includes(projectName)) {
+      this.editedUser.mantisProjects.push(projectName);
+    }
+  } else {
+    this.editedUser.mantisProjects = this.editedUser.mantisProjects.filter(p => p !== projectName);
+  }
+  this.editedUser.mantisProject = this.editedUser.mantisProjects[0] || '';
+}
+
   // -- Data Loading --
 
   loadUsers(): void {
@@ -265,7 +280,9 @@ toggleProject(projectName: string, event: Event): void {
       accountLocked: user.accountLocked || false,
       createdDate: user.createdDate,
       departement: user.departement || '',
-      username: user.username || ''
+      username: user.username || '',
+      mantisProject: user.mantisProject || '',
+      mantisProjects: user.mantisProjects ? [...user.mantisProjects] : []
     };
     this.editedRole = user.roles[0] || '';
     this.isEditModalOpen = true;
@@ -288,7 +305,10 @@ toggleProject(projectName: string, event: Event): void {
       phone: this.editedUser.phone,
       dateOfBirth: this.editedUser.dateOfBirth,
       role: this.editedRole,
-      departement: this.editedUser.departement || undefined
+      departement: this.editedUser.departement || undefined,
+      username: this.editedUser.username,
+      mantisProject: this.editedUser.mantisProject,
+      mantisProjects: this.editedUser.mantisProjects
     };
 
     this.adminService.updateUser(this.editedUser.id, request)

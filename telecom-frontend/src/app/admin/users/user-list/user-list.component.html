@@ -362,6 +362,41 @@
           </div>
         </div>
       </div>
+
+      <!-- SECTION MantisBT (BA uniquement) -->
+      <div class="form-section" *ngIf="editedRole === 'ROLE_BUSINESS_ANALYST'">
+        <div class="form-section-title">
+          <i class="fas fa-share-alt"></i> Configuration MantisBT
+        </div>
+
+        <div class="form-group">
+          <label>Nom d'utilisateur MantisBT</label>
+          <select class="form-input" [(ngModel)]="editedUser.username">
+            <option value="">-- Sélectionner un utilisateur --</option>
+            <option *ngFor="let user of mantisUsers" [value]="user">{{ user }}</option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="editedUser.username">
+          <label>Projets assignés</label>
+          <div class="projects-checkboxes">
+            <label *ngFor="let p of allMantisProjects"
+                   class="project-checkbox-item"
+                   [class.selected]="editedUser.mantisProjects?.includes(p.name)">
+              <input type="checkbox" [value]="p.name"
+                     [checked]="editedUser.mantisProjects?.includes(p.name)"
+                     (change)="toggleEditProject(p.name, $event)" />
+              <i class="fas fa-folder"></i>
+              <span>{{ p.name }}</span>
+            </label>
+          </div>
+          <div class="selected-projects" *ngIf="editedUser.mantisProjects?.length">
+            <span class="project-badge" *ngFor="let p of editedUser.mantisProjects">
+              <i class="fas fa-check"></i> {{ p }}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" (click)="closeEditModal()"><i class="fas fa-times"></i> Annuler</button>

@@ -142,6 +142,17 @@ public class AdminService {
             user.setRoles(roles);
         }
 
+        // Update Mantis fields
+        if (userDTO.getMantisProject() != null) {
+            user.setMantisProject(userDTO.getMantisProject());
+        }
+        if (userDTO.getMantisProjects() != null && !userDTO.getMantisProjects().isEmpty()) {
+            user.setMantisProject(String.join(",", userDTO.getMantisProjects()));
+        }
+        if (userDTO.getUsername() != null && !userDTO.getUsername().isBlank()) {
+            user.setUsername(userDTO.getUsername());
+        }
+
         User updatedUser = userRepository.save(user);
 
         // Notify the user about the profile update
@@ -282,7 +293,7 @@ public class AdminService {
                         .collect(Collectors.toList()))
                 .createdDate(user.getCreatedDate())
                 .departement(user.getDepartement())
-                .username(user.getUsername())
+                .username(user.getMantisUsername())
                 .mantisProject(user.getMantisProject());
 
         if (user.getMantisProject() != null && !user.getMantisProject().isBlank()) {
