@@ -62,6 +62,8 @@ export class UserListComponent implements OnInit, OnDestroy {
     'SERVICE_1200': '1200'
   };
 
+  allMantisProjects: {id: number, name: string}[] = [];
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -73,12 +75,34 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.loadUsers();
     this.loadStats();
     this.loadMantisUsers();
+    this.loadAllMantisProjects();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+  loadAllMantisProjects(): void {
+  this.adminService.getMantisProjectsList().subscribe({
+    next: (projects) => this.allMantisProjects = projects,
+    error: (err) => console.error('Erreur projets Mantis:', err)
+  });
+}
+
+toggleProject(projectName: string, event: Event): void {
+  const checked = (event.target as HTMLInputElement).checked;
+  if (!this.newUser.mantisProjects) this.newUser.mantisProjects = [];
+  
+  if (checked) {
+    if (!this.newUser.mantisProjects.includes(projectName)) {
+      this.newUser.mantisProjects.push(projectName);
+    }
+  } else {
+    this.newUser.mantisProjects = this.newUser.mantisProjects.filter(p => p !== projectName);
+  }
+  this.newUser.mantisProject = this.newUser.mantisProjects[0] || '';
+}
 
   // -- Data Loading --
 
@@ -210,19 +234,13 @@ export class UserListComponent implements OnInit, OnDestroy {
 
   // -- View Modal --
 
-  openViewModal(user: UserDTO): void {
-  // 1. Essaie de matcher par username MantisBT
-  let mantisInfo = user.username ? this.mantisUsersMap[user.username] : null;
-
-  // 2. Fallback : matcher par email si username ne matche pas
-  if (!mantisInfo && user.email) {
-    mantisInfo = Object.values(this.mantisUsersMap)
-      .find(m => m.email === user.email) ?? null;
-  }
+ openViewModal(user: UserDTO): void {
+  // Projets stockés en base (mantisProjects du user)
+  const storedProjects = user.mantisProjects ?? [];
 
   this.viewedUser = {
     ...user,
-    mantisProjects: mantisInfo?.projects ?? []
+    mantisProjects: storedProjects
   };
   this.isViewModalOpen = true;
 }
@@ -315,36 +333,36 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.showPassword = true;
   }
 
-  onUsernameChange(): void {
-    
-    const selectedUser: any = this.mantisUsersMap[this.newUser.username]; 
-    
-    if (selectedUser) {
-      if (selectedUser.realName && selectedUser.realName.trim()) {
-        this.newUser.firstName = selectedUser.realName.trim();
-      } else {
-        this.newUser.firstName = this.newUser.username;
-      }
+ onUsernameChange(): void {
+  this.newUser.firstName = '';
+  this.newUser.email = '';
+  this.newUser.mantisProject = '';
+  this.newUser.mantisProjects = [];
 
-      if (selectedUser.email && selectedUser.email.trim()) {
-        this.newUser.email = selectedUser.email.trim();
-      }
+  if (!this.newUser.username) return;
 
-      // Set the first project as the primary project, and store all projects
-      if (selectedUser.projects && selectedUser.projects.length > 0) {
-        this.newUser.mantisProject = selectedUser.projects[0].trim();
-        this.newUser.mantisProjects = [...selectedUser.projects];
-      } else {
-        this.newUser.mantisProject = 'Non assigné';
-        this.newUser.mantisProjects = ['Non assigné'];
-      }
-    } else {
-      this.newUser.firstName = '';
-      this.newUser.email = '';
-      this.newUser.mantisProject = '';
-      this.newUser.mantisProjects = [];
-    }
+  // D'abord essayer depuis le cache local (mantisUsersMap)
+  const cached = this.mantisUsersMap[this.newUser.username];
+  if (cached?.realName) this.newUser.firstName = cached.realName.trim();
+  if (cached?.email) this.newUser.email = cached.email.trim();
+
+  // Si email manquant dans le cache → appel API direct
+  if (!this.newUser.email) {
+    this.adminService.getMantisUserDetails(this.newUser.username)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details) => {
+          if (details.realName && !this.newUser.firstName) {
+            this.newUser.firstName = details.realName.trim();
+          }
+          if (details.email) {
+            this.newUser.email = details.email.trim();
+          }
+        },
+        error: (err) => console.error('Erreur détails user Mantis:', err)
+      });
   }
+}
 
   createUser(): void {
    if (

@@ -13,6 +13,7 @@ import tn.esprit.ticketmanagement.mantis.MantisService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin")
@@ -110,5 +111,25 @@ public class AdminController {
         }
         
         return ResponseEntity.ok(usersWithDetails);
+    }
+
+    @GetMapping("/mantis-users/{username}/details")
+    public ResponseEntity<Map<String, Object>> getMantisUserDetails(
+            @PathVariable String username) {
+        return ResponseEntity.ok(mantisService.getUserDetails(username));
+    }
+
+    @GetMapping("/mantis-projects")
+    public ResponseEntity<List<Map<String, Object>>> getMantisProjects() {
+        List<Map<String, Object>> projects = mantisService.getProjectsForUser(null)
+                .stream()
+                .map(p -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", p.getId());
+                    map.put("name", p.getName());
+                    return map;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(projects);
     }
 }

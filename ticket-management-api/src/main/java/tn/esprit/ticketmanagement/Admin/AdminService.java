@@ -87,7 +87,11 @@ public class AdminService {
                 .accountLocked(false)
                 .roles(new ArrayList<>(List.of(role)))
                 .departement(request.getDepartement())
-                .mantisProject(request.getMantisProject())
+                .mantisProject(
+                        request.getMantisProjects() != null && !request.getMantisProjects().isEmpty()
+                                ? String.join(",", request.getMantisProjects())
+                                : request.getMantisProject()
+                )
                 .build();
 
         User savedUser = userRepository.save(user);

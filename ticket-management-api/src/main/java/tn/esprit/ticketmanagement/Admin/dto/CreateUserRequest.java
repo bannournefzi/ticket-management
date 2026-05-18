@@ -4,6 +4,7 @@ import lombok.Data;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class CreateUserRequest {
@@ -18,5 +19,7 @@ public class CreateUserRequest {
     private Departement departement;
 
     private String mantisProject;
+
+    private List<String> mantisProjects;
 
 }

@@ -306,93 +306,201 @@ public class MantisService {
         }
     }
 
-    public Map<String, Object> getUserDetails(String username) {
-        log.info("Fetching details for user: {}", username);
+//    public Map<String, Object> getUserDetails(String username) {
+//        log.info("Fetching details for user: {}", username);
+//        Map<String, Object> details = new HashMap<>();
+//        List<String> projects = new ArrayList<>();
+//
+//        try {
+//            int page = 1;
+//            int pageSize = 50;
+//            boolean found = false;
+//
+//            while (!found && page <= 3) {
+//                String url = mantisProperties.getBaseUrl() + "/api/rest/issues?page_size=" + pageSize + "&page=" + page;
+//                HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
+//                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+//
+//                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+//                    String body = response.getBody();
+//
+//                    String reporterRegex = "\"reporter\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
+//                    java.util.regex.Pattern reporterDetailPattern = java.util.regex.Pattern.compile(reporterRegex);
+//                    java.util.regex.Matcher reporterMatcher = reporterDetailPattern.matcher(body);
+//
+//                    if (reporterMatcher.find()) {
+//                        String realName = reporterMatcher.group(1);
+//                        String email = reporterMatcher.group(2);
+//                        if (realName != null && !realName.isBlank()) {
+//                            details.put("realName", realName);
+//                        }
+//                        if (email != null && !email.isBlank()) {
+//                            details.put("email", email);
+//                        }
+//                        found = true;
+//                    }
+//
+//                    if (!found) {
+//                        String handlerRegex = "\"handler\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
+//                        java.util.regex.Pattern handlerDetailPattern = java.util.regex.Pattern.compile(handlerRegex);
+//                        java.util.regex.Matcher handlerMatcher = handlerDetailPattern.matcher(body);
+//
+//                        if (handlerMatcher.find()) {
+//                            String realName = handlerMatcher.group(1);
+//                            String email = handlerMatcher.group(2);
+//                            if (realName != null && !realName.isBlank()) {
+//                                details.put("realName", realName);
+//                            }
+//                            if (email != null && !email.isBlank()) {
+//                                details.put("email", email);
+//                            }
+//                            found = true;
+//                        }
+//                    }
+//
+//                    // Extract ALL unique project names from all issues, not just the first
+//                    java.util.regex.Pattern projectAllPattern = java.util.regex.Pattern.compile("\"project\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"([^\"]+)\"");
+//                    java.util.regex.Matcher projectAllMatcher = projectAllPattern.matcher(body);
+//                    while (projectAllMatcher.find()) {
+//                        String projectName = projectAllMatcher.group(1);
+//                        if (projectName != null && !projectName.isBlank() && !projects.contains(projectName)) {
+//                            projects.add(projectName);
+//                        }
+//                    }
+//
+//                    if (!body.contains("\"issues\"") || body.contains("\"issues\":[]")) {
+//                        break;
+//                    }
+//                    page++;
+//                } else {
+//                    break;
+//                }
+//            }
+//
+//            // Store the full list of projects
+//            if (!projects.isEmpty()) {
+//                details.put("projects", projects);
+//            } else {
+//                details.put("projects", List.of("Aucun projet trouvé"));
+//            }
+//
+//            log.info("User details for {}: {} ({} projects)", username, details, projects.size());
+//            return details;
+//
+//        } catch (RestClientResponseException ex) {
+//            log.error("Failed to fetch user details: {}", ex.getRawStatusCode());
+//            return details;
+//        }
+//    }
+public Map<String, Object> getUserDetails(String username) {
+    log.info("Fetching details for user: {}", username);
+    Map<String, Object> details = new HashMap<>();
+
+    try {
+        HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Chercher dans toutes les issues (reporter ET handler)
+        int page = 1;
+        boolean found = false;
+
+        while (!found && page <= 5) {
+            String url = mantisProperties.getBaseUrl()
+                    + "/api/rest/issues?page_size=100&page=" + page;
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful()
+                    || response.getBody() == null) break;
+
+            JsonNode root = mapper.readTree(response.getBody());
+            JsonNode issues = root.path("issues");
+
+            if (!issues.isArray() || issues.size() == 0) break;
+
+            for (JsonNode issue : issues) {
+                // Vérifier reporter
+                JsonNode reporter = issue.path("reporter");
+                if (username.equals(reporter.path("name").asText())) {
+                    extractUserInfo(reporter, details);
+                    found = true;
+                    break;
+                }
+                // Vérifier handler
+                JsonNode handler = issue.path("handler");
+                if (username.equals(handler.path("name").asText())) {
+                    extractUserInfo(handler, details);
+                    found = true;
+                    break;
+                }
+            }
+            page++;
+        }
+
+        log.info("User {} details found: {}", username, details);
+
+    } catch (Exception ex) {
+        log.error("Failed to fetch user details for {}: {}", username, ex.getMessage());
+    }
+
+    details.put("projects", List.of());
+    return details;
+}
+
+    private void extractUserInfo(JsonNode userNode, Map<String, Object> details) {
+        String email = userNode.path("email").asText();
+        String realName = userNode.path("real_name").asText();
+        if (!email.isBlank()) details.put("email", email);
+        if (!realName.isBlank()) details.put("realName", realName);
+    }
+
+
+
+    private Map<String, Object> getUserDetailsFromIssues(String username) {
+        log.info("Fallback: getting projects for {} from issues", username);
         Map<String, Object> details = new HashMap<>();
         List<String> projects = new ArrayList<>();
 
         try {
-            int page = 1;
-            int pageSize = 50;
-            boolean found = false;
+            HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
+            String url = mantisProperties.getBaseUrl() + "/api/rest/issues?page_size=100&page=1";
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
-            while (!found && page <= 3) {
-                String url = mantisProperties.getBaseUrl() + "/api/rest/issues?page_size=" + pageSize + "&page=" + page;
-                HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
-                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                String body = response.getBody();
 
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    String body = response.getBody();
+                // Chercher les issues de cet utilisateur et extraire ses projets
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(body);
+                JsonNode issues = root.path("issues");
 
-                    String reporterRegex = "\"reporter\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
-                    java.util.regex.Pattern reporterDetailPattern = java.util.regex.Pattern.compile(reporterRegex);
-                    java.util.regex.Matcher reporterMatcher = reporterDetailPattern.matcher(body);
-
-                    if (reporterMatcher.find()) {
-                        String realName = reporterMatcher.group(1);
-                        String email = reporterMatcher.group(2);
-                        if (realName != null && !realName.isBlank()) {
-                            details.put("realName", realName);
-                        }
-                        if (email != null && !email.isBlank()) {
-                            details.put("email", email);
-                        }
-                        found = true;
-                    }
-
-                    if (!found) {
-                        String handlerRegex = "\"handler\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"" + username + "\"[^}]*\"real_name\"\\s*:\\s*\"([^\"]*)\"[^}]*\"email\"\\s*:\\s*\"([^\"]*)\"";
-                        java.util.regex.Pattern handlerDetailPattern = java.util.regex.Pattern.compile(handlerRegex);
-                        java.util.regex.Matcher handlerMatcher = handlerDetailPattern.matcher(body);
-
-                        if (handlerMatcher.find()) {
-                            String realName = handlerMatcher.group(1);
-                            String email = handlerMatcher.group(2);
-                            if (realName != null && !realName.isBlank()) {
-                                details.put("realName", realName);
+                if (issues.isArray()) {
+                    for (JsonNode issue : issues) {
+                        String reporterName = issue.path("reporter").path("name").asText();
+                        if (username.equals(reporterName)) {
+                            // Récupérer email et realName
+                            if (!details.containsKey("email")) {
+                                String email = issue.path("reporter").path("email").asText();
+                                String realName = issue.path("reporter").path("real_name").asText();
+                                if (!email.isBlank()) details.put("email", email);
+                                if (!realName.isBlank()) details.put("realName", realName);
                             }
-                            if (email != null && !email.isBlank()) {
-                                details.put("email", email);
+                            // Récupérer le projet de cette issue
+                            String projectName = issue.path("project").path("name").asText();
+                            if (!projectName.isBlank() && !projects.contains(projectName)) {
+                                projects.add(projectName);
                             }
-                            found = true;
                         }
                     }
-
-                    // Extract ALL unique project names from all issues, not just the first
-                    java.util.regex.Pattern projectAllPattern = java.util.regex.Pattern.compile("\"project\"\\s*:\\s*\\{[^}]*\"name\"\\s*:\\s*\"([^\"]+)\"");
-                    java.util.regex.Matcher projectAllMatcher = projectAllPattern.matcher(body);
-                    while (projectAllMatcher.find()) {
-                        String projectName = projectAllMatcher.group(1);
-                        if (projectName != null && !projectName.isBlank() && !projects.contains(projectName)) {
-                            projects.add(projectName);
-                        }
-                    }
-
-                    if (!body.contains("\"issues\"") || body.contains("\"issues\":[]")) {
-                        break;
-                    }
-                    page++;
-                } else {
-                    break;
                 }
             }
-
-            // Store the full list of projects
-            if (!projects.isEmpty()) {
-                details.put("projects", projects);
-            } else {
-                details.put("projects", List.of("Aucun projet trouvé"));
-            }
-
-            log.info("User details for {}: {} ({} projects)", username, details, projects.size());
-            return details;
-
-        } catch (RestClientResponseException ex) {
-            log.error("Failed to fetch user details: {}", ex.getRawStatusCode());
-            return details;
+        } catch (Exception ex) {
+            log.error("Fallback also failed for {}: {}", username, ex.getMessage());
         }
-    }
 
+        details.put("projects", projects.isEmpty() ? List.of() : projects);
+        return details;
+    }
     public int getUnassignedIssuesCount(String username) {
         log.info("Fetching unassigned issues count for user: {}", username);
         
