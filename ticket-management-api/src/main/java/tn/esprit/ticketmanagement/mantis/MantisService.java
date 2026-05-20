@@ -18,6 +18,7 @@ import tn.esprit.ticketmanagement.mantis.dto.MantisIssueResponse;
 import tn.esprit.ticketmanagement.mantis.dto.MantisProjectDTO;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +28,19 @@ public class MantisService {
 
     private final MantisProperties mantisProperties;
     private final RestTemplate restTemplate;
+
+    // Track recently pushed issues to prevent ping-pong with polling
+    private final ConcurrentHashMap<Long, Long> recentlyPushedIssues = new ConcurrentHashMap<>();
+
+    public boolean isRecentlyPushed(Long mantisIssueId) {
+        Long pushedAt = recentlyPushedIssues.get(mantisIssueId);
+        if (pushedAt == null) return false;
+        if (System.currentTimeMillis() - pushedAt > 30_000) {
+            recentlyPushedIssues.remove(mantisIssueId);
+            return false;
+        }
+        return true;
+    }
 
     private HttpHeaders buildHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -615,6 +629,98 @@ public Map<String, Object> getUserDetails(String username) {
             log.error("Error checking user existence: {}", ex.getRawStatusCode());
             return false;
         }
+    }
+
+    public void updateIssueStatus(Long mantisIssueId, String platformStatus) {
+        String url = mantisProperties.getBaseUrl() + "/api/rest/issues/" + mantisIssueId;
+
+        // Record this push to prevent polling from overwriting it back
+        recentlyPushedIssues.put(mantisIssueId, System.currentTimeMillis());
+
+        Map<String, Integer> statusIdMap = Map.of(
+            "NEW", 10, "FEEDBACK", 20, "ACKNOWLEDGED", 30,
+            "CONFIRMED", 40, "ASSIGNED", 50, "RESOLVED", 80, "CLOSED", 90
+        );
+
+        Integer statusId = statusIdMap.get(platformStatus);
+        if (statusId == null) {
+            log.warn("No Mantis mapping for status: {}", platformStatus);
+            return;
+        }
+
+        Map<String, Object> statusObj = new HashMap<>();
+        statusObj.put("id", statusId);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", statusObj);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, buildHeaders());
+
+        try {
+            log.info(">>> Sending PATCH to Mantis: URL={}, statusId={}", url, statusId);
+            ResponseEntity<String> rawResponse = restTemplate.exchange(
+                url, HttpMethod.PATCH, entity, String.class);
+            String respBody = rawResponse.getBody();
+            log.info("Mantis issue #{} status updated to id={} — response {}: {}",
+                mantisIssueId, statusId, rawResponse.getStatusCode(),
+                respBody != null ? respBody.substring(0, Math.min(respBody.length(), 300)) : "null");
+        } catch (RestClientResponseException ex) {
+            log.error("Failed to update Mantis status: {} - body: {}", 
+                ex.getRawStatusCode(), ex.getResponseBodyAsString());
+        }
+    }
+
+    public String getIssueStatus(Long mantisIssueId) {
+        try {
+            String url = mantisProperties.getBaseUrl() + "/api/rest/issues/" + mantisIssueId;
+            log.info("Fetching Mantis issue #{} status from: {}", mantisIssueId, url);
+            HttpEntity<Void> entity = new HttpEntity<>(buildHeaders());
+
+            // Use same approach as getMantisNotes() — ResponseEntity<String> + manual ObjectMapper
+            ResponseEntity<String> rawResponse = restTemplate.exchange(
+                url, HttpMethod.GET, entity, String.class);
+
+            if (rawResponse.getStatusCode().is2xxSuccessful() && rawResponse.getBody() != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(rawResponse.getBody());
+
+                // Try "issues" array first (standard Mantis API)
+                JsonNode issues = root.path("issues");
+                JsonNode issueNode = null;
+                int statusId = 0;
+
+                if (issues.isArray() && issues.size() > 0) {
+                    issueNode = issues.get(0);
+                } else {
+                    issueNode = root.path("issue");
+                    if (issueNode.isMissingNode() || issueNode.isNull()) {
+                        issueNode = root;
+                    }
+                }
+
+                if (issueNode != null) {
+                    statusId = issueNode.path("status").path("id").asInt(0);
+                    String statusName = issueNode.path("status").path("name").asText("?");
+                    log.info("Mantis issue #{} status → name='{}' id={}", mantisIssueId, statusName, statusId);
+                }
+
+                if (statusId > 0) {
+                    return String.valueOf(statusId);
+                }
+
+                log.warn("Could not extract status from Mantis response for issue #{} — body: {}", mantisIssueId, rawResponse.getBody());
+            } else {
+                log.warn("Mantis GET returned status {} for issue #{}", rawResponse.getStatusCode(), mantisIssueId);
+            }
+        } catch (RestClientResponseException ex) {
+            String responseBody = "";
+            try { responseBody = ex.getResponseBodyAsString(); } catch (Exception ignored) {}
+            log.warn("Cannot get Mantis issue #{} status ({}): {}",
+                mantisIssueId, ex.getRawStatusCode(), responseBody);
+        } catch (Exception ex) {
+            log.warn("Error getting Mantis issue #{} status: {} - {}", mantisIssueId, ex.getClass().getSimpleName(), ex.getMessage());
+        }
+        return null;
     }
 
     public void addNoteToIssue(Long mantisIssueId, String noteText) {

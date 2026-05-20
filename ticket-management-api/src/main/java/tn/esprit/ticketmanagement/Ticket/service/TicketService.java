@@ -398,6 +398,18 @@ return tickets.stream()
 
         Ticket saved = ticketRepository.save(ticket);
 
+        log.info(">>> DEBUG: Ticket #{} saved, mantisId={}, newStatus={}", saved.getId(), saved.getMantisId(), newStatus);
+
+        // Sync to Mantis if ticket is linked
+        if (saved.getMantisId() != null) {
+            try {
+                mantisService.updateIssueStatus(saved.getMantisId(), newStatus.name());
+                log.info("Ticket #{} status synced to Mantis #{}", saved.getId(), saved.getMantisId());
+            } catch (Exception e) {
+                log.warn("Could not sync status to Mantis: {}", e.getMessage());
+            }
+        }
+
         eventPublisher.publishEvent(
                 new TicketEvents.TicketStatusChangedEvent(this, saved, oldStatus, newStatus));
 
@@ -420,9 +432,26 @@ return tickets.stream()
             ticket.setResolvedDate(LocalDateTime.now());
         } else if (newStatus == TicketStatus.CLOSED) {
             ticket.setClosedDate(LocalDateTime.now());
+        } else if (newStatus == TicketStatus.ASSIGNED && oldStatus == TicketStatus.RESOLVED) {
+            ticket.setResolvedDate(null);
+            ticket.setClosedDate(null);
         }
 
-        return convertToDTO(ticketRepository.save(ticket));
+        Ticket saved = ticketRepository.save(ticket);
+
+        log.info(">>> DEBUG 2: Ticket #{} saved, mantisId={}, newStatus={}", saved.getId(), saved.getMantisId(), newStatus);
+
+        // Sync to Mantis if ticket is linked
+        if (saved.getMantisId() != null) {
+            try {
+                mantisService.updateIssueStatus(saved.getMantisId(), newStatus.name());
+                log.info("Ticket #{} status synced to Mantis #{}", saved.getId(), saved.getMantisId());
+            } catch (Exception e) {
+                log.warn("Could not sync status to Mantis: {}", e.getMessage());
+            }
+        }
+
+        return convertToDTO(saved);
     }
 
     // ══════════════════════════════════════════

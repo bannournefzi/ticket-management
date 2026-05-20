@@ -6,12 +6,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import tn.esprit.ticketmanagement.role.Role;
 import tn.esprit.ticketmanagement.role.RoleRepository;
 
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableAsync
+@EnableScheduling
 public class TicketManagementBackendApplication {
 
 	public static void main(String[] args) {
