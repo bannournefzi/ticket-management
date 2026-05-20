@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../auth/service/auth.service';
@@ -93,6 +93,7 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private adminService: AdminService,
     private router: Router,
+    private route: ActivatedRoute,
     private commentService: CommentService,
     private aiService: AiService,
     private ngZone: NgZone,
@@ -112,6 +113,14 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Lecture des queryParams provenant du diagnostic IA
+    this.route.queryParams.subscribe(params => {
+      if (params['title']) this.newTicket.title = params['title'];
+      if (params['description']) this.newTicket.description = params['description'];
+      if (params['category']) this.newTicket.category = params['category'];
+      if (params['priority']) this.newTicket.priority = params['priority'];
+    });
+
     this.loadSlaConfigs();
     this.loadDynamicCategories();
     this.loadMyTickets();

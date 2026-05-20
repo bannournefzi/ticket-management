@@ -70,11 +70,29 @@ public class TroubleshootingAiService {
         5. Les "options" doivent être concrètes, jamais vagues. Ex: ["Oui, ça fonctionne", "Non, toujours le même message", "Je ne sais pas faire"].
 
         FORMAT DE RÉPONSE : JSON STRICT UNIQUEMENT, AUCUN TEXTE EN DEHORS DU JSON.
+
+        Si action = CONTINUE ou RESOLVED :
         {
           "reply": "Ton message clair et professionnel avec la procédure à tester",
           "options": ["Choix 1", "Choix 2"],
           "action": "CONTINUE"
         }
+
+        Si action = CREATE_TICKET, tu DOIS aussi remplir ticketData :
+        {
+          "reply": "Ton message expliquant le transfert au niveau 2",
+          "options": [],
+          "action": "CREATE_TICKET",
+          "ticketData": {
+            "title": "Titre court du problème (max 80 caractères)",
+            "description": "Résumé du diagnostic et des symptômes décrits par l'utilisateur",
+            "category": "BUG | FEATURE_REQUEST | IMPROVEMENT | SUPPORT | DOCUMENTATION | OTHER",
+            "priority": "LOW | MEDIUM | HIGH | CRITICAL"
+          }
+        }
+
+        Règles pour ticketData.category : BUG = anomalie, FEATURE_REQUEST = nouvelle fonctionnalité, IMPROVEMENT = amélioration, SUPPORT = demande d'aide, DOCUMENTATION = documentation manquante, OTHER = autre.
+        Règles pour ticketData.priority : CRITICAL = incident bloquant, HIGH = fonctionnel mais gênant, MEDIUM = normal, LOW = mineur/esthétique.
 
         INTERDIT : Aucun texte en dehors du JSON. Aucune balise markdown. Aucun commentaire.
         """;
@@ -167,10 +185,29 @@ public class TroubleshootingAiService {
             optionsNode.forEach(opt -> options.add(opt.asText()));
         }
 
+        // Parsing de ticketData (optionnel — seulement quand action = CREATE_TICKET)
+        AgentResponse.TicketData ticketData = null;
+        JsonNode tdNode = node.path("ticketData");
+        if (!tdNode.isMissingNode() && tdNode.isObject()) {
+            String tdTitle = tdNode.path("title").asText(null);
+            String tdDesc = tdNode.path("description").asText(null);
+            String tdCat  = tdNode.path("category").asText(null);
+            String tdPri  = tdNode.path("priority").asText(null);
+            if (tdTitle != null || tdDesc != null || tdCat != null || tdPri != null) {
+                ticketData = AgentResponse.TicketData.builder()
+                        .title(tdTitle)
+                        .description(tdDesc)
+                        .category(tdCat)
+                        .priority(tdPri)
+                        .build();
+            }
+        }
+
         return AgentResponse.builder()
                 .reply(reply)
                 .action(action)
                 .options(options)
+                .ticketData(ticketData)
                 .build();
     }
 

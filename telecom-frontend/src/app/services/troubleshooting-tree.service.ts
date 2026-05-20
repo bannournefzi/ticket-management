@@ -2,10 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface TicketData {
+  title?: string;
+  description?: string;
+  category?: string;
+  priority?: string;
+}
+
 export interface AiAgentResponse {
   reply: string;
   action: 'CONTINUE' | 'RESOLVED' | 'CREATE_TICKET';
   options?: string[];
+  ticketData?: TicketData;
 }
 
 @Injectable({

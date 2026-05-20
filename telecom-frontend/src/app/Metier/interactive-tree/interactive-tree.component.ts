@@ -130,7 +130,12 @@ export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChe
         this.addMessage('SYSTEM', '📋 Génération du rapport de diagnostic en cours...');
         setTimeout(() => {
           this.router.navigate(['/create-ticket'], {
-            queryParams: { description: this.buildDiagnosticReport() }
+            queryParams: {
+              title: response.ticketData?.title || '',
+              description: response.ticketData?.description || this.buildDiagnosticReport(),
+              category: response.ticketData?.category || 'SUPPORT',
+              priority: response.ticketData?.priority || 'MEDIUM'
+            }
           });
         }, 2000);
         break;

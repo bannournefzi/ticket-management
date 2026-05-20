@@ -78,19 +78,19 @@
 
   <!-- ══════════ FOOTER ══════════ -->
   <footer class="chat-footer" *ngIf="!isResolved">
-    <div class="input-row" [class.input-row--disabled]="currentOptions.length > 0 || isAiTyping">
+    <div class="input-row" [class.input-row--disabled]="isAiTyping">
       <input
         type="text"
         [(ngModel)]="userInput"
         (keyup.enter)="submitText()"
         placeholder="Ou décrivez votre problème librement…"
-        [disabled]="isAiTyping || currentOptions.length > 0"
+        [disabled]="isAiTyping"
         class="chat-input"
         autocomplete="off" />
       <button
         class="send-btn"
         (click)="submitText()"
-        [disabled]="isAiTyping || currentOptions.length > 0 || !userInput.trim()">
+        [disabled]="isAiTyping || !userInput.trim()">
         <i class="fas fa-paper-plane"></i>
       </button>
     </div>
