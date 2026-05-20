@@ -1,102 +1,233 @@
-<div class="chat-shell">
+<div class="scanner-shell">
 
-  <!-- ══════════ HEADER ══════════ -->
-  <header class="chat-header">
+  <!-- ═══ HEADER : STATUS BAR ═══ -->
+  <header class="scanner-header">
     <div class="header-left">
-      <div class="agent-avatar">
-        <i class="fas fa-robot"></i>
-        <span class="status-dot"></span>
+      <div class="robot-logo">
+        <i class="fas fa-microchip"></i>
       </div>
-      <div class="header-meta">
-        <h3>Assistant Diagnostic IT</h3>
-        <span class="sub">Technicien N1 · Certifié ITIL v4</span>
+      <div class="header-titles">
+        <h1 class="header-title">SYSTÈME DE DIAGNOSTIC IT</h1>
+        <span class="header-sub">Niveau 1 — Assistant Automatique</span>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="progress-track">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="progressPercent"></div>
+        </div>
+        <span class="progress-label">{{ progressPercent }}%</span>
       </div>
     </div>
     <div class="header-right">
-      <span class="badge-live" *ngIf="!isResolved">
-        <i class="fas fa-circle"></i> EN LIGNE
+      <span class="status-badge" [class.status--scanning]="isScanning || isAiTyping"
+            [class.status--resolved]="isResolved"
+            [class.status--idle]="!isScanning && !isAiTyping && !isResolved">
+        <i class="fas fa-circle"></i>
+        <span *ngIf="isResolved">RÉSOLU</span>
+        <span *ngIf="isScanning || isAiTyping">ANALYSE EN COURS</span>
+        <span *ngIf="!isScanning && !isAiTyping && !isResolved">PRÊT</span>
       </span>
-      <span class="badge-resolved" *ngIf="isResolved">
-        <i class="fas fa-check-circle"></i> RÉSOLU
-      </span>
+      <span class="step-counter">Étape {{ currentStep }} / {{ maxSteps }}</span>
     </div>
   </header>
 
-  <!-- ══════════ BODY ══════════ -->
-  <div class="chat-body" #scrollMe>
+  <!-- ═══ BODY : 2-COLUMN LAYOUT ═══ -->
+  <div class="scanner-body">
 
-    <div *ngFor="let msg of messages; trackBy: trackByIndex"
-         class="msg-row"
-         [class.msg-row--user]="msg.sender === 'USER'"
-         [class.msg-row--ia]="msg.sender === 'IA'"
-         [class.msg-row--system]="msg.sender === 'SYSTEM'">
+    <!-- COLONNE GAUCHE : Status Panel -->
+    <aside class="panel-left">
 
-      <!-- Avatar IA -->
-      <div class="avatar avatar--ia" *ngIf="msg.sender === 'IA'">
-        <i class="fas fa-robot"></i>
-      </div>
-
-      <!-- Bulle -->
-      <div class="bubble-wrap">
-        <div class="bubble">{{ msg.text }}</div>
-        <div class="timestamp">
-          {{ msg.timestamp | date:'HH:mm' }}
+      <!-- Problem card -->
+      <div class="panel-card problem-card">
+        <div class="card-label">PROBLÈME DÉTECTÉ</div>
+        <div class="problem-value">
+          <span class="problem-icon" *ngIf="detectedCategory">
+            <ng-container [ngSwitch]="detectedCategory">
+              <i *ngSwitchCase="'Réseau'" class="fas fa-globe"></i>
+              <i *ngSwitchCase="'Accès'" class="fas fa-lock"></i>
+              <i *ngSwitchCase="'Performance'" class="fas fa-tachometer-alt"></i>
+              <i *ngSwitchCase="'Périphérique'" class="fas fa-print"></i>
+              <i *ngSwitchCase="'Logiciel'" class="fas fa-cube"></i>
+              <i *ngSwitchDefault class="fas fa-question-circle"></i>
+            </ng-container>
+          </span>
+          <span class="problem-text">{{ detectedCategory || 'En attente...' }}</span>
         </div>
       </div>
 
-      <!-- Avatar User -->
-      <div class="avatar avatar--user" *ngIf="msg.sender === 'USER'">
-        <i class="fas fa-user"></i>
-      </div>
-    </div>
-
-    <!-- ── Typing Indicator ── -->
-    <div class="msg-row msg-row--ia" *ngIf="isAiTyping">
-      <div class="avatar avatar--ia">
-        <i class="fas fa-robot"></i>
-      </div>
-      <div class="bubble-wrap">
-        <div class="bubble bubble--typing">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
+      <!-- Severity card -->
+      <div class="panel-card severity-card" [class.sev--low]="severity === 'LOW'"
+           [class.sev--medium]="severity === 'MEDIUM'"
+           [class.sev--high]="severity === 'HIGH'"
+           [class.sev--critical]="severity === 'CRITICAL'">
+        <div class="card-label">SÉVÉRITÉ</div>
+        <div class="severity-value">
+          <i [class]="'fas ' + getSeverityIcon(severity)"></i>
+          <span>{{ getSeverityLabel(severity) }}</span>
         </div>
       </div>
-    </div>
 
-    <!-- ── Options Buttons ── -->
-    <div class="options-area" *ngIf="currentOptions.length > 0 && !isAiTyping">
-      <button
-        *ngFor="let opt of currentOptions"
-        class="opt-btn"
-        (click)="selectOption(opt)">
-        {{ opt }}
-      </button>
-    </div>
+      <!-- Timer card -->
+      <div class="panel-card timer-card">
+        <div class="card-label">DURÉE DU DIAGNOSTIC</div>
+        <div class="timer-value">
+          <i class="fas fa-stopwatch"></i>
+          <span>{{ elapsedTime }}</span>
+        </div>
+      </div>
 
-  </div><!-- /chat-body -->
+      <!-- Symptom log -->
+      <div class="panel-card symptoms-card">
+        <div class="card-label">SYMPTÔMES COLLECTÉS</div>
+        <div class="symptom-list" *ngIf="symptomLog.length > 0; else noSymptoms">
+          <div class="symptom-item" *ngFor="let s of symptomLog; let i = index">
+            <span class="symptom-check"><i class="fas fa-check-circle"></i></span>
+            <span class="symptom-text">{{ s | slice:0:60 }}{{ s.length > 60 ? '...' : '' }}</span>
+          </div>
+        </div>
+        <ng-template #noSymptoms>
+          <div class="symptom-empty">
+            <i class="fas fa-search"></i>
+            <span>En attente de symptômes...</span>
+          </div>
+        </ng-template>
+      </div>
 
-  <!-- ══════════ FOOTER ══════════ -->
-  <footer class="chat-footer" *ngIf="!isResolved">
-    <div class="input-row" [class.input-row--disabled]="isAiTyping">
-      <input
-        type="text"
-        [(ngModel)]="userInput"
-        (keyup.enter)="submitText()"
-        placeholder="Ou décrivez votre problème librement…"
-        [disabled]="isAiTyping"
-        class="chat-input"
-        autocomplete="off" />
-      <button
-        class="send-btn"
-        (click)="submitText()"
-        [disabled]="isAiTyping || !userInput.trim()">
-        <i class="fas fa-paper-plane"></i>
-      </button>
+      <!-- Quick stats -->
+      <div class="panel-card stats-card">
+        <div class="stat-row">
+          <span class="stat-label">Messages échangés</span>
+          <span class="stat-value">{{ messages.length }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Tentatives N1</span>
+          <span class="stat-value">{{ attemptCount }}</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- COLONNE DROITE : Diagnostic Area -->
+    <main class="panel-right">
+
+      <!-- Error banner -->
+      <div class="error-banner" *ngIf="hasError">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
+        <button class="error-close" (click)="hasError = false"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Result screen -->
+      <div class="result-screen" *ngIf="showScannerResult">
+        <div class="result-icon" [class.result--ticket]="scannerResultAction === 'CREATE_TICKET'"
+             [class.result--resolved]="scannerResultAction === 'RESOLVED'">
+          <i *ngIf="scannerResultAction === 'CREATE_TICKET'" class="fas fa-ticket-alt"></i>
+          <i *ngIf="scannerResultAction === 'RESOLVED'" class="fas fa-check-circle"></i>
+        </div>
+        <h2 class="result-title" *ngIf="scannerResultAction === 'CREATE_TICKET'">
+          Création du ticket en cours...
+        </h2>
+        <h2 class="result-title" *ngIf="scannerResultAction === 'RESOLVED'">
+          Incident résolu !
+        </h2>
+        <p class="result-text" *ngIf="scannerResultAction === 'CREATE_TICKET'">
+          Le rapport de diagnostic est transféré au niveau 2. Vous allez être redirigé.
+        </p>
+        <p class="result-text" *ngIf="scannerResultAction === 'RESOLVED'">
+          Merci d'avoir utilisé le diagnostic assisté.
+        </p>
+        <div class="result-spinner"><i class="fas fa-spinner fa-pulse fa-3x"></i></div>
+      </div>
+
+      <!-- Active diagnostic zone -->
+      <div class="diagnostic-zone" *ngIf="!showScannerResult">
+
+        <!-- Step title -->
+        <div class="step-header">
+          <span class="step-badge">{{ currentStepTitle }}</span>
+        </div>
+
+        <!-- Question card -->
+        <div class="question-card" *ngIf="messages.length > 0 && !isResolved">
+          <div class="question-avatar">
+            <i class="fas fa-robot"></i>
+          </div>
+          <div class="question-content">
+            <p class="question-text">{{ messages[messages.length - 1].text }}</p>
+          </div>
+        </div>
+
+        <!-- Scan animation -->
+        <div class="scan-overlay" *ngIf="isScanning || isAiTyping">
+          <div class="scan-line"></div>
+          <div class="scan-text">
+            <span>ANALYSE EN COURS</span>
+            <span class="scan-dots">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Response cards -->
+        <div class="response-cards" *ngIf="currentOptions.length > 0 && !isScanning && !isResolved">
+          <div class="response-card" *ngFor="let opt of currentOptions"
+               (click)="selectOption(opt)">
+            <div class="card-icon"><i class="fas fa-arrow-right"></i></div>
+            <div class="card-text">{{ opt }}</div>
+            <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+          </div>
+        </div>
+
+        <!-- Free text input (toujours visible) -->
+        <div class="free-input-zone">
+          <div class="free-input-divider" *ngIf="currentOptions.length > 0">
+            <span>OU décrivez votre problème librement</span>
+          </div>
+          <div class="free-input-row">
+            <input type="text" [(ngModel)]="userInput"
+                   (keyup.enter)="submitText()"
+                   placeholder="Tapez votre problème ou réponse ici..."
+                   class="scanner-input"
+                   [disabled]="isAiTyping || isScanning"
+                   autocomplete="off" />
+            <button class="send-btn" (click)="submitText()"
+                    [disabled]="!userInput.trim() || isAiTyping || isScanning">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+          <div class="free-input-hint">
+            <i class="fas fa-info-circle"></i>
+            Vous pouvez cliquer sur une option OU écrire votre réponse librement
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══ FOOTER : TIMELINE ═══ -->
+  <footer class="scanner-footer">
+    <div class="timeline">
+      <div class="timeline-step" *ngFor="let step of [].constructor(maxSteps); let i = index"
+           [ngClass]="getStepClass(i)">
+        <div class="step-dot">
+          <i [class]="getStepIcon(i)"></i>
+        </div>
+        <div class="step-label" *ngIf="i === 0">Catégorie</div>
+        <div class="step-label" *ngIf="i === 1">Analyse</div>
+        <div class="step-label" *ngIf="i === 2">Diagnostic</div>
+        <div class="step-label" *ngIf="i === 3">Test</div>
+        <div class="step-label" *ngIf="i === 4">Vérification</div>
+        <div class="step-label" *ngIf="i === 5">Validation</div>
+        <div class="step-label" *ngIf="i === 6">Conclusion</div>
+        <div class="step-label" *ngIf="i === 7">Rapport</div>
+        <div class="step-connector" *ngIf="i < maxSteps - 1"></div>
+      </div>
     </div>
-    <div class="footer-hint" *ngIf="currentOptions.length > 0">
-      <i class="fas fa-hand-pointer"></i> Sélectionnez une option pour continuer
-    </div>
+    <button class="reset-btn" (click)="resetDiagnostic()" *ngIf="messages.length > 1">
+      <i class="fas fa-redo"></i> Nouveau diagnostic
+    </button>
   </footer>
 
 </div>

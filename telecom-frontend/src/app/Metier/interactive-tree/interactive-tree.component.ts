@@ -1,11 +1,7 @@
 import {
   Component,
   OnInit,
-  OnDestroy,
-  ViewChild,
-  ElementRef,
-  AfterViewChecked,
-  ChangeDetectorRef
+  OnDestroy
 } from '@angular/core';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { TroubleshootingTreeService, AiAgentResponse } from '../../services/troubleshooting-tree.service';
@@ -22,9 +18,7 @@ export interface ChatMessage {
   templateUrl: './interactive-tree.component.html',
   styleUrls: ['./interactive-tree.component.scss']
 })
-export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChecked {
-
-  @ViewChild('scrollMe') private scrollContainer!: ElementRef;
+export class InteractiveTreeComponent implements OnInit, OnDestroy {
 
   messages: ChatMessage[] = [];
   currentOptions: string[] = [];
@@ -34,17 +28,28 @@ export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChe
   hasError = false;
   errorMessage = '';
 
-  // Compteur de tentatives infructueuses (pour affichage)
-  private attemptCount = 0;
+  // Scanner state
+  progressPercent = 0;
+  currentStep = 0;
+  maxSteps = 8;
+  elapsedTime = '00:00';
+  detectedCategory = '';
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'MEDIUM';
+  symptomLog: string[] = [];
+  isScanning = false;
+  currentStepTitle = 'Initialisation du diagnostic';
+  showScannerResult = false;
+  scannerResultAction: 'RESOLVED' | 'CREATE_TICKET' | null = null;
 
-  // RxJS : destruction propre des subscriptions
+  attemptCount = 0;
   private readonly destroy$ = new Subject<void>();
-  private shouldScroll = false;
+  private timerInterval: any = null;
+  private scanStartTime = 0;
+  private tickSeconds = 0;
 
   constructor(
     private treeService: TroubleshootingTreeService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -57,18 +62,55 @@ export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChe
       '📦 Logiciel / Application',
       '❓ Autre problème'
     ];
+    this.currentStepTitle = 'Sélectionnez la catégorie du problème';
+    this.currentStep = 1;
+    this.startTimer();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.stopTimer();
   }
 
-  ngAfterViewChecked(): void {
-    if (this.shouldScroll) {
-      this.scrollToBottom();
-      this.shouldScroll = false;
+  private startTimer(): void {
+    this.scanStartTime = Date.now();
+    this.tickSeconds = 0;
+    this.timerInterval = setInterval(() => {
+      this.tickSeconds++;
+      this.elapsedTime = this.formatTime(this.tickSeconds);
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
+  }
+
+  private formatTime(totalSeconds: number): string {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+
+  private detectCategory(text: string): string {
+    const lower = text.toLowerCase();
+    if (lower.includes('réseau') || lower.includes('vpn') || lower.includes('connexion') || lower.includes('wifi') || lower.includes('ping')) return 'Réseau';
+    if (lower.includes('mot de passe') || lower.includes('mdp') || lower.includes('accès') || lower.includes('bloqué') || lower.includes('login')) return 'Accès';
+    if (lower.includes('lenteur') || lower.includes('crash') || lower.includes('pc') || lower.includes('ralenti') || lower.includes('freeze')) return 'Performance';
+    if (lower.includes('imprimante') || lower.includes('périphérique') || lower.includes('scan') || lower.includes('impression')) return 'Périphérique';
+    if (lower.includes('logiciel') || lower.includes('application') || lower.includes('bug') || lower.includes('erreur') || lower.includes('plante')) return 'Logiciel';
+    return 'Général';
+  }
+
+  private detectSeverity(text: string, reply: string): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' {
+    const combined = (text + ' ' + reply).toLowerCase();
+    if (combined.includes('critique') || combined.includes('bloquant') || combined.includes('urgence') || combined.includes('plus rien')) return 'CRITICAL';
+    if (combined.includes('urgent') || combined.includes('important') || combined.includes('impossible') || combined.includes('bloqué') || combined.includes('plus accès')) return 'HIGH';
+    if (combined.includes('mineur') || combined.includes('léger') || combined.includes('peu') || combined.includes('parfois')) return 'LOW';
+    return 'MEDIUM';
   }
 
   // ─── Envoi d'un message ────────────────────────────────────────────────────
@@ -92,15 +134,22 @@ export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChe
     this.addMessage('USER', text);
     this.currentOptions = [];
     this.isAiTyping = true;
-    this.shouldScroll = true;
+    this.isScanning = true;
+
+    // Scanner state updates
+    this.currentStep = Math.min(this.currentStep + 1, this.maxSteps);
+    this.progressPercent = Math.min(95, this.progressPercent + 12);
+    this.symptomLog.push(text);
+    if (!this.detectedCategory) {
+      this.detectedCategory = this.detectCategory(text);
+    }
 
     this.treeService.analyzeProblem(text)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
           this.isAiTyping = false;
-          this.shouldScroll = true;
-          this.cdr.detectChanges();
+          this.isScanning = false;
         })
       )
       .subscribe({
@@ -122,11 +171,34 @@ export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChe
   private handleAiResponse(response: AiAgentResponse): void {
     this.addMessage('IA', response.reply);
     this.currentOptions = response.options ?? [];
+    this.currentStepTitle = `VÉRIFICATION #${this.currentStep}`;
+
+    // Update severity based on AI response
+    this.severity = this.detectSeverity(
+      this.symptomLog[this.symptomLog.length - 1] || '',
+      response.reply
+    );
+
+    // Extract category from ticketData if present
+    if (response.ticketData?.category && !this.detectedCategory) {
+      const catMap: Record<string, string> = {
+        'BUG': 'Logiciel',
+        'FEATURE_REQUEST': 'Fonctionnalité',
+        'IMPROVEMENT': 'Amélioration',
+        'SUPPORT': 'Général',
+        'DOCUMENTATION': 'Documentation',
+        'OTHER': 'Autre'
+      };
+      this.detectedCategory = catMap[response.ticketData.category] || 'Général';
+    }
 
     switch (response.action) {
       case 'CREATE_TICKET':
         this.attemptCount++;
         this.currentOptions = [];
+        this.progressPercent = 100;
+        this.showScannerResult = true;
+        this.scannerResultAction = 'CREATE_TICKET';
         this.addMessage('SYSTEM', '📋 Génération du rapport de diagnostic en cours...');
         setTimeout(() => {
           this.router.navigate(['/create-ticket'], {
@@ -143,12 +215,14 @@ export class InteractiveTreeComponent implements OnInit, OnDestroy, AfterViewChe
       case 'RESOLVED':
         this.currentOptions = [];
         this.isResolved = true;
+        this.progressPercent = 100;
+        this.showScannerResult = true;
+        this.scannerResultAction = 'RESOLVED';
         this.addMessage('SYSTEM', '✅ Incident résolu. Merci d\'avoir utilisé le diagnostic assisté.');
         break;
 
       case 'CONTINUE':
       default:
-        // Rien à faire, les boutons sont déjà mis à jour
         break;
     }
   }
@@ -173,6 +247,9 @@ Date / Heure     : ${now}
 Généré par       : Agent IA Diagnostic (ITSM)
 Tentatives N1    : ${this.attemptCount}
 Statut           : Escalade N2 requise
+Catégorie        : ${this.detectedCategory}
+Sévérité         : ${this.severity}
+Durée            : ${this.elapsedTime}
 -------------------------------------------------------
 JOURNAL DE DIAGNOSTIC :
 
@@ -189,16 +266,53 @@ Merci de prendre en charge ce ticket en priorité.
   // ─── Helpers ──────────────────────────────────────────────────────────────
   private addMessage(sender: 'USER' | 'IA' | 'SYSTEM', text: string): void {
     this.messages.push({ sender, text, timestamp: new Date() });
-    this.shouldScroll = true;
   }
 
-  private scrollToBottom(): void {
-    try {
-      const el = this.scrollContainer.nativeElement;
-      el.scrollTop = el.scrollHeight;
-    } catch { /* ignore */ }
-  }
-
-  // Utilitaire template
   trackByIndex = (index: number) => index;
+
+  getSeverityIcon(sev: string): string {
+    const icons: Record<string, string> = { 'LOW': 'fa-arrow-down', 'MEDIUM': 'fa-equals', 'HIGH': 'fa-arrow-up', 'CRITICAL': 'fa-fire' };
+    return icons[sev] || 'fa-minus';
+  }
+
+  getSeverityLabel(sev: string): string {
+    const labels: Record<string, string> = { 'LOW': 'Faible', 'MEDIUM': 'Moyenne', 'HIGH': 'Élevée', 'CRITICAL': 'Critique' };
+    return labels[sev] || 'Moyenne';
+  }
+
+  getStepIcon(index: number): string {
+    if (index < this.currentStep) return 'fas fa-check-circle';
+    if (index === this.currentStep) return 'fas fa-spinner fa-pulse';
+    return 'fas fa-circle-notch';
+  }
+
+  getStepClass(index: number): string {
+    if (index < this.currentStep) return 'step--done';
+    if (index === this.currentStep) return 'step--active';
+    return 'step--pending';
+  }
+
+  resetDiagnostic(): void {
+    this.messages = [];
+    this.currentOptions = [];
+    this.userInput = '';
+    this.isAiTyping = false;
+    this.isResolved = false;
+    this.hasError = false;
+    this.errorMessage = '';
+    this.progressPercent = 0;
+    this.currentStep = 0;
+    this.elapsedTime = '00:00';
+    this.detectedCategory = '';
+    this.severity = 'MEDIUM';
+    this.symptomLog = [];
+    this.isScanning = false;
+    this.currentStepTitle = 'Redémarrage...';
+    this.showScannerResult = false;
+    this.scannerResultAction = null;
+    this.attemptCount = 0;
+    this.tickSeconds = 0;
+    this.stopTimer();
+    this.ngOnInit();
+  }
 }
