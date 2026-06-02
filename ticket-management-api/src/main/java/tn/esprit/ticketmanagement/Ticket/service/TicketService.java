@@ -67,6 +67,7 @@ public class TicketService {
     private final ApplicationEventPublisher eventPublisher;
     private final MantisService mantisService;
     private final MantisProperties mantisProperties;
+    private final TicketSuggestionIndexService ticketSuggestionIndexService;
     @PersistenceContext
     private EntityManager em;
     private final GroupRepository groupRepository;
@@ -410,6 +411,15 @@ return tickets.stream()
             }
         }
 
+        // Index for suggestion engine if resolved or closed
+        if (newStatus == TicketStatus.RESOLVED || newStatus == TicketStatus.CLOSED) {
+            try {
+                ticketSuggestionIndexService.indexTicketForSuggestions(saved);
+            } catch (Exception e) {
+                log.warn("Could not index ticket #{} for suggestions: {}", saved.getId(), e.getMessage());
+            }
+        }
+
         eventPublisher.publishEvent(
                 new TicketEvents.TicketStatusChangedEvent(this, saved, oldStatus, newStatus));
 
@@ -448,6 +458,15 @@ return tickets.stream()
                 log.info("Ticket #{} status synced to Mantis #{}", saved.getId(), saved.getMantisId());
             } catch (Exception e) {
                 log.warn("Could not sync status to Mantis: {}", e.getMessage());
+            }
+        }
+
+        // Index for suggestion engine if resolved or closed
+        if (newStatus == TicketStatus.RESOLVED || newStatus == TicketStatus.CLOSED) {
+            try {
+                ticketSuggestionIndexService.indexTicketForSuggestions(saved);
+            } catch (Exception e) {
+                log.warn("Could not index ticket #{} for suggestions: {}", saved.getId(), e.getMessage());
             }
         }
 

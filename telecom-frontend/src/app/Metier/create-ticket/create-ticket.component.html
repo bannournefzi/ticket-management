@@ -151,6 +151,7 @@
             Titre <span class="required">*</span>
           </label>
           <input type="text" class="form-input" [(ngModel)]="newTicket.title"
+                 (ngModelChange)="onFormFieldChange()"
                  placeholder="Ex: Problème d'accès au module de facturation"
                  minlength="5" maxlength="200"/>
           <span class="form-hint" *ngIf="newTicket.title && newTicket.title.length < 5">
@@ -165,6 +166,7 @@
             Description <span class="required">*</span>
           </label>
           <textarea class="form-input form-textarea" [(ngModel)]="newTicket.description"
+                    (ngModelChange)="onFormFieldChange()"
                     rows="5" placeholder="Décrivez votre problème ou demande en détail..."
                     minlength="10" maxlength="5000"></textarea>
           <div class="form-hint-row">
@@ -242,6 +244,78 @@
   </ul>
 </div>
 
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- ═══ AI SUGGESTION PANEL ═══            -->
+    <!-- ═══════════════════════════════════════ -->
+
+    <div class="suggestion-panel" *ngIf="isAnalyzing">
+      <div class="suggestion-loading">
+        <div class="spinner-sm"></div>
+        <span>Analyse de votre problème...</span>
+      </div>
+    </div>
+
+    <div class="suggestion-panel suggestion-has-results" *ngIf="showSuggestionPanel && hasSuggestions && !isAnalyzing">
+      <div class="suggestion-header">
+        <div class="suggestion-header-left">
+          <i class="fas fa-robot"></i>
+          <span class="suggestion-title">Assistant IA</span>
+          <span class="confidence-badge" *ngIf="analysisConfidence > 0">
+            Confiance {{ (analysisConfidence * 100).toFixed(0) }}%
+          </span>
+        </div>
+        <button class="suggestion-close" (click)="clearSuggestions()" title="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="suggestion-recommendation" *ngIf="aiRecommendation">
+        <i class="fas fa-lightbulb"></i>
+        <p>{{ aiRecommendation }}</p>
+      </div>
+
+      <div class="suggestion-cards">
+        <div class="suggestion-card" *ngFor="let s of suggestions">
+          <div class="s-card-top">
+            <span class="s-card-type">
+              <i class="fas" [ngClass]="s.type === 'KB_ARTICLE' ? 'fa-book' : s.type === 'SAME_USER_TICKET' ? 'fa-ticket-alt' : 'fa-users'"></i>
+              {{ s.type === 'KB_ARTICLE' ? 'Base de connaissances' : s.type === 'SAME_USER_TICKET' ? 'Votre ticket' : 'Ticket similaire' }}
+            </span>
+            <span class="s-card-score">{{ (s.similarityScore * 100).toFixed(0) }}%</span>
+          </div>
+          <div class="s-card-score-bar">
+            <div class="s-card-score-fill" [style.width.%]="s.similarityScore * 100"></div>
+          </div>
+          <h4 class="s-card-title">{{ s.title }}</h4>
+
+          <div class="s-card-details" *ngIf="s.type === 'SAME_USER_TICKET' && s.description">
+            <p class="s-card-desc">{{ s.description.length > 200 ? (s.description | slice:0:200) + '...' : s.description }}</p>
+            <span class="s-card-date" *ngIf="s.resolvedDate">Résolu le {{ s.resolvedDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <div class="s-card-solution" *ngIf="s.type === 'KB_ARTICLE' && s.solution">
+            <p class="s-card-solution-text">{{ s.solution.length > 300 ? (s.solution | slice:0:300) + '...' : s.solution }}</p>
+            <span class="s-card-date" *ngIf="s.createdAt">Créé le {{ s.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <div class="s-card-limited" *ngIf="s.type === 'OTHER_USER_TICKET'">
+            <span class="s-card-date" *ngIf="s.resolvedDate">Résolu le {{ s.resolvedDate | date:'dd/MM/yyyy' }}</span>
+            <p class="s-card-hint"><i class="fas fa-lock"></i> Détails confidentiels</p>
+          </div>
+
+          <button class="s-card-view-btn" *ngIf="s.type === 'KB_ARTICLE' || s.type === 'SAME_USER_TICKET'" (click)="viewSuggestionDetails(s)">
+            Voir la solution <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="suggestion-actions">
+        <button class="btn-suggestion btn-secondary" (click)="markAsSolved()">
+          <i class="fas fa-check-circle"></i> J'ai résolu mon problème
+        </button>
       </div>
     </div>
 
@@ -500,6 +574,39 @@
 
     <div class="modal-footer">
       <button class="btn-cancel" (click)="closeViewModal()"><i class="fas fa-times"></i> Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SOLUTION MODAL ═══ -->
+<div class="modal-overlay" *ngIf="showSolutionModal" (click)="closeSolutionModal()">
+  <div class="modal-container modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fas fa-lightbulb"></i>
+        <h2>Solution suggérée</h2>
+      </div>
+      <button class="modal-close" (click)="closeSolutionModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="isLoadingSolution" class="loading-state">
+        <div class="loader"></div>
+        <p>Chargement de la solution...</p>
+      </div>
+      <div *ngIf="!isLoadingSolution">
+        <h3 class="modal-ticket-title">{{ solutionTitle }}</h3>
+        <div class="view-description-block" *ngIf="solutionDescription">
+          <label class="view-info-label"><i class="fas fa-align-left"></i> Description</label>
+          <p class="view-description-text">{{ solutionDescription }}</p>
+        </div>
+        <div class="view-description-block">
+          <label class="view-info-label"><i class="fas fa-check-circle"></i> Solution</label>
+          <p class="view-description-text solution-text">{{ solutionContent }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeSolutionModal()"><i class="fas fa-times"></i> Fermer</button>
     </div>
   </div>
 </div>

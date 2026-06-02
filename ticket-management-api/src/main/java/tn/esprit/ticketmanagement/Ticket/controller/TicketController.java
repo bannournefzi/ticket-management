@@ -19,16 +19,23 @@ import tn.esprit.ticketmanagement.Ticket.*;
 import tn.esprit.ticketmanagement.Ticket.dto.TicketDTO;
 import tn.esprit.ticketmanagement.Ticket.dto.TicketHistoryDTO;
 import tn.esprit.ticketmanagement.Ticket.dto.TicketStatsDTO;
+import tn.esprit.ticketmanagement.Ticket.dto.TicketSuggestionRequest;
+import tn.esprit.ticketmanagement.Ticket.dto.TicketSuggestionResponse;
 import tn.esprit.ticketmanagement.Ticket.enums.TicketCategory;
 import tn.esprit.ticketmanagement.Ticket.enums.TicketPriority;
 import tn.esprit.ticketmanagement.Ticket.enums.TicketStatus;
 import tn.esprit.ticketmanagement.Ticket.service.TicketService;
+import tn.esprit.ticketmanagement.Ticket.service.TicketSuggestionIndexService;
+import tn.esprit.ticketmanagement.Ticket.service.TicketSuggestionService;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 import tn.esprit.ticketmanagement.mantis.MantisService;
 import tn.esprit.ticketmanagement.mantis.dto.MantisProjectDTO;
 import tn.esprit.ticketmanagement.mantis.dto.PushToMantisRequest;
 import tn.esprit.ticketmanagement.mantis.MantisService;
+import tn.esprit.ticketmanagement.suggestion.dto.AnalyticsEventRequest;
+import tn.esprit.ticketmanagement.suggestion.entity.TicketSuggestionAnalytics;
+import tn.esprit.ticketmanagement.suggestion.repository.TicketSuggestionAnalyticsRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +48,9 @@ public class TicketController {
 
     private final TicketService ticketService;
     private final MantisService mantisService;
+    private final TicketSuggestionService ticketSuggestionService;
+    private final TicketSuggestionIndexService ticketSuggestionIndexService;
+    private final TicketSuggestionAnalyticsRepository analyticsRepository;
 
 
     // ══════════════════════════════════════════
@@ -68,6 +78,47 @@ public class TicketController {
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ticketService.createTicket(request, currentUser));
+    }
+
+    // ══════════════════════════════════════════
+    //  IA — SUGGESTIONS PRE-SUBMIT
+    // ══════════════════════════════════════════
+
+    @PostMapping("/pre-submit-analysis")
+    @Operation(summary = "Analyser un ticket avant création (IA suggestions)")
+    public ResponseEntity<TicketSuggestionResponse> preSubmitAnalysis(
+            @RequestBody TicketSuggestionRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(
+                ticketSuggestionService.getSuggestions(request, currentUser));
+    }
+
+    @PostMapping("/pre-submit-analysis/analytics")
+    @Operation(summary = "Enregistrer un événement analytique des suggestions")
+    public ResponseEntity<Void> trackSuggestionAnalytics(
+            @RequestBody @Valid AnalyticsEventRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        TicketSuggestionAnalytics record = TicketSuggestionAnalytics.builder()
+                .userId(currentUser.getId())
+                .sessionId(request.getSessionId())
+                .eventType(request.getEventType())
+                .suggestionType(request.getSuggestionType())
+                .suggestionId(request.getSuggestionId())
+                .ticketTitle(request.getTicketTitle())
+                .ticketDescription(request.getTicketDescription())
+                .ticketPriority(request.getTicketPriority())
+                .ticketCategory(request.getTicketCategory())
+                .build();
+        analyticsRepository.save(record);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/pre-submit-analysis/reindex")
+    @Operation(summary = "Réindexer tous les tickets résolus et articles KB")
+    public ResponseEntity<Map<String, String>> reindexSuggestions(@AuthenticationPrincipal User currentUser) {
+        ticketSuggestionIndexService.indexAllResolvedTickets();
+        ticketSuggestionIndexService.indexAllArticles();
+        return ResponseEntity.ok(Map.of("message", "Réindexation terminée avec succès"));
     }
 
     // ══════════════════════════════════════════

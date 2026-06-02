@@ -1,5 +1,7 @@
 package tn.esprit.ticketmanagement.config;
 
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
@@ -12,8 +14,14 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import javax.sql.DataSource;
 
+@Slf4j
 @Configuration
 public class PgVectorDataSourceConfig {
+
+    @PostConstruct
+    public void init() {
+        log.info("[DIAG] PgVectorDataSourceConfig loaded");
+    }
 
     // ===== MAIN datasource (port 5432) =====
     @Bean
@@ -22,6 +30,7 @@ public class PgVectorDataSourceConfig {
             @Value("${spring.datasource.url}") String url,
             @Value("${spring.datasource.username}") String username,
             @Value("${spring.datasource.password}") String password) {
+        log.info("[DIAG] Creating mainDataSource: {}", url);
         return DataSourceBuilder.create()
                 .url(url)
                 .username(username)
@@ -36,6 +45,7 @@ public class PgVectorDataSourceConfig {
             @Value("${pgvector.datasource.url}") String url,
             @Value("${pgvector.datasource.username}") String username,
             @Value("${pgvector.datasource.password}") String password) {
+        log.info("[DIAG] Creating pgVectorDataSource: {}", url);
         return DataSourceBuilder.create()
                 .url(url)
                 .username(username)
@@ -47,6 +57,7 @@ public class PgVectorDataSourceConfig {
     @Bean(name = "pgVectorJdbcTemplate")
     public JdbcTemplate pgVectorJdbcTemplate(
             @Qualifier("pgVectorDataSource") DataSource dataSource) {
+        log.info("[DIAG] Creating pgVectorJdbcTemplate");
         return new JdbcTemplate(dataSource);
     }
 
@@ -54,6 +65,9 @@ public class PgVectorDataSourceConfig {
     public PgVectorStore vectorStore(
             EmbeddingModel embeddingModel,
             @Qualifier("pgVectorJdbcTemplate") JdbcTemplate jdbcTemplate) {
+        log.info("[DIAG] Creating PgVectorStore: dims=768, distance=COSINE, initSchema=false");
+        log.info("[DIAG]   embeddingModel class: {}", embeddingModel.getClass().getName());
+        log.info("[DIAG]   jdbcTemplate class: {}", jdbcTemplate.getClass().getName());
         return PgVectorStore.builder(jdbcTemplate, embeddingModel)
                 .dimensions(768)
                 .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE)
@@ -63,6 +77,7 @@ public class PgVectorDataSourceConfig {
 
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder) {
+        log.info("[DIAG] Creating ChatClient");
         return builder.build();
     }
 }

@@ -17,4 +17,6 @@ public interface KnowledgeBaseRepository extends JpaRepository<KnowledgeBaseArti
            "LOWER(a.solution) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "ORDER BY a.createdAt DESC")
     List<KnowledgeBaseArticle> searchByKeyword(@Param("keyword") String keyword);
+
+    List<KnowledgeBaseArticle> findByTicketId(Integer ticketId);
 }

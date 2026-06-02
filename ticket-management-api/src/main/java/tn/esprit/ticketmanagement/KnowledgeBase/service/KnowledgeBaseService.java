@@ -12,6 +12,7 @@ import tn.esprit.ticketmanagement.KnowledgeBase.entity.KnowledgeBaseArticle;
 import tn.esprit.ticketmanagement.Ticket.entity.Ticket;
 import tn.esprit.ticketmanagement.Ticket.repository.TicketRepository;
 import tn.esprit.ticketmanagement.Ticket.enums.TicketStatus;
+import tn.esprit.ticketmanagement.Ticket.service.TicketSuggestionIndexService;
 import tn.esprit.ticketmanagement.User.entity.User;
 import org.springframework.http.HttpStatus;
 
@@ -25,6 +26,7 @@ public class KnowledgeBaseService {
 
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final TicketRepository ticketRepository;
+    private final TicketSuggestionIndexService ticketSuggestionIndexService;
 
     @Transactional
     public KnowledgeBaseArticleDTO createArticleFromTicket(Integer ticketId, CreateKnowledgeBaseArticleRequest request, User currentUser) {
@@ -60,6 +62,13 @@ public class KnowledgeBaseService {
         if (ticket != null) {
             ticket.setConvertedToKB(true);
             ticketRepository.save(ticket);
+        }
+
+        // Index the new article for pre-submit suggestions
+        try {
+            ticketSuggestionIndexService.indexArticleForSuggestions(saved);
+        } catch (Exception e) {
+            log.warn("Could not index article #{} for suggestions: {}", saved.getId(), e.getMessage());
         }
 
         log.info("Article created from ticket {} by user {}", ticketId, currentUser.fullName());

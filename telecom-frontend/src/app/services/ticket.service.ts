@@ -15,7 +15,8 @@ export interface MantisProject {
   id: number;
   name: string;
 }
-import { map } from 'rxjs/operators';     
+import { map } from 'rxjs/operators';
+import { TicketSuggestionResponse, AnalyticsEventRequest } from '../models/ticket-suggestion.model';
 @Injectable({
   providedIn: 'root'
 })
@@ -37,7 +38,19 @@ export class TicketService {
     return this.http.post<Ticket>(this.baseUrl, request);
   }
 
-  
+  // ══════════════════════════════════════════
+  //  IA — PRE-SUBMIT SUGGESTIONS
+  // ══════════════════════════════════════════
+
+  preSubmitAnalysis(title: string, description: string): Observable<TicketSuggestionResponse> {
+    return this.http.post<TicketSuggestionResponse>(
+      `${this.baseUrl}/pre-submit-analysis`, { title, description });
+  }
+
+  trackSuggestionAnalytics(event: AnalyticsEventRequest): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/pre-submit-analysis/analytics`, event);
+  }
 
   // ══════════════════════════════════════════
   //  LECTURE — PAGINÉE

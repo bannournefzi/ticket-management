@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { Subject, of } from 'rxjs';
+import { debounceTime, filter, switchMap, catchError, timeout, takeUntil } from 'rxjs/operators';
 import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../auth/service/auth.service';
 import { AdminService, UserDTO } from '../../services/admin.service';
@@ -12,6 +14,9 @@ import {
   TicketPriority, TicketStatus, TicketCategory
 } from '../../models/ticket.model';
 import { TicketComment } from '../../models/TicketComment';
+import { SuggestionItem, TicketSuggestionResponse } from '../../models/ticket-suggestion.model';
+import { KnowledgeBaseService } from '../../services/knowledge-base.service';
+import { KnowledgeBaseArticle } from '../../models/knowledge-base.model';
 
 @Component({
   selector: 'app-create-ticket',
@@ -25,6 +30,24 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   myTickets: Ticket[] = [];
   isLoading = false;
   isLoadingTickets = false;
+
+  // AI Suggestion state
+  private analysisTrigger = new Subject<void>();
+  private destroy$ = new Subject<void>();
+  isAnalyzing = false;
+  hasSuggestions = false;
+  suggestions: SuggestionItem[] = [];
+  aiRecommendation = '';
+  analysisConfidence = 0;
+  analysisSessionId = '';
+  showSuggestionPanel = false;
+
+  // Solution modal
+  showSolutionModal = false;
+  solutionTitle = '';
+  solutionDescription = '';
+  solutionContent = '';
+  isLoadingSolution = false;
 
   tagInput = '';
   comments: TicketComment[] = [];
@@ -97,7 +120,8 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     private commentService: CommentService,
     private aiService: AiService,
     private ngZone: NgZone,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private knowledgeBaseService: KnowledgeBaseService
   ) {
     const navigation = this.router.getCurrentNavigation();
     if (navigation?.extras.state) {
@@ -127,9 +151,15 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     this.loadBusinessAnalysts();
     try { this.currentUserId = this.authService.getUserId(); } catch {}
     this.initVoiceRecognition();
+    this.setupAutoAnalysis();
   }
 
-  ngOnDestroy(): void { this.stopRecording(); }
+  ngOnDestroy(): void {
+    this.stopRecording();
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.analysisTrigger.complete();
+  }
 
   private initVoiceRecognition(): void {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -296,9 +326,142 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ══════════════════════════════════════════
+  //  IA — PRE-SUBMIT ANALYSIS
+  // ══════════════════════════════════════════
+
+  private setupAutoAnalysis(): void {
+    console.log('[Suggestion] setupAutoAnalysis initialized');
+    this.analysisTrigger.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(800),
+      filter(() => {
+        const t = (this.newTicket.title || '').trim();
+        const d = (this.newTicket.description || '').trim();
+        const pass = t.length >= 10 && d.length >= 30;
+        console.log(`[Suggestion] filter check: title=${t.length}, desc=${d.length}, pass=${pass}`);
+        return pass;
+      }),
+      switchMap(() => {
+        console.log('[Suggestion] switchMap triggered, calling API');
+        this.isAnalyzing = true;
+        this.analysisSessionId = this.generateSessionId();
+        return this.ticketService.preSubmitAnalysis(
+          this.newTicket.title, this.newTicket.description
+        ).pipe(
+          timeout(30000),
+          catchError(err => {
+            console.log('[Suggestion] API error:', err);
+            this.toastr.error('Erreur analyse IA: ' + (err.message || 'timeout'));
+            return of(null as unknown as TicketSuggestionResponse);
+          })
+        );
+      })
+    ).subscribe(response => {
+      console.log('[Suggestion] subscribe response:', JSON.stringify(response));
+      console.log('[Suggestion] hasSuggestions value:', response?.hasSuggestions);
+      console.log('[Suggestion] suggestions length:', response?.suggestions?.length);
+      this.isAnalyzing = false;
+      if (response && response.hasSuggestions) {
+        console.log('[Suggestion] has suggestions, showing panel');
+        this.suggestions = response.suggestions;
+        this.aiRecommendation = response.aiRecommendation;
+        this.analysisConfidence = response.confidence;
+        this.hasSuggestions = true;
+        this.showSuggestionPanel = true;
+        this.trackAnalytics('SHOWN');
+      } else {
+        console.log('[Suggestion] no suggestions or null, clearing');
+        this.clearSuggestions();
+      }
+    });
+  }
+
+  onFormFieldChange(): void {
+    console.log('[Suggestion] onFormFieldChange called');
+    this.analysisTrigger.next();
+  }
+
+  viewSuggestionDetails(suggestion: SuggestionItem): void {
+    this.trackAnalytics('VIEWED', suggestion);
+    this.isLoadingSolution = true;
+    this.showSolutionModal = true;
+
+    if (suggestion.type === 'KB_ARTICLE') {
+      this.solutionTitle = suggestion.title;
+      this.solutionDescription = suggestion.description || '';
+      this.solutionContent = suggestion.solution || '';
+      this.isLoadingSolution = false;
+    } else if (suggestion.linkedArticleId) {
+      this.solutionTitle = suggestion.title;
+      this.solutionDescription = '';
+      this.solutionContent = 'Chargement de la solution...';
+      this.knowledgeBaseService.getArticleById(suggestion.linkedArticleId).subscribe({
+        next: (article) => {
+          this.solutionTitle = article.title;
+          this.solutionDescription = article.description || '';
+          this.solutionContent = article.solution || '';
+          this.isLoadingSolution = false;
+        },
+        error: () => {
+          this.solutionContent = 'Erreur lors du chargement de la solution.';
+          this.isLoadingSolution = false;
+        }
+      });
+    } else {
+      this.solutionTitle = suggestion.title;
+      this.solutionDescription = '';
+      this.solutionContent = 'Aucune solution disponible.';
+      this.isLoadingSolution = false;
+    }
+  }
+
+  closeSolutionModal(): void {
+    this.showSolutionModal = false;
+    this.solutionTitle = '';
+    this.solutionDescription = '';
+    this.solutionContent = '';
+  }
+
+  markAsSolved(): void {
+    this.trackAnalytics('AVOIDED');
+    this.toastr.success('Heureux que votre problème soit résolu !');
+    this.clearSuggestions();
+    this.resetForm();
+  }
+
+  clearSuggestions(): void {
+    this.hasSuggestions = false;
+    this.showSuggestionPanel = false;
+    this.suggestions = [];
+    this.aiRecommendation = '';
+    this.analysisConfidence = 0;
+  }
+
+  private trackAnalytics(eventType: string, suggestion?: SuggestionItem): void {
+    this.ticketService.trackSuggestionAnalytics({
+      sessionId: this.analysisSessionId,
+      eventType: eventType as any,
+      suggestionType: suggestion?.type || null as any,
+      suggestionId: suggestion?.ticketId || suggestion?.articleId || null as any,
+      ticketTitle: this.newTicket.title,
+      ticketDescription: this.newTicket.description,
+      ticketPriority: this.newTicket.priority,
+      ticketCategory: this.newTicket.category
+    }).subscribe();
+  }
+
+  private generateSessionId(): string {
+    return 'sug-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  }
+
   submitTicket(): void {
     if (!this.newTicket.title?.trim()) { this.toastr.error('Le titre est obligatoire'); return; }
     if (!this.newTicket.description?.trim()) { this.toastr.error('La description est obligatoire'); return; }
+
+    if (this.hasSuggestions) {
+      this.trackAnalytics('CREATED_ANYWAY');
+    }
 
     this.isLoading = true;
 
