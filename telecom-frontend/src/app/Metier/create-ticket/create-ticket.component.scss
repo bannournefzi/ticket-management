@@ -705,205 +705,188 @@
 
 .ai-panel__footer-hint { font-size: 12px; color: #9ca3af; }
 
-// ============================================
-// ═══  SOLUTION MODAL  ═══════════════════════
-// ============================================
+// ═══════════════════════════════════════════════════════════════════════════
+// ═══  SOLUTION MODAL  —  Minimal, Professional, Modern SaaS  ═══════════
+// ═══════════════════════════════════════════════════════════════════════════
 
 .sol-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.5);
   display: flex; align-items: center; justify-content: center;
   z-index: 3000;
-  animation: solOverlayIn 0.25s ease;
+  animation: solFadeIn 0.2s ease;
   padding: 20px;
 }
 
-@keyframes solOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes solFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .sol-modal {
   background: white;
-  border-radius: 20px;
+  border-radius: 14px;
   width: 100%;
-  max-width: 600px;
+  max-width: 580px;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 32px 80px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255,255,255,0.1);
-  animation: solModalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: solSlideUp 0.25s ease;
   display: flex;
   flex-direction: column;
 }
 
-@keyframes solModalIn { from { opacity: 0; transform: scale(0.92) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes solSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-// ── Sol header ────────────────────────────
+// ── Header ────────────────────────────────────────────────────────────────
+
 .sol-header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   padding: 20px 24px;
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%);
-  border-radius: 20px 20px 0 0;
-  flex-shrink: 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .sol-header__left {
-  display: flex; align-items: flex-start; gap: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
 }
 
-.sol-avatar {
-  position: relative;
-  width: 46px; height: 46px; border-radius: 14px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.2);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  i { color: white; font-size: 22px; }
-}
-
-.sol-avatar__dot {
-  position: absolute; bottom: -2px; right: -2px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: #10b981; border: 2px solid #312e81;
+.sol-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: #f5f5f5;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  i { font-size: 18px; color: #6b7280; }
 }
 
 .sol-header__title {
-  margin: 0 0 8px; font-size: 18px; font-weight: 800; color: white; line-height: 1.2;
+  margin: 0 0 2px; font-size: 16px; font-weight: 600; color: #111827; line-height: 1.3;
 }
 
-.sol-header__badges {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-}
-
-.sol-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-  i { font-size: 10px; }
-  &--kb { background: rgba(139, 92, 246, 0.25); color: #ddd6fe; border: 1px solid rgba(139, 92, 246, 0.3); }
-  &--ticket { background: rgba(59, 130, 246, 0.25); color: #bfdbfe; border: 1px solid rgba(59, 130, 246, 0.3); }
-}
-
-.sol-confidence {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7);
-  i { font-size: 10px; }
+.sol-header__subtitle {
+  margin: 0; font-size: 13px; color: #9ca3af; line-height: 1.4;
 }
 
 .sol-close {
-  width: 34px; height: 34px; border-radius: 10px; border: none;
-  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7);
-  cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: transparent; color: #9ca3af; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
   i { font-size: 16px; }
-  &:hover { background: rgba(255,255,255,0.2); color: white; }
+  &:hover { background: #f3f4f6; color: #374151; }
 }
 
-// ── Sol body ──────────────────────────────
+// ── Body ──────────────────────────────────────────────────────────────────
+
 .sol-body {
-  padding: 24px;
+  padding: 20px 24px 16px;
   overflow-y: auto;
   flex: 1;
 
   &--loading {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 200px; gap: 16px;
+    min-height: 180px; gap: 14px;
   }
 }
 
 .sol-spinner {
-  position: relative; width: 56px; height: 56px;
+  width: 36px; height: 36px;
 }
 
 .sol-spinner__ring {
   width: 100%; height: 100%; border-radius: 50%;
-  border: 3px solid #e2e8f0; border-top-color: #6366f1;
-  animation: spin 0.8s linear infinite;
+  border: 3px solid #e5e7eb; border-top-color: #6366f1;
+  animation: solSpin 0.7s linear infinite;
 }
 
-.sol-spinner__icon {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  i { color: #6366f1; font-size: 20px; }
+@keyframes solSpin { to { transform: rotate(360deg); } }
+
+.sol-loading-text {
+  font-size: 14px; color: #6b7280; margin: 0;
 }
 
-.sol-loading-text { font-size: 14px; color: #64748b; font-weight: 500; margin: 0; }
+// ── Metadata pills ────────────────────────────────────────────────────────
 
-// ── Sol sections ──────────────────────────
+.sol-meta {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 20px;
+}
+
+.sol-pill {
+  display: inline-flex; align-items: center;
+  padding: 4px 10px; border-radius: 6px;
+  background: #f3f4f6; color: #6b7280;
+  font-size: 12px; font-weight: 500; line-height: 1.3;
+}
+
+// ── Sections ──────────────────────────────────────────────────────────────
+
 .sol-section {
-  display: flex; gap: 14px; margin-bottom: 20px;
+  margin-bottom: 20px;
   &:last-child { margin-bottom: 0; }
-  &--title { padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; margin-bottom: 20px; }
-  &--solution { padding-top: 4px; }
 }
 
-.sol-section__icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
-  i { font-size: 15px; }
-  &--blue { background: #eff6ff; color: #2563eb; }
-  &--orange { background: #fff7ed; color: #ea580c; }
-  &--green { background: #f0fdf4; color: #16a34a; }
+.sol-section__title {
+  margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #9ca3af;
+  text-transform: uppercase; letter-spacing: 0.5px;
 }
 
-.sol-section__content { flex: 1; min-width: 0; }
+.sol-section__box {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
 
-.sol-section__label {
-  display: block; font-size: 10px; font-weight: 800; color: #94a3b8;
-  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
-}
-
-.sol-article-title {
-  margin: 0 0 6px; font-size: 17px; font-weight: 700; color: #0f172a; line-height: 1.3;
-}
-
-.sol-date {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; color: #94a3b8; font-weight: 500;
-  i { font-size: 10px; }
+  &--solution {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #6366f1;
+  }
 }
 
 .sol-section__text {
-  margin: 0; font-size: 14px; color: #475569; line-height: 1.7;
+  margin: 0; font-size: 14px; color: #374151; line-height: 1.7;
+  white-space: pre-wrap; word-break: break-word;
 }
 
-.sol-solution-box {
-  background: linear-gradient(135deg, #f0fdf4 0%, #f8fff9 100%);
-  border: 1px solid #bbf7d0;
-  border-left: 3px solid #16a34a;
-  border-radius: 10px;
-  padding: 16px;
-}
+// ── Footer ────────────────────────────────────────────────────────────────
 
-.sol-solution-text {
-  margin: 0; font-size: 14px; color: #1a2e1b; line-height: 1.8; white-space: pre-wrap;
-}
-
-// ── Sol footer ────────────────────────────
 .sol-footer {
-  padding: 16px 24px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+  padding: 14px 24px;
+  border-top: 1px solid #f0f0f0;
   display: flex;
+  align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
   flex-shrink: 0;
 }
 
 .sol-btn {
-  flex: 1; min-width: 120px; padding: 10px 16px; border-radius: 10px;
-  font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  i { font-size: 13px; }
-
-  &--solved {
-    background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
-    &:hover { background: linear-gradient(135deg, #059669, #047857); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }
-  }
-
-  &--create {
-    background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none;
-    &:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35); }
-  }
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+  line-height: 1.4; border: none;
 
   &--cancel {
-    background: white; color: #64748b; border: 1px solid #e2e8f0;
-    flex: 0; min-width: 80px;
-    &:hover { background: #f1f5f9; color: #374151; }
+    background: transparent; color: #6b7280; border: none;
+    &:hover { color: #374151; }
+  }
+
+  &--solved {
+    background: transparent; color: #6b7280;
+    border: 1px solid #e5e7eb;
+    &:hover { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+  }
+
+  &--primary {
+    background: #111827; color: white;
+    margin-left: auto;
+    &:hover { background: #1f2937; }
   }
 }
 
@@ -922,6 +905,6 @@
   .form-grid { grid-template-columns: 1fr; }
   .modal-container { width: 95%; }
   .ai-panel { margin: 0 16px 0; }
-  .sol-footer { flex-direction: column; }
-  .sol-btn { flex: none; width: 100%; }
+  .sol-footer { flex-direction: column; align-items: stretch; }
+  .sol-btn { flex: none; width: 100%; margin-left: 0; }
 }

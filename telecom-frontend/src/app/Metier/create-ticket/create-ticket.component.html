@@ -612,27 +612,15 @@
 <div class="sol-overlay" *ngIf="showSolutionModal" (click)="closeSolutionModal()">
   <div class="sol-modal" (click)="$event.stopPropagation()">
 
-    <!-- Modal Header -->
+    <!-- Header -->
     <div class="sol-header">
       <div class="sol-header__left">
-        <div class="sol-avatar">
-          <i class="fas fa-robot"></i>
-          <span class="sol-avatar__dot"></span>
+        <div class="sol-icon">
+          <i class="fas fa-lightbulb"></i>
         </div>
         <div>
-          <h2 class="sol-header__title">Solution suggérée</h2>
-          <div class="sol-header__badges">
-            <span class="sol-badge sol-badge--kb" *ngIf="activeSuggestion?.type === 'KB_ARTICLE'">
-              <i class="fas fa-book-open"></i> Base de connaissances
-            </span>
-            <span class="sol-badge sol-badge--ticket" *ngIf="activeSuggestion?.type === 'SAME_USER_TICKET'">
-              <i class="fas fa-history"></i> Votre historique
-            </span>
-            <span class="sol-confidence" *ngIf="activeSuggestion">
-              <i class="fas fa-chart-line"></i>
-              {{ (activeSuggestion!.similarityScore * 100).toFixed(0) }}% correspondance
-            </span>
-          </div>
+          <h2 class="sol-header__title">Solution proposée</h2>
+          <p class="sol-header__subtitle">Suggestion trouvée dans la base de connaissances</p>
         </div>
       </div>
       <button class="sol-close" (click)="closeSolutionModal()">
@@ -644,7 +632,6 @@
     <div class="sol-body sol-body--loading" *ngIf="isLoadingSolution">
       <div class="sol-spinner">
         <div class="sol-spinner__ring"></div>
-        <div class="sol-spinner__icon"><i class="fas fa-robot"></i></div>
       </div>
       <p class="sol-loading-text">Chargement de la solution…</p>
     </div>
@@ -652,42 +639,26 @@
     <!-- Content -->
     <div class="sol-body" *ngIf="!isLoadingSolution">
 
-      <!-- Article title -->
-      <div class="sol-section sol-section--title">
-        <div class="sol-section__icon sol-section__icon--blue">
-          <i class="fas fa-file-alt"></i>
-        </div>
-        <div class="sol-section__content">
-          <label class="sol-section__label">Article</label>
-          <h3 class="sol-article-title">{{ solutionTitle }}</h3>
-          <span class="sol-date" *ngIf="solutionCreatedAt">
-            <i class="fas fa-calendar-alt"></i>
-            {{ solutionCreatedAt | date:'dd MMMM yyyy' : '' : 'fr-FR' }}
-          </span>
-        </div>
+      <!-- Metadata pills -->
+      <div class="sol-meta" *ngIf="activeSuggestion">
+        <span class="sol-pill">{{ getSuggestionTypeLabel(activeSuggestion.type) }}</span>
+        <span class="sol-pill">{{ (activeSuggestion.similarityScore * 100).toFixed(0) }}% correspondance</span>
+        <span class="sol-pill" *ngIf="solutionCreatedAt">{{ solutionCreatedAt | date:'dd/MM/yyyy' }}</span>
       </div>
 
-      <!-- Problem description -->
+      <!-- Problem -->
       <div class="sol-section" *ngIf="solutionDescription">
-        <div class="sol-section__icon sol-section__icon--orange">
-          <i class="fas fa-exclamation-circle"></i>
-        </div>
-        <div class="sol-section__content">
-          <label class="sol-section__label">Problème décrit</label>
+        <h3 class="sol-section__title">Problème</h3>
+        <div class="sol-section__box">
           <p class="sol-section__text">{{ solutionDescription }}</p>
         </div>
       </div>
 
-      <!-- Solution content -->
-      <div class="sol-section sol-section--solution" *ngIf="solutionContent">
-        <div class="sol-section__icon sol-section__icon--green">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="sol-section__content">
-          <label class="sol-section__label">Solution</label>
-          <div class="sol-solution-box">
-            <p class="sol-solution-text">{{ solutionContent }}</p>
-          </div>
+      <!-- Solution -->
+      <div class="sol-section" *ngIf="solutionContent">
+        <h3 class="sol-section__title">Solution</h3>
+        <div class="sol-section__box sol-section__box--solution">
+          <p class="sol-section__text">{{ solutionContent }}</p>
         </div>
       </div>
 
@@ -695,18 +666,10 @@
 
     <!-- Footer -->
     <div class="sol-footer">
-      <button class="sol-btn sol-btn--solved" (click)="markAsSolved()">
-        <i class="fas fa-check-circle"></i>
-        J'ai résolu mon problème
-      </button>
-      <button class="sol-btn sol-btn--create" (click)="createTicketAnyway()">
-        <i class="fas fa-paper-plane"></i>
-        Créer le ticket quand même
-      </button>
-      <button class="sol-btn sol-btn--cancel" (click)="closeSolutionModal()">
-        <i class="fas fa-times"></i>
-        Fermer
-      </button>
+      <button class="sol-btn sol-btn--cancel" (click)="closeSolutionModal()">Fermer</button>
+      <button class="sol-btn sol-btn--solved" (click)="markAsSolved()">J'ai résolu mon problème</button>
+      <button class="sol-btn sol-btn--primary" (click)="createTicketAnyway()">Créer le ticket quand même</button>
     </div>
+
   </div>
 </div>
