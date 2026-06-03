@@ -50,36 +50,25 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!-- ═══ VOICE-TO-TICKET AI ═══             -->
-    <!-- ═══════════════════════════════════════ -->
+    <!-- VOICE-TO-TICKET AI -->
     <div class="voice-section" *ngIf="voiceSupported">
-
-      <!-- Default: bouton pour démarrer -->
       <div class="voice-prompt" *ngIf="!isRecording && !isProcessingVoice && !showVoiceResult">
         <button class="voice-start-btn" (click)="startRecording()">
-          <div class="mic-icon-wrapper">
-            <i class="fas fa-microphone"></i>
-          </div>
+          <div class="mic-icon-wrapper"><i class="fas fa-microphone"></i></div>
           <div class="voice-start-text">
             <span class="voice-main-text">Dicter un ticket par voix</span>
             <span class="voice-sub-text">Cliquez et décrivez votre problème, l'IA remplit le formulaire</span>
           </div>
-          <div class="voice-badge">
-            <i class="fas fa-robot"></i> IA
-          </div>
+          <div class="voice-badge"><i class="fas fa-robot"></i> IA</div>
         </button>
       </div>
 
-      <!-- Enregistrement en cours -->
       <div class="voice-recording" *ngIf="isRecording">
         <div class="recording-indicator">
           <div class="pulse-ring"></div>
           <div class="pulse-ring delay-1"></div>
           <div class="pulse-ring delay-2"></div>
-          <div class="mic-active">
-            <i class="fas fa-microphone"></i>
-          </div>
+          <div class="mic-active"><i class="fas fa-microphone"></i></div>
         </div>
         <div class="recording-info">
           <span class="recording-label">Enregistrement en cours...</span>
@@ -88,24 +77,15 @@
           <p class="recording-hint" *ngIf="!voiceTranscript">Parlez clairement en décrivant votre problème...</p>
         </div>
         <div class="recording-actions">
-          <button class="btn-stop" (click)="stopRecording()">
-            <i class="fas fa-stop"></i> Arrêter
-          </button>
-          <button class="btn-cancel-voice" (click)="cancelVoice()">
-            <i class="fas fa-times"></i>
-          </button>
+          <button class="btn-stop" (click)="stopRecording()"><i class="fas fa-stop"></i> Arrêter</button>
+          <button class="btn-cancel-voice" (click)="cancelVoice()"><i class="fas fa-times"></i></button>
         </div>
       </div>
 
-      <!-- Traitement IA -->
       <div class="voice-processing" *ngIf="isProcessingVoice">
         <div class="processing-animation">
-          <div class="ai-brain">
-            <i class="fas fa-brain"></i>
-          </div>
-          <div class="processing-dots">
-            <span></span><span></span><span></span>
-          </div>
+          <div class="ai-brain"><i class="fas fa-brain"></i></div>
+          <div class="processing-dots"><span></span><span></span><span></span></div>
         </div>
         <div class="processing-info">
           <span class="processing-label">L'IA analyse votre demande...</span>
@@ -113,7 +93,6 @@
         </div>
       </div>
 
-      <!-- Résultat -->
       <div class="voice-result" *ngIf="showVoiceResult && !isRecording && !isProcessingVoice">
         <div class="result-header">
           <div class="result-icon"><i class="fas fa-check-circle"></i></div>
@@ -123,17 +102,12 @@
               Confiance : {{ getConfidenceLabel() }} ({{ (voiceConfidence * 100).toFixed(0) }}%)
             </span>
           </div>
-          <button class="btn-retry-voice" (click)="cancelVoice(); startRecording()" title="Réessayer">
-            <i class="fas fa-redo"></i>
-          </button>
-          <button class="btn-cancel-voice" (click)="cancelVoice()" title="Fermer">
-            <i class="fas fa-times"></i>
-          </button>
+          <button class="btn-retry-voice" (click)="cancelVoice(); startRecording()" title="Réessayer"><i class="fas fa-redo"></i></button>
+          <button class="btn-cancel-voice" (click)="cancelVoice()" title="Fermer"><i class="fas fa-times"></i></button>
         </div>
         <p class="result-hint">Vérifiez et modifiez les champs ci-dessous avant de soumettre.</p>
       </div>
 
-      <!-- Erreur vocale -->
       <div class="voice-error" *ngIf="voiceError">
         <i class="fas fa-exclamation-triangle"></i>
         <span>{{ voiceError }}</span>
@@ -179,9 +153,7 @@
 
         <!-- Priorité -->
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-flag"></i> Priorité
-          </label>
+          <label class="form-label"><i class="fas fa-flag"></i> Priorité</label>
           <div class="chip-group">
             <button *ngFor="let p of priorities" type="button" class="chip"
                     [class.selected]="newTicket.priority === p"
@@ -198,9 +170,7 @@
 
         <!-- Catégorie -->
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-tag"></i> Type de demande <span class="required">*</span>
-          </label>
+          <label class="form-label"><i class="fas fa-tag"></i> Type de demande <span class="required">*</span></label>
           <div class="chip-group chip-group-wrap">
             <button *ngFor="let c of categories" type="button"
                     class="chip chip-category" [class.selected]="newTicket.category === c"
@@ -213,9 +183,7 @@
 
         <!-- Tags -->
         <div class="form-group full-width">
-          <label class="form-label">
-            <i class="fas fa-tags"></i> Tags <span class="optional">(optionnel)</span>
-          </label>
+          <label class="form-label"><i class="fas fa-tags"></i> Tags <span class="optional">(optionnel)</span></label>
           <div class="tags-input-container">
             <div class="tags-list" *ngIf="newTicket.tags && newTicket.tags.length > 0">
               <span class="tag-chip" *ngFor="let tag of newTicket.tags; let i = index">
@@ -226,96 +194,167 @@
             <input type="text" class="form-input tag-input" [(ngModel)]="tagInput"
                    (keydown.enter)="addTag($event)" placeholder="Tapez un tag et appuyez Entrée..."/>
           </div>
-          <span class="form-hint">
-            <i class="fas fa-info-circle"></i> Appuyez Entrée pour ajouter un tag
-          </span>
+          <span class="form-hint"><i class="fas fa-info-circle"></i> Appuyez Entrée pour ajouter un tag</span>
         </div>
 
+        <!-- Pièces jointes -->
         <div class="attachments-field">
-  <label>Pièces jointes</label>
-  <input type="file" multiple (change)="onFilesSelected($event)" />
-  <small>Maximum size: 2,097 KB par fichier</small>
-
-  <ul>
-    <li *ngFor="let f of selectedFiles; let i = index">
-      {{ f.name }} ({{ (f.size / 1024) | number:'1.0-0' }} KB)
-      <button type="button" (click)="removeFile(i)">Supprimer</button>
-    </li>
-  </ul>
-</div>
+          <label>Pièces jointes</label>
+          <input type="file" multiple (change)="onFilesSelected($event)" />
+          <small>Maximum size: 2,097 KB par fichier</small>
+          <ul>
+            <li *ngFor="let f of selectedFiles; let i = index">
+              {{ f.name }} ({{ (f.size / 1024) | number:'1.0-0' }} KB)
+              <button type="button" (click)="removeFile(i)">Supprimer</button>
+            </li>
+          </ul>
+        </div>
 
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!-- ═══ AI SUGGESTION PANEL ═══            -->
-    <!-- ═══════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ═══  AI ASSISTANT PANEL  ════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
 
-    <div class="suggestion-panel" *ngIf="isAnalyzing">
-      <div class="suggestion-loading">
-        <div class="spinner-sm"></div>
-        <span>Analyse de votre problème...</span>
-      </div>
-    </div>
-
-    <div class="suggestion-panel suggestion-has-results" *ngIf="showSuggestionPanel && hasSuggestions && !isAnalyzing">
-      <div class="suggestion-header">
-        <div class="suggestion-header-left">
+    <!-- Loading skeleton -->
+    <div class="ai-panel ai-panel--loading" *ngIf="isAnalyzing">
+      <div class="ai-panel__header">
+        <div class="ai-avatar ai-avatar--pulse">
           <i class="fas fa-robot"></i>
-          <span class="suggestion-title">Assistant IA</span>
-          <span class="confidence-badge" *ngIf="analysisConfidence > 0">
-            Confiance {{ (analysisConfidence * 100).toFixed(0) }}%
+        </div>
+        <div class="ai-panel__header-text">
+          <span class="ai-panel__title">Assistant IA</span>
+          <span class="ai-panel__subtitle">Analyse de votre demande en cours…</span>
+        </div>
+        <div class="ai-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="ai-skeleton">
+        <div class="skeleton-line skeleton-line--wide"></div>
+        <div class="skeleton-line skeleton-line--medium"></div>
+        <div class="skeleton-line skeleton-line--narrow"></div>
+      </div>
+    </div>
+
+    <!-- Results panel -->
+    <div class="ai-panel ai-panel--results" *ngIf="showSuggestionPanel && hasSuggestions && !isAnalyzing">
+
+      <!-- Panel header -->
+      <div class="ai-panel__header">
+        <div class="ai-avatar">
+          <i class="fas fa-robot"></i>
+          <span class="ai-avatar__dot"></span>
+        </div>
+        <div class="ai-panel__header-text">
+          <span class="ai-panel__title">Assistant IA</span>
+          <span class="ai-panel__subtitle">{{ suggestions.length }} solution{{ suggestions.length > 1 ? 's' : '' }} trouvée{{ suggestions.length > 1 ? 's' : '' }}</span>
+        </div>
+        <div class="ai-panel__badges">
+          <span class="ai-confidence-badge" [ngClass]="getConfidenceTier(analysisConfidence)">
+            <i class="fas fa-chart-line"></i>
+            {{ confidencePercent }}% confiance
           </span>
         </div>
-        <button class="suggestion-close" (click)="clearSuggestions()" title="Fermer">
+        <button class="ai-panel__close" (click)="clearSuggestions()" title="Fermer l'assistant">
           <i class="fas fa-times"></i>
         </button>
       </div>
 
-      <div class="suggestion-recommendation" *ngIf="aiRecommendation">
-        <i class="fas fa-lightbulb"></i>
-        <p>{{ aiRecommendation }}</p>
+      <!-- AI recommendation -->
+      <div class="ai-recommendation" *ngIf="aiRecommendation">
+        <div class="ai-recommendation__icon">
+          <i class="fas fa-lightbulb"></i>
+        </div>
+        <p class="ai-recommendation__text">{{ aiRecommendation }}</p>
       </div>
 
-      <div class="suggestion-cards">
-        <div class="suggestion-card" *ngFor="let s of suggestions">
-          <div class="s-card-top">
-            <span class="s-card-type">
-              <i class="fas" [ngClass]="s.type === 'KB_ARTICLE' ? 'fa-book' : s.type === 'SAME_USER_TICKET' ? 'fa-ticket-alt' : 'fa-users'"></i>
-              {{ s.type === 'KB_ARTICLE' ? 'Base de connaissances' : s.type === 'SAME_USER_TICKET' ? 'Votre ticket' : 'Ticket similaire' }}
-            </span>
-            <span class="s-card-score">{{ (s.similarityScore * 100).toFixed(0) }}%</span>
+      <!-- Primary suggestion (hero card) -->
+      <div class="ai-primary-card" *ngIf="primarySuggestion">
+        <div class="ai-primary-card__meta">
+          <span class="ai-type-badge" [ngClass]="'ai-type-badge--' + (primarySuggestion.type | lowercase)">
+            <i [class]="getSuggestionTypeIcon(primarySuggestion.type)"></i>
+            {{ getSuggestionTypeLabel(primarySuggestion.type) }}
+          </span>
+          <div class="ai-score">
+            <div class="ai-score__bar">
+              <div class="ai-score__fill" [style.width.%]="primarySuggestion.similarityScore * 100"
+                   [ngClass]="getConfidenceTier(primarySuggestion.similarityScore)"></div>
+            </div>
+            <span class="ai-score__label">{{ (primarySuggestion.similarityScore * 100).toFixed(0) }}%</span>
           </div>
-          <div class="s-card-score-bar">
-            <div class="s-card-score-fill" [style.width.%]="s.similarityScore * 100"></div>
-          </div>
-          <h4 class="s-card-title">{{ s.title }}</h4>
+        </div>
 
-          <div class="s-card-details" *ngIf="s.type === 'SAME_USER_TICKET' && s.description">
-            <p class="s-card-desc">{{ s.description.length > 200 ? (s.description | slice:0:200) + '...' : s.description }}</p>
-            <span class="s-card-date" *ngIf="s.resolvedDate">Résolu le {{ s.resolvedDate | date:'dd/MM/yyyy' }}</span>
-          </div>
+        <h3 class="ai-primary-card__title">{{ primarySuggestion.title }}</h3>
 
-          <div class="s-card-solution" *ngIf="s.type === 'KB_ARTICLE' && s.solution">
-            <p class="s-card-solution-text">{{ s.solution.length > 300 ? (s.solution | slice:0:300) + '...' : s.solution }}</p>
-            <span class="s-card-date" *ngIf="s.createdAt">Créé le {{ s.createdAt | date:'dd/MM/yyyy' }}</span>
-          </div>
+        <p class="ai-primary-card__preview" *ngIf="primarySuggestion.type === 'KB_ARTICLE' && primarySuggestion.solution">
+          {{ primarySuggestion.solution.length > 180 ? (primarySuggestion.solution | slice:0:180) + '…' : primarySuggestion.solution }}
+        </p>
+        <p class="ai-primary-card__preview" *ngIf="primarySuggestion.type === 'SAME_USER_TICKET' && primarySuggestion.description">
+          {{ primarySuggestion.description.length > 180 ? (primarySuggestion.description | slice:0:180) + '…' : primarySuggestion.description }}
+        </p>
+        <p class="ai-primary-card__locked" *ngIf="primarySuggestion.type === 'OTHER_USER_TICKET'">
+          <i class="fas fa-lock"></i> Détails confidentiels — problème similaire résolu
+        </p>
 
-          <div class="s-card-limited" *ngIf="s.type === 'OTHER_USER_TICKET'">
-            <span class="s-card-date" *ngIf="s.resolvedDate">Résolu le {{ s.resolvedDate | date:'dd/MM/yyyy' }}</span>
-            <p class="s-card-hint"><i class="fas fa-lock"></i> Détails confidentiels</p>
-          </div>
-
-          <button class="s-card-view-btn" *ngIf="s.type === 'KB_ARTICLE' || s.type === 'SAME_USER_TICKET'" (click)="viewSuggestionDetails(s)">
-            Voir la solution <i class="fas fa-arrow-right"></i>
+        <div class="ai-primary-card__footer">
+          <span class="ai-date" *ngIf="primarySuggestion.resolvedDate || primarySuggestion.createdAt">
+            <i class="fas fa-calendar-alt"></i>
+            {{ primarySuggestion.resolvedDate || primarySuggestion.createdAt | date:'dd/MM/yyyy' }}
+          </span>
+          <button class="btn-view-solution"
+                  *ngIf="primarySuggestion.type === 'KB_ARTICLE' || primarySuggestion.type === 'SAME_USER_TICKET'"
+                  (click)="viewSuggestionDetails(primarySuggestion)">
+            <i class="fas fa-eye"></i>
+            Voir la solution complète
+            <i class="fas fa-arrow-right btn-view-solution__arrow"></i>
           </button>
         </div>
       </div>
 
-      <div class="suggestion-actions">
-        <button class="btn-suggestion btn-secondary" (click)="markAsSolved()">
-          <i class="fas fa-check-circle"></i> J'ai résolu mon problème
+      <!-- Secondary suggestions (collapsed) -->
+      <div class="ai-secondary-section" *ngIf="secondarySuggestions.length > 0">
+        <button class="ai-expand-btn" (click)="showAllSuggestions = !showAllSuggestions">
+          <i class="fas fa-layer-group"></i>
+          {{ showAllSuggestions ? 'Masquer' : 'Voir' }} {{ secondarySuggestions.length }} autre{{ secondarySuggestions.length > 1 ? 's' : '' }} suggestion{{ secondarySuggestions.length > 1 ? 's' : '' }}
+          <i class="fas" [ngClass]="showAllSuggestions ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
         </button>
+
+        <div class="ai-secondary-list" *ngIf="showAllSuggestions">
+          <div class="ai-secondary-card"
+               *ngFor="let s of secondarySuggestions; trackBy: trackBySuggestion">
+            <div class="ai-secondary-card__left">
+              <span class="ai-type-dot" [ngClass]="'ai-type-dot--' + (s.type | lowercase)">
+                <i [class]="getSuggestionTypeIcon(s.type)"></i>
+              </span>
+              <div>
+                <p class="ai-secondary-card__title">{{ s.title }}</p>
+                <p class="ai-secondary-card__meta">
+                  {{ getSuggestionTypeLabel(s.type) }}
+                  <span *ngIf="s.resolvedDate || s.createdAt"> · {{ s.resolvedDate || s.createdAt | date:'dd/MM/yyyy' }}</span>
+                </p>
+              </div>
+            </div>
+            <div class="ai-secondary-card__right">
+              <span class="ai-secondary-score">{{ (s.similarityScore * 100).toFixed(0) }}%</span>
+              <button class="btn-secondary-view"
+                      *ngIf="s.type === 'KB_ARTICLE' || s.type === 'SAME_USER_TICKET'"
+                      (click)="viewSuggestionDetails(s)" title="Voir la solution">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel footer actions -->
+      <div class="ai-panel__footer">
+        <button class="btn-ai-solved" (click)="markAsSolved()">
+          <i class="fas fa-check-circle"></i>
+          J'ai résolu mon problème
+        </button>
+        <span class="ai-panel__footer-hint">ou continuez à créer votre ticket ci-dessous</span>
       </div>
     </div>
 
@@ -334,7 +373,6 @@
 
   <!-- Mes tickets récents -->
   <div class="main-card" style="margin-top: 24px;">
-
     <div class="card-header-section">
       <div class="card-header-icon icon-list"><i class="fas fa-list-alt"></i></div>
       <div>
@@ -358,7 +396,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let ticket of myTickets" class="table-row"
+          <tr *ngFor="let ticket of myTickets; trackBy: trackByTicketId" class="table-row"
               [class.sla-breached-row]="ticket.slaStatus === 'BREACHED'">
             <td class="td-id">#{{ ticket.id }}</td>
             <td>
@@ -388,13 +426,11 @@
               </span>
             </td>
             <td class="td-center">
-              <span class="sla-badge" [ngClass]="getSLAClass(ticket.slaStatus)"
-                    [title]="getSLALabel(ticket.slaStatus)">
+              <span class="sla-badge" [ngClass]="getSLAClass(ticket.slaStatus)" [title]="getSLALabel(ticket.slaStatus)">
                 <i [class]="getSLAIcon(ticket.slaStatus)"></i>
                 {{ getSLAShortLabel(ticket.slaStatus) }}
               </span>
             </td>
-           
             <td class="td-date">{{ getTimeAgo(ticket.createdDate) }}</td>
             <td class="td-center">
               <div class="action-group">
@@ -425,13 +461,11 @@
 <!-- ═══ MODAL VIEW ═══ -->
 <div class="modal-overlay" *ngIf="isViewModalOpen" (click)="closeViewModal()">
   <div class="modal-container modal-large" (click)="$event.stopPropagation()">
-
     <div class="modal-header">
       <div class="modal-title">
         <i class="fas fa-ticket-alt"></i>
         <h2>Ticket #{{ viewedTicket?.id }}</h2>
-        <span class="sla-badge modal-sla" *ngIf="viewedTicket?.slaStatus"
-              [ngClass]="getSLAClass(viewedTicket?.slaStatus)">
+        <span class="sla-badge modal-sla" *ngIf="viewedTicket?.slaStatus" [ngClass]="getSLAClass(viewedTicket?.slaStatus)">
           <i [class]="getSLAIcon(viewedTicket?.slaStatus)"></i>
           {{ getSLALabel(viewedTicket?.slaStatus) }}
         </span>
@@ -440,7 +474,6 @@
     </div>
 
     <div class="modal-body" *ngIf="viewedTicket">
-
       <div class="modal-tabs">
         <button class="modal-tab" [class.active]="activeTab === 'details'" (click)="activeTab = 'details'">
           <i class="fas fa-info-circle"></i> Détails
@@ -455,7 +488,6 @@
         </button>
       </div>
 
-      <!-- TAB 1: Détails -->
       <div *ngIf="activeTab === 'details'">
         <h3 class="modal-ticket-title">{{ viewedTicket.title }}</h3>
         <div class="modal-badges">
@@ -482,7 +514,6 @@
             <p class="view-info-value">{{ viewedTicket.creatorFullName }}</p>
             <p class="view-info-sub">{{ viewedTicket.creatorEmail }}</p>
           </div>
-          
           <div class="view-info-block">
             <label class="view-info-label"><i class="fas fa-building"></i> Département</label>
             <p class="view-info-value" *ngIf="viewedTicket.departement">{{ viewedTicket.departement }}</p>
@@ -503,10 +534,9 @@
         </div>
       </div>
 
-      <!-- TAB 2: Commentaires -->
       <div *ngIf="activeTab === 'comments'">
         <div class="comments-list">
-          <div class="comment-item" *ngFor="let c of comments" [class.internal-note]="c.internalNote">
+          <div class="comment-item" *ngFor="let c of comments; trackBy: trackByCommentId" [class.internal-note]="c.internalNote">
             <div class="comment-header">
               <span class="comment-avatar">{{ getInitial(c.authorFullName) }}</span>
               <div class="comment-meta">
@@ -541,7 +571,6 @@
         </div>
       </div>
 
-      <!-- TAB 3: Historique -->
       <div *ngIf="activeTab === 'history'">
         <div class="history-container" *ngIf="ticketHistory.length > 0">
           <div class="history-timeline">
@@ -569,7 +598,6 @@
         <div class="empty-state small" *ngIf="ticketHistory.length === 0 && !isLoadingHistory"><i class="fas fa-history"></i><p>Aucun historique</p></div>
         <div class="loading-state small" *ngIf="isLoadingHistory"><div class="loader small"></div><p>Chargement...</p></div>
       </div>
-
     </div>
 
     <div class="modal-footer">
@@ -578,35 +606,107 @@
   </div>
 </div>
 
-<!-- ═══ SOLUTION MODAL ═══ -->
-<div class="modal-overlay" *ngIf="showSolutionModal" (click)="closeSolutionModal()">
-  <div class="modal-container modal-large" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <div class="modal-title">
-        <i class="fas fa-lightbulb"></i>
-        <h2>Solution suggérée</h2>
-      </div>
-      <button class="modal-close" (click)="closeSolutionModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div *ngIf="isLoadingSolution" class="loading-state">
-        <div class="loader"></div>
-        <p>Chargement de la solution...</p>
-      </div>
-      <div *ngIf="!isLoadingSolution">
-        <h3 class="modal-ticket-title">{{ solutionTitle }}</h3>
-        <div class="view-description-block" *ngIf="solutionDescription">
-          <label class="view-info-label"><i class="fas fa-align-left"></i> Description</label>
-          <p class="view-description-text">{{ solutionDescription }}</p>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- ═══  SOLUTION MODAL  ════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="sol-overlay" *ngIf="showSolutionModal" (click)="closeSolutionModal()">
+  <div class="sol-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="sol-header">
+      <div class="sol-header__left">
+        <div class="sol-avatar">
+          <i class="fas fa-robot"></i>
+          <span class="sol-avatar__dot"></span>
         </div>
-        <div class="view-description-block">
-          <label class="view-info-label"><i class="fas fa-check-circle"></i> Solution</label>
-          <p class="view-description-text solution-text">{{ solutionContent }}</p>
+        <div>
+          <h2 class="sol-header__title">Solution suggérée</h2>
+          <div class="sol-header__badges">
+            <span class="sol-badge sol-badge--kb" *ngIf="activeSuggestion?.type === 'KB_ARTICLE'">
+              <i class="fas fa-book-open"></i> Base de connaissances
+            </span>
+            <span class="sol-badge sol-badge--ticket" *ngIf="activeSuggestion?.type === 'SAME_USER_TICKET'">
+              <i class="fas fa-history"></i> Votre historique
+            </span>
+            <span class="sol-confidence" *ngIf="activeSuggestion">
+              <i class="fas fa-chart-line"></i>
+              {{ (activeSuggestion!.similarityScore * 100).toFixed(0) }}% correspondance
+            </span>
+          </div>
         </div>
       </div>
+      <button class="sol-close" (click)="closeSolutionModal()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" (click)="closeSolutionModal()"><i class="fas fa-times"></i> Fermer</button>
+
+    <!-- Loading -->
+    <div class="sol-body sol-body--loading" *ngIf="isLoadingSolution">
+      <div class="sol-spinner">
+        <div class="sol-spinner__ring"></div>
+        <div class="sol-spinner__icon"><i class="fas fa-robot"></i></div>
+      </div>
+      <p class="sol-loading-text">Chargement de la solution…</p>
+    </div>
+
+    <!-- Content -->
+    <div class="sol-body" *ngIf="!isLoadingSolution">
+
+      <!-- Article title -->
+      <div class="sol-section sol-section--title">
+        <div class="sol-section__icon sol-section__icon--blue">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="sol-section__content">
+          <label class="sol-section__label">Article</label>
+          <h3 class="sol-article-title">{{ solutionTitle }}</h3>
+          <span class="sol-date" *ngIf="solutionCreatedAt">
+            <i class="fas fa-calendar-alt"></i>
+            {{ solutionCreatedAt | date:'dd MMMM yyyy' : '' : 'fr-FR' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Problem description -->
+      <div class="sol-section" *ngIf="solutionDescription">
+        <div class="sol-section__icon sol-section__icon--orange">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="sol-section__content">
+          <label class="sol-section__label">Problème décrit</label>
+          <p class="sol-section__text">{{ solutionDescription }}</p>
+        </div>
+      </div>
+
+      <!-- Solution content -->
+      <div class="sol-section sol-section--solution" *ngIf="solutionContent">
+        <div class="sol-section__icon sol-section__icon--green">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="sol-section__content">
+          <label class="sol-section__label">Solution</label>
+          <div class="sol-solution-box">
+            <p class="sol-solution-text">{{ solutionContent }}</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="sol-footer">
+      <button class="sol-btn sol-btn--solved" (click)="markAsSolved()">
+        <i class="fas fa-check-circle"></i>
+        J'ai résolu mon problème
+      </button>
+      <button class="sol-btn sol-btn--create" (click)="createTicketAnyway()">
+        <i class="fas fa-paper-plane"></i>
+        Créer le ticket quand même
+      </button>
+      <button class="sol-btn sol-btn--cancel" (click)="closeSolutionModal()">
+        <i class="fas fa-times"></i>
+        Fermer
+      </button>
     </div>
   </div>
 </div>

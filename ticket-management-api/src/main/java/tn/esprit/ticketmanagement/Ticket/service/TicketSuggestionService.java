@@ -51,14 +51,27 @@ public class TicketSuggestionService {
     public TicketSuggestionResponse getSuggestions(TicketSuggestionRequest request, User currentUser) {
         String query = buildQuery(request);
 
+        log.info("====== TICKET SUGGESTION DIAGNOSTIC ======");
+        log.info("[DIAG] 1. Incoming query: '{}'", query);
+        log.info("[DIAG] 2. Similarity threshold: {}", SIMILARITY_THRESHOLD);
+        log.info("[DIAG] 3. Current user ID: {}", currentUser.getId());
+
         if (query.isBlank()) {
+            log.warn("[DIAG] Query is blank, returning empty");
             return emptyResponse();
         }
 
         List<SuggestionItem> items = searchAndRank(query, currentUser);
 
         if (items.isEmpty()) {
+            log.warn("[DIAG] searchAndRank returned 0 items after all filtering");
             return emptyResponse();
+        }
+
+        log.info("[DIAG] Final suggestions count: {}", items.size());
+        for (SuggestionItem item : items) {
+            log.info("[DIAG]   -> type={}, title='{}', score={}, linkedArticleId={}",
+                    item.getType(), item.getTitle(), item.getSimilarityScore(), item.getLinkedArticleId());
         }
 
         String recommendation = generateRecommendation(items);
@@ -84,8 +97,17 @@ public class TicketSuggestionService {
 
     private List<SuggestionItem> searchAndRank(String query, User currentUser) {
         try {
+            log.info("[DIAG] 4. Generating embedding for query...");
             float[] queryVec = embeddingModel.embed(query);
             String vectorStr = toPgVector(queryVec);
+
+            StringBuilder previewSb = new StringBuilder();
+            for (int i = 0; i < Math.min(5, queryVec.length); i++) {
+                if (i > 0) previewSb.append(", ");
+                previewSb.append(String.format("%.6f", queryVec[i]));
+            }
+            String vecPreview = previewSb.toString();
+            log.info("[DIAG] 5. Embedding (first 5 values): [{} ...] ({} dims)", vecPreview, queryVec.length);
 
             String sql = "SELECT content, metadata::text, " +
                     "1 - (embedding <=> ?::vector(768)) AS similarity " +
@@ -93,79 +115,112 @@ public class TicketSuggestionService {
                     "WHERE 1 - (embedding <=> ?::vector(768)) >= ? " +
                     "ORDER BY similarity DESC LIMIT ?";
 
+            log.info("[DIAG] 6. Executing pgvector SQL with threshold={}, limit={}", SIMILARITY_THRESHOLD, TOP_K);
+
             List<Map<String, Object>> rows = pgVectorJdbcTemplate.queryForList(
                     sql, vectorStr, vectorStr, SIMILARITY_THRESHOLD, TOP_K);
 
+            log.info("[DIAG] 7. Raw SQL returned {} rows", rows.size());
+
             if (rows.isEmpty()) {
+                log.warn("[DIAG] 7a. NO ROWS returned from pgvector! No matches above threshold.");
                 return List.of();
             }
 
             List<SuggestionItem> candidates = new ArrayList<>();
+            int rowIndex = 0;
 
             for (Map<String, Object> row : rows) {
+                rowIndex++;
                 try {
                     String content = (String) row.get("content");
                     String metadataJson = (String) row.get("metadata");
                     double rawScore = ((Number) row.get("similarity")).doubleValue();
 
                     JsonNode meta = objectMapper.readTree(metadataJson);
-                    String type = meta.has("type") ? meta.get("type").asText() : null;
+                    String type = meta.has("type") ? meta.get("type").asText() : "UNKNOWN";
+
+                    String contentPreview = content.length() > 80 ? content.substring(0, 80) + "..." : content;
+                    log.info("[DIAG] 8. Row #{}: type={}, rawScore={}, content='{}', metadata={}",
+                            rowIndex, type, String.format("%.4f", rawScore), contentPreview, metadataJson);
 
                     SuggestionItem item = null;
 
                     if ("TICKET".equals(type)) {
+                        log.info("[DIAG] 8a. Row #{} is TICKET, calling processTicketResult", rowIndex);
                         item = processTicketResult(meta, rawScore, currentUser);
                     } else if ("KB_ARTICLE".equals(type)) {
+                        log.info("[DIAG] 8b. Row #{} is KB_ARTICLE, calling processArticleResult", rowIndex);
                         item = processArticleResult(meta, rawScore);
                     } else if (meta.has("ticketId")) {
+                        log.info("[DIAG] 8c. Row #{} metadata has ticketId but type={}, treating as TICKET", rowIndex, type);
                         item = processTicketResult(meta, rawScore, currentUser);
+                    } else {
+                        log.warn("[DIAG] 8d. Row #{} UNKNOWN type '{}', skipping", rowIndex, type);
                     }
 
                     if (item != null) {
                         candidates.add(item);
+                        log.info("[DIAG] 9. Row #{} ACCEPTED as {}: title='{}', score={}", rowIndex, item.getType(), item.getTitle(), String.format("%.4f", item.getSimilarityScore()));
+                    } else {
+                        log.warn("[DIAG] 9. Row #{} DISCARDED (process* returned null)", rowIndex);
                     }
                 } catch (Exception e) {
-                    log.warn("Error processing vector result: {}", e.getMessage());
+                    log.warn("[DIAG] Row #{} ERROR processing: {}: {}", rowIndex, e.getClass().getSimpleName(), e.getMessage());
                 }
             }
 
-            return rankAndLimit(candidates);
+            log.info("[DIAG] 10. Candidates before rankAndLimit: {}", candidates.size());
+            List<SuggestionItem> result = rankAndLimit(candidates);
+            log.info("[DIAG] 11. Results after rankAndLimit: {}", result.size());
+            return result;
 
         } catch (Exception e) {
-            log.warn("Suggestion search failed: {}", e.getMessage());
+            log.warn("[DIAG] searchAndRank CATCH: {}: {}", e.getClass().getSimpleName(), e.getMessage());
             return List.of();
         }
     }
 
     private SuggestionItem processTicketResult(JsonNode meta, double rawScore, User currentUser) {
         int ticketId = meta.get("ticketId").asInt();
+        log.info("[DIAG] processTicketResult: ticketId={}, rawScore={}", ticketId, String.format("%.4f", rawScore));
+
         Optional<Ticket> optTicket = ticketRepository.findById(ticketId);
 
         if (optTicket.isEmpty()) {
+            log.warn("[DIAG] processTicketResult: ticket #{} NOT FOUND in DB, discarding", ticketId);
             return null;
         }
 
         Ticket ticket = optTicket.get();
 
         boolean isSameUser = ticket.getCreator().getId().equals(currentUser.getId());
+        log.info("[DIAG] processTicketResult: ticket #{} found, title='{}', status={}, creatorId={}, isSameUser={}",
+                ticketId, ticket.getTitle(), ticket.getStatus(), ticket.getCreator().getId(), isSameUser);
 
         if (!isSameUser) {
             if (ticket.getStatus() != TicketStatus.RESOLVED && ticket.getStatus() != TicketStatus.CLOSED) {
+                log.warn("[DIAG] processTicketResult: ticket #{} is OTHER_USER and status={} (not RESOLVED/CLOSED), discarding",
+                        ticketId, ticket.getStatus());
                 return null;
             }
         }
 
         // Check if a linked KB article with a solution exists
+        log.info("[DIAG] processTicketResult: checking linked KB articles for ticket #{}", ticketId);
         List<KnowledgeBaseArticle> linkedArticles = knowledgeBaseRepository.findByTicketId(ticket.getId());
         if (linkedArticles.isEmpty()) {
-            log.debug("Discarding ticket #{} — no linked KB article", ticket.getId());
+            log.warn("[DIAG] processTicketResult: ticket #{} has NO linked KB article, discarding", ticketId);
             return null;
         }
         KnowledgeBaseArticle kb = linkedArticles.get(0);
+        log.info("[DIAG] processTicketResult: found linked KB article #{} for ticket #{}", kb.getId(), ticketId);
         if (kb.getSolution() == null || kb.getSolution().isBlank()) {
-            log.debug("Discarding ticket #{} — linked KB article #{} has no solution", ticket.getId(), kb.getId());
+            log.warn("[DIAG] processTicketResult: KB article #{} has EMPTY solution, discarding ticket #{}", kb.getId(), ticketId);
             return null;
         }
+        log.info("[DIAG] processTicketResult: KB article #{} has solution (length={}), ACCEPTING ticket #{}",
+                kb.getId(), kb.getSolution().length(), ticketId);
 
         SuggestionType type = isSameUser ? SuggestionType.SAME_USER_TICKET : SuggestionType.OTHER_USER_TICKET;
 
@@ -190,13 +245,19 @@ public class TicketSuggestionService {
 
     private SuggestionItem processArticleResult(JsonNode meta, double rawScore) {
         long articleId = meta.get("articleId").asLong();
+        log.info("[DIAG] processArticleResult: articleId={}, rawScore={}", articleId, String.format("%.4f", rawScore));
+
         Optional<KnowledgeBaseArticle> optArticle = knowledgeBaseRepository.findById(articleId);
 
         if (optArticle.isEmpty()) {
+            log.warn("[DIAG] processArticleResult: article #{} NOT FOUND in DB, discarding", articleId);
             return null;
         }
 
         KnowledgeBaseArticle article = optArticle.get();
+        log.info("[DIAG] processArticleResult: article #{} found, title='{}', solutionLength={}",
+                articleId, article.getTitle(),
+                article.getSolution() != null ? article.getSolution().length() : 0);
 
         return SuggestionItem.builder()
                 .type(SuggestionType.KB_ARTICLE)
@@ -214,40 +275,65 @@ public class TicketSuggestionService {
 
     private List<SuggestionItem> rankAndLimit(List<SuggestionItem> candidates) {
         LocalDate cutoff = LocalDate.now().minusDays(RECENT_DAYS);
+        log.info("[DIAG] rankAndLimit: processing {} candidates, cutoff={}", candidates.size(), cutoff);
 
         List<ScoredItem> scored = new ArrayList<>();
+        int discardedAfterBoost = 0;
 
-        for (SuggestionItem item : candidates) {
+        for (int i = 0; i < candidates.size(); i++) {
+            SuggestionItem item = candidates.get(i);
             double adjusted = item.getSimilarityScore();
+            String boostInfo = "none";
 
             if (item.getType() == SuggestionType.KB_ARTICLE) {
                 adjusted *= KB_BOOST;
+                boostInfo = "KB_BOOST(1.3)";
 
                 if (item.getCreatedAt() != null) {
                     try {
                         LocalDate articleDate = LocalDate.parse(item.getCreatedAt());
                         if (articleDate.isAfter(cutoff)) {
                             adjusted *= KB_RECENT_BOOST;
+                            boostInfo += "+RECENT(1.15)";
                         }
                     } catch (Exception ignored) {}
                 }
             } else if (item.getType() == SuggestionType.SAME_USER_TICKET) {
                 adjusted *= SAME_USER_BOOST;
+                boostInfo = "SAME_USER_BOOST(1.1)";
             }
 
+            double beforeClip = adjusted;
             adjusted = Math.min(adjusted, 1.0);
+
+            log.info("[DIAG] rankAndLimit #{}: type={}, title='{}', originalScore={}, boost={}, adjustedBeforeClip={}, adjusted={}, threshold={}",
+                    i, item.getType(), item.getTitle(),
+                    String.format("%.4f", item.getSimilarityScore()),
+                    boostInfo,
+                    String.format("%.4f", beforeClip),
+                    String.format("%.4f", adjusted),
+                    SIMILARITY_THRESHOLD);
 
             if (adjusted >= SIMILARITY_THRESHOLD) {
                 scored.add(new ScoredItem(item, adjusted));
+                log.info("[DIAG] rankAndLimit #{}: ACCEPTED ({} >= {})", i, String.format("%.4f", adjusted), SIMILARITY_THRESHOLD);
+            } else {
+                discardedAfterBoost++;
+                log.warn("[DIAG] rankAndLimit #{}: DISCARDED ({} < {})", i, String.format("%.4f", adjusted), SIMILARITY_THRESHOLD);
             }
         }
 
         scored.sort((a, b) -> Double.compare(b.adjustedScore, a.adjustedScore));
 
+        log.info("[DIAG] rankAndLimit: after boost+threshold: {} accepted, {} discarded, MAX_RESULTS={}",
+                scored.size(), discardedAfterBoost, MAX_RESULTS);
+
         return scored.stream()
                 .limit(MAX_RESULTS)
                 .map(s -> {
                     s.item.setSimilarityScore(s.adjustedScore);
+                    log.info("[DIAG] rankAndLimit FINAL: type={}, title='{}', finalScore={}",
+                            s.item.getType(), s.item.getTitle(), String.format("%.4f", s.adjustedScore));
                     return s.item;
                 })
                 .collect(Collectors.toList());

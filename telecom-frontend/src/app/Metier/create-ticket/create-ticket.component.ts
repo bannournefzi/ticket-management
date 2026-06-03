@@ -31,7 +31,7 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   isLoading = false;
   isLoadingTickets = false;
 
-  // AI Suggestion state
+  // ── AI Suggestion state ─────────────────────────────────────────────
   private analysisTrigger = new Subject<void>();
   private destroy$ = new Subject<void>();
   isAnalyzing = false;
@@ -42,13 +42,19 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   analysisSessionId = '';
   showSuggestionPanel = false;
 
-  // Solution modal
+  // Expanded state for secondary suggestions
+  showAllSuggestions = false;
+
+  // ── Solution modal ──────────────────────────────────────────────────
   showSolutionModal = false;
+  activeSuggestion: SuggestionItem | null = null;
   solutionTitle = '';
   solutionDescription = '';
   solutionContent = '';
+  solutionCreatedAt = '';
   isLoadingSolution = false;
 
+  // ── Form state ──────────────────────────────────────────────────────
   tagInput = '';
   comments: TicketComment[] = [];
   newComment = '';
@@ -63,6 +69,7 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   ticketHistory: TicketHistory[] = [];
   isLoadingHistory = false;
 
+  // ── Voice state ─────────────────────────────────────────────────────
   isRecording = false;
   isProcessingVoice = false;
   voiceTranscript = '';
@@ -137,7 +144,6 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Lecture des queryParams provenant du diagnostic IA
     this.route.queryParams.subscribe(params => {
       if (params['title']) this.newTicket.title = params['title'];
       if (params['description']) this.newTicket.description = params['description'];
@@ -161,6 +167,49 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     this.analysisTrigger.complete();
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  DEDUPLICATION UTILITY
+  //  Removes duplicates by: articleId, linkedArticleId, ticketId
+  // ══════════════════════════════════════════════════════════════════════
+  private deduplicateSuggestions(items: SuggestionItem[]): SuggestionItem[] {
+    const seen = new Set<string>();
+    return items.filter(item => {
+      // Build a unique key per item type
+      let key: string;
+      if (item.type === 'KB_ARTICLE') {
+        key = `KB_${item.articleId ?? item.title}`;
+      } else if (item.type === 'SAME_USER_TICKET') {
+        key = `SAME_${item.ticketId ?? item.linkedArticleId ?? item.title}`;
+      } else {
+        key = `OTHER_${item.linkedArticleId ?? item.title}`;
+      }
+
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  trackBy functions — prevent ngFor from re-rendering unchanged items
+  // ══════════════════════════════════════════════════════════════════════
+  trackBySuggestion(index: number, item: SuggestionItem): string {
+    if (item.type === 'KB_ARTICLE') return `KB_${item.articleId}`;
+    if (item.type === 'SAME_USER_TICKET') return `SAME_${item.ticketId}`;
+    return `OTHER_${item.linkedArticleId ?? index}`;
+  }
+
+  trackByTicketId(index: number, ticket: Ticket): number {
+    return ticket.id;
+  }
+
+  trackByCommentId(index: number, comment: TicketComment): number {
+    return comment.id;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  VOICE
+  // ══════════════════════════════════════════════════════════════════════
   private initVoiceRecognition(): void {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { this.voiceSupported = false; return; }
@@ -269,6 +318,9 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  FORM HELPERS
+  // ══════════════════════════════════════════════════════════════════════
   emptyTicket(): CreateTicketRequest {
     return { title: '', description: '', priority: 'MEDIUM', category: 'SUPPORT', departement: undefined, assignedToId: undefined, tags: [] };
   }
@@ -278,6 +330,7 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     this.tagInput = '';
     this.selectedFiles = [];
     this.cancelVoice();
+    this.clearSuggestions();
   }
 
   addTag(event: Event): void {
@@ -294,6 +347,9 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
 
   countByStatus(status: TicketStatus): number { return this.myTickets.filter(t => t.status === status).length; }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  DATA LOADING
+  // ══════════════════════════════════════════════════════════════════════
   loadSlaConfigs(): void {
     this.settingsService.getAllSla().subscribe({ next: (d) => this.slaConfigs = d, error: () => {} });
   }
@@ -314,7 +370,10 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   loadMyTickets(): void {
     this.isLoadingTickets = true;
     this.ticketService.getMyTickets().subscribe({
-      next: (d) => { this.myTickets = d.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()); this.isLoadingTickets = false; },
+      next: (d) => {
+        this.myTickets = d.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
+        this.isLoadingTickets = false;
+      },
       error: () => { this.isLoadingTickets = false; }
     });
   }
@@ -326,64 +385,94 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ══════════════════════════════════════════
-  //  IA — PRE-SUBMIT ANALYSIS
-  // ══════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════
+  //  AI SUGGESTION PANEL
+  // ══════════════════════════════════════════════════════════════════════
 
   private setupAutoAnalysis(): void {
-    console.log('[Suggestion] setupAutoAnalysis initialized');
     this.analysisTrigger.pipe(
       takeUntil(this.destroy$),
       debounceTime(800),
       filter(() => {
         const t = (this.newTicket.title || '').trim();
         const d = (this.newTicket.description || '').trim();
-        const pass = t.length >= 10 && d.length >= 30;
-        console.log(`[Suggestion] filter check: title=${t.length}, desc=${d.length}, pass=${pass}`);
-        return pass;
+        return t.length >= 10 && d.length >= 30;
       }),
       switchMap(() => {
-        console.log('[Suggestion] switchMap triggered, calling API');
         this.isAnalyzing = true;
+        // Reset suggestions BEFORE new request — prevents stale data accumulation
+        this.clearSuggestions();
         this.analysisSessionId = this.generateSessionId();
         return this.ticketService.preSubmitAnalysis(
           this.newTicket.title, this.newTicket.description
         ).pipe(
           timeout(30000),
           catchError(err => {
-            console.log('[Suggestion] API error:', err);
-            this.toastr.error('Erreur analyse IA: ' + (err.message || 'timeout'));
+            this.isAnalyzing = false;
             return of(null as unknown as TicketSuggestionResponse);
           })
         );
       })
     ).subscribe(response => {
-      console.log('[Suggestion] subscribe response:', JSON.stringify(response));
-      console.log('[Suggestion] hasSuggestions value:', response?.hasSuggestions);
-      console.log('[Suggestion] suggestions length:', response?.suggestions?.length);
       this.isAnalyzing = false;
-      if (response && response.hasSuggestions) {
-        console.log('[Suggestion] has suggestions, showing panel');
-        this.suggestions = response.suggestions;
+      if (response && response.hasSuggestions && response.suggestions?.length > 0) {
+        // ── CRITICAL: deduplicate before assigning to state ──
+        const unique = this.deduplicateSuggestions(response.suggestions);
+        // Always REPLACE (not push) — avoids accumulation across calls
+        this.suggestions = unique;
         this.aiRecommendation = response.aiRecommendation;
         this.analysisConfidence = response.confidence;
-        this.hasSuggestions = true;
-        this.showSuggestionPanel = true;
-        this.trackAnalytics('SHOWN');
+        this.hasSuggestions = unique.length > 0;
+        this.showSuggestionPanel = unique.length > 0;
+        this.showAllSuggestions = false;
+        if (this.hasSuggestions) this.trackAnalytics('SHOWN');
       } else {
-        console.log('[Suggestion] no suggestions or null, clearing');
         this.clearSuggestions();
       }
     });
   }
 
   onFormFieldChange(): void {
-    console.log('[Suggestion] onFormFieldChange called');
     this.analysisTrigger.next();
+  }
+
+  get primarySuggestion(): SuggestionItem | null {
+    return this.suggestions.length > 0 ? this.suggestions[0] : null;
+  }
+
+  get secondarySuggestions(): SuggestionItem[] {
+    return this.suggestions.slice(1);
+  }
+
+  get confidencePercent(): number {
+    return Math.round(this.analysisConfidence * 100);
+  }
+
+  getConfidenceTier(score: number): string {
+    if (score >= 0.8) return 'tier-high';
+    if (score >= 0.6) return 'tier-medium';
+    return 'tier-low';
+  }
+
+  getSuggestionTypeLabel(type: string): string {
+    return {
+      'KB_ARTICLE': 'Base de connaissances',
+      'SAME_USER_TICKET': 'Votre historique',
+      'OTHER_USER_TICKET': 'Ticket similaire'
+    }[type] || type;
+  }
+
+  getSuggestionTypeIcon(type: string): string {
+    return {
+      'KB_ARTICLE': 'fas fa-book-open',
+      'SAME_USER_TICKET': 'fas fa-history',
+      'OTHER_USER_TICKET': 'fas fa-users'
+    }[type] || 'fas fa-circle';
   }
 
   viewSuggestionDetails(suggestion: SuggestionItem): void {
     this.trackAnalytics('VIEWED', suggestion);
+    this.activeSuggestion = suggestion;
     this.isLoadingSolution = true;
     this.showSolutionModal = true;
 
@@ -391,16 +480,19 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
       this.solutionTitle = suggestion.title;
       this.solutionDescription = suggestion.description || '';
       this.solutionContent = suggestion.solution || '';
+      this.solutionCreatedAt = suggestion.createdAt || '';
       this.isLoadingSolution = false;
     } else if (suggestion.linkedArticleId) {
       this.solutionTitle = suggestion.title;
       this.solutionDescription = '';
-      this.solutionContent = 'Chargement de la solution...';
+      this.solutionContent = '';
+      this.solutionCreatedAt = suggestion.resolvedDate || '';
       this.knowledgeBaseService.getArticleById(suggestion.linkedArticleId).subscribe({
         next: (article) => {
           this.solutionTitle = article.title;
           this.solutionDescription = article.description || '';
           this.solutionContent = article.solution || '';
+          this.solutionCreatedAt = article.createdAt || suggestion.resolvedDate || '';
           this.isLoadingSolution = false;
         },
         error: () => {
@@ -412,22 +504,32 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
       this.solutionTitle = suggestion.title;
       this.solutionDescription = '';
       this.solutionContent = 'Aucune solution disponible.';
+      this.solutionCreatedAt = '';
       this.isLoadingSolution = false;
     }
   }
 
   closeSolutionModal(): void {
     this.showSolutionModal = false;
+    this.activeSuggestion = null;
     this.solutionTitle = '';
     this.solutionDescription = '';
     this.solutionContent = '';
+    this.solutionCreatedAt = '';
   }
 
   markAsSolved(): void {
     this.trackAnalytics('AVOIDED');
     this.toastr.success('Heureux que votre problème soit résolu !');
+    this.closeSolutionModal();
     this.clearSuggestions();
     this.resetForm();
+  }
+
+  createTicketAnyway(): void {
+    this.closeSolutionModal();
+    this.trackAnalytics('CREATED_ANYWAY');
+    this.submitTicket();
   }
 
   clearSuggestions(): void {
@@ -436,6 +538,7 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     this.suggestions = [];
     this.aiRecommendation = '';
     this.analysisConfidence = 0;
+    this.showAllSuggestions = false;
   }
 
   private trackAnalytics(eventType: string, suggestion?: SuggestionItem): void {
@@ -455,6 +558,9 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     return 'sug-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  TICKET SUBMIT
+  // ══════════════════════════════════════════════════════════════════════
   submitTicket(): void {
     if (!this.newTicket.title?.trim()) { this.toastr.error('Le titre est obligatoire'); return; }
     if (!this.newTicket.description?.trim()) { this.toastr.error('La description est obligatoire'); return; }
@@ -505,6 +611,9 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  MODAL / COMMENTS / HISTORY
+  // ══════════════════════════════════════════════════════════════════════
   openViewModal(ticket: Ticket): void {
     this.viewedTicket = ticket; this.isViewModalOpen = true; this.activeTab = 'details';
     this.ticketHistory = []; this.comments = []; this.newComment = ''; this.isInternalNote = false;
@@ -514,38 +623,58 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   loadComments(id: number): void {
     this.isLoadingComments = true;
     this.commentService.getComments(id, 'INTERNAL').subscribe({
-      next: (d) => { this.comments = d; this.isLoadingComments = false; }, error: () => { this.isLoadingComments = false; }
+      next: (d) => { this.comments = d; this.isLoadingComments = false; },
+      error: () => { this.isLoadingComments = false; }
     });
   }
 
   sendComment(): void {
     if (!this.newComment.trim() || !this.viewedTicket) return;
     this.isSendingComment = true;
-    this.commentService.addComment(this.viewedTicket.id, { content: this.newComment.trim(), internalNote: this.isInternalNote, source: 'INTERNAL' }).subscribe({
-      next: (c) => { this.comments.push(c); this.newComment = ''; this.isInternalNote = false; this.isSendingComment = false; },
+    this.commentService.addComment(this.viewedTicket.id, {
+      content: this.newComment.trim(),
+      internalNote: this.isInternalNote,
+      source: 'INTERNAL'
+    }).subscribe({
+      next: (c) => {
+        this.comments = [...this.comments, c]; // immutable update
+        this.newComment = ''; this.isInternalNote = false; this.isSendingComment = false;
+      },
       error: () => { this.isSendingComment = false; }
     });
   }
 
   deleteComment(c: TicketComment): void {
     if (!this.viewedTicket || !confirm('Supprimer ce commentaire ?')) return;
-    this.commentService.deleteComment(this.viewedTicket.id, c.id).subscribe({ next: () => { this.comments = this.comments.filter(x => x.id !== c.id); } });
+    this.commentService.deleteComment(this.viewedTicket.id, c.id).subscribe({
+      next: () => { this.comments = this.comments.filter(x => x.id !== c.id); }
+    });
   }
 
   canDeleteComment(c: TicketComment): boolean { return c.authorId === this.currentUserId; }
   getInitial(n: string): string { return n ? n.charAt(0).toUpperCase() : '?'; }
-  getCommentRoleLabel(r: string): string { return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'USER': 'Utilisateur' }[r] || r; }
+  getCommentRoleLabel(r: string): string {
+    return { 'ADMIN': 'Admin', 'BUSINESS_ANALYST': 'BA', 'USER': 'Utilisateur' }[r] || r;
+  }
   closeViewModal(): void { this.isViewModalOpen = false; this.viewedTicket = null; this.ticketHistory = []; }
 
   loadHistory(id: number): void {
     this.isLoadingHistory = true; this.ticketHistory = [];
     this.ticketService.getTicketHistory(id).subscribe({
-      next: (d) => { this.ticketHistory = d; this.isLoadingHistory = false; }, error: () => { this.isLoadingHistory = false; }
+      next: (d) => { this.ticketHistory = d; this.isLoadingHistory = false; },
+      error: () => { this.isLoadingHistory = false; }
     });
   }
 
-  getHistoryFieldLabel(f: string): string { return { 'status': 'Statut', 'priority': 'Priorité', 'assignee': 'Assigné à', 'title': 'Titre', 'description': 'Description', 'category': 'Catégorie' }[f] || f; }
-  getHistoryDotClass(f: string): string { return { 'status': 'dot-status', 'priority': 'dot-priority', 'assignee': 'dot-assignee' }[f] || 'dot-default'; }
+  // ══════════════════════════════════════════════════════════════════════
+  //  DISPLAY HELPERS
+  // ══════════════════════════════════════════════════════════════════════
+  getHistoryFieldLabel(f: string): string {
+    return { 'status': 'Statut', 'priority': 'Priorité', 'assignee': 'Assigné à', 'title': 'Titre', 'description': 'Description', 'category': 'Catégorie' }[f] || f;
+  }
+  getHistoryDotClass(f: string): string {
+    return { 'status': 'dot-status', 'priority': 'dot-priority', 'assignee': 'dot-assignee' }[f] || 'dot-default';
+  }
 
   getSLADeadlineLabel(priority: string): string {
     const sla = this.slaConfigs.find(s => s.priorityLevel === priority);
@@ -582,7 +711,6 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
-
     for (const file of Array.from(input.files)) {
       if (file.size > this.MAX_FILE_SIZE) {
         this.toastr.error(`Le fichier ${file.name} dépasse 2,097 KB`);
@@ -590,7 +718,6 @@ export class CreateTicketComponent implements OnInit, OnDestroy {
       }
       this.selectedFiles.push(file);
     }
-
     input.value = '';
   }
 
