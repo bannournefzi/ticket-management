@@ -30,6 +30,8 @@ import { MeetingRoomComponent } from './meetings/meeting-room/meeting-room.compo
 import { UserMeetingsComponent } from './meetings/user-meetings/user-meetings.component';
 import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.component';
 import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calendar.component';
+import { AuditHistoryComponent } from './Metier/audit-history/audit-history.component';
+import { AuditLogsComponent } from './admin/audit-logs/audit-logs.component';
 
 
 const routes: Routes = [
@@ -67,6 +69,8 @@ const routes: Routes = [
       { path: 'metier/diagnostic', component: InteractiveTreeComponent,  canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'ASSISTANT_DEPANNAGE' } },
 { path: 'metier/meeting-calendar', component: MetierCalendarComponent,
   canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_REUNIONS' } },
+      { path: 'metier/history', component: AuditHistoryComponent,
+        canActivate: [RoleGuard], data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST'], pageKey: 'AUDIT_HISTORY' } },
 
       {
         path: 'admin', canActivate: [RoleGuard], data: { role: 'ROLE_ADMIN' },
@@ -78,6 +82,7 @@ const routes: Routes = [
           { path: 'groups/create', component: GroupFormComponent },
           { path: 'groups/:id', component: GroupDetailComponent },
           { path: 'groups/:id/edit', component: GroupFormComponent },
+          { path: 'logs', component: AuditLogsComponent, data: { pageKey: 'ADMIN_AUDIT_LOGS' } },
         ]
       },
       {

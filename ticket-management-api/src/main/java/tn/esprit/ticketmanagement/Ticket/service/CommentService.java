@@ -10,6 +10,8 @@ import tn.esprit.ticketmanagement.Ticket.entity.Comment;
 import tn.esprit.ticketmanagement.Ticket.entity.Ticket;
 import tn.esprit.ticketmanagement.Ticket.repository.CommentRepository;
 import tn.esprit.ticketmanagement.Ticket.repository.TicketRepository;
+import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
+import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.mantis.MantisService;
 
@@ -27,6 +29,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final TicketRepository ticketRepository;
     private final MantisService mantisService;
+    private final AuditLogService auditLogService;
 
     // ══════════════════════════════════════════
     // Constants
@@ -86,6 +89,9 @@ public class CommentService {
             log.debug("Commentaire source=INTERNAL — non synchronisé vers Mantis");
         }
 
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_CREATE_COMMENT,
+                "Ticket", "Comment", saved.getId().longValue(),
+                "Commentaire ajouté au ticket #" + ticketId + " par " + currentUser.fullName());
         return convertToDTO(saved);
     }
 
@@ -223,6 +229,10 @@ public class CommentService {
         }
 
         commentRepository.delete(comment);
+
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_DELETE_COMMENT,
+                "Ticket", "Comment", commentId.longValue(),
+                "Commentaire #" + commentId + " supprimé du ticket #" + comment.getTicket().getId());
     }
 
     /**

@@ -19,6 +19,8 @@ import tn.esprit.ticketmanagement.auth.dto.AuthenticationRequest;
 import tn.esprit.ticketmanagement.auth.dto.AuthenticationResponse;
 import tn.esprit.ticketmanagement.auth.email.EmailTemplateName;
 import tn.esprit.ticketmanagement.auth.entity.RegistrationRequest;
+import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
+import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.User.service.UserPagePermissionService;
 import tn.esprit.ticketmanagement.role.Role;
 import tn.esprit.ticketmanagement.role.RoleRepository;
@@ -46,6 +48,7 @@ public class AuthenticationService {
     private final jwtService jwtservice;
     private final PlatformNotificationService platformNotificationService;
     private final UserPagePermissionService userPagePermissionService;
+    private final AuditLogService auditLogService;
 
     @Value("${application.mailing.frontend.activation-url}")
     private String activationUrl;
@@ -71,6 +74,10 @@ public class AuthenticationService {
         userRepository.save(user);
         userPagePermissionService.grantAllDefaultPages(user.getId());
         sendValidationEmail(user);
+
+        auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_REGISTER, "Auth",
+                "User", user.getId().longValue(),
+                "Inscription de " + user.getEmail());
 
         // Notify all admins about new user registration
         platformNotificationService.createAndPushToRole("ROLE_ADMIN",
@@ -175,6 +182,11 @@ public class AuthenticationService {
 
         userSessionRepository.save(session);
 
+        auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_LOGIN, "Auth",
+                "User", user.getId().longValue(),
+                "Connexion de " + user.getEmail() + " depuis " + ipAddress,
+                ipAddress, userAgent);
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();
@@ -201,5 +213,9 @@ public class AuthenticationService {
 
         savedToken.setValidatedAt(LocalDateTime.now());
         tokenRepository.save(savedToken);
+
+        auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_ACTIVATE_ACCOUNT, "Auth",
+                "User", user.getId().longValue(),
+                "Activation du compte " + user.getEmail());
     }
 }

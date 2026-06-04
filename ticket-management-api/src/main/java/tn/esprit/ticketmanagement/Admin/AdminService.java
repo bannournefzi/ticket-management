@@ -19,6 +19,8 @@ import tn.esprit.ticketmanagement.User.repository.TokenRepository;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.auth.service.Emailservice;
 import tn.esprit.ticketmanagement.role.Role;
+import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
+import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.User.service.UserPagePermissionService;
 import tn.esprit.ticketmanagement.role.RoleRepository;
 
@@ -42,6 +44,7 @@ public class AdminService {
     private final TokenRepository tokenRepository;
     private final JdbcTemplate jdbcTemplate;
     private final UserPagePermissionService userPagePermissionService;
+    private final AuditLogService auditLogService;
 
 
 

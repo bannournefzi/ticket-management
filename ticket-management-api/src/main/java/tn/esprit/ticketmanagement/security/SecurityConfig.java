@@ -64,6 +64,8 @@ public class SecurityConfig {
                                 ).permitAll()
                                 .requestMatchers("/admin/permissions/**").hasRole("ADMIN")
                                 .requestMatchers("/user/permissions/my-pages").authenticated()
+                                .requestMatchers("/audit/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/audit/my-history").authenticated()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))

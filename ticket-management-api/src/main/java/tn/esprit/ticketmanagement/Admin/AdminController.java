@@ -3,11 +3,15 @@ package tn.esprit.ticketmanagement.Admin;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.ticketmanagement.Admin.dto.CreateUserRequest;
 import tn.esprit.ticketmanagement.Admin.dto.UserDTO;
 import tn.esprit.ticketmanagement.Admin.dto.UserStatsDTO;
+import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
+import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.User.enums.Departement;
+import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.mantis.MantisService;
 
 import java.util.HashMap;
@@ -23,6 +27,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final MantisService mantisService;
+    private final AuditLogService auditLogService;
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -37,32 +42,62 @@ public class AdminController {
      @PutMapping("/users/{id}")
     public ResponseEntity<UserDTO> updateUser(
             @PathVariable Integer id,
-            @RequestBody UserDTO userDTO
+            @RequestBody UserDTO userDTO,
+            @AuthenticationPrincipal User admin
     ) {
-        return ResponseEntity.ok(adminService.updateUser(id, userDTO));
+        UserDTO result = adminService.updateUser(id, userDTO);
+        auditLogService.log(admin.getId(), admin.fullName(), AuditLog.ACTION_UPDATE_USER,
+                "Admin", "User", id.longValue(),
+                "Mise à jour de l'utilisateur #" + id);
+        return ResponseEntity.ok(result);
     }
 
     @PatchMapping("/users/{id}/role")
     public ResponseEntity<UserDTO> updateUserRole(
             @PathVariable Integer id,
-            @RequestParam String role
+            @RequestParam String role,
+            @AuthenticationPrincipal User admin
     ) {
-        return ResponseEntity.ok(adminService.updateUserRole(id, role));
+        UserDTO result = adminService.updateUserRole(id, role);
+        auditLogService.log(admin.getId(), admin.fullName(), AuditLog.ACTION_UPDATE_USER_ROLE,
+                "Admin", "User", id.longValue(),
+                "Rôle de l'utilisateur #" + id + " changé en " + role);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/users")
-    public ResponseEntity<UserDTO> createUser(@RequestBody CreateUserRequest request) {
-        return ResponseEntity.ok(adminService.createUser(request));
+    public ResponseEntity<UserDTO> createUser(
+            @RequestBody CreateUserRequest request,
+            @AuthenticationPrincipal User admin
+    ) {
+        UserDTO result = adminService.createUser(request);
+        auditLogService.log(admin.getId(), admin.fullName(), AuditLog.ACTION_CREATE_USER,
+                "Admin", "User", result.getId().longValue(),
+                "Création de l'utilisateur " + result.getEmail());
+        return ResponseEntity.ok(result);
     }
 
     @PatchMapping("/users/{id}/toggle-status")
-    public ResponseEntity<UserDTO> toggleUserStatus(@PathVariable Integer id) {
-        return ResponseEntity.ok(adminService.toggleUserStatus(id));
+    public ResponseEntity<UserDTO> toggleUserStatus(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal User admin
+    ) {
+        UserDTO result = adminService.toggleUserStatus(id);
+        auditLogService.log(admin.getId(), admin.fullName(), AuditLog.ACTION_TOGGLE_USER_STATUS,
+                "Admin", "User", id.longValue(),
+                "Statut de l'utilisateur #" + id + " basculé");
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal User admin
+    ) {
         adminService.deleteUser(id);
+        auditLogService.log(admin.getId(), admin.fullName(), AuditLog.ACTION_DELETE_USER,
+                "Admin", "User", id.longValue(),
+                "Suppression de l'utilisateur #" + id);
         return ResponseEntity.noContent().build();
     }
 
@@ -90,9 +125,14 @@ public class AdminController {
     @PatchMapping("/users/{id}/departement")
     public ResponseEntity<UserDTO> updateUserDepartement(
             @PathVariable Integer id,
-            @RequestParam Departement departement
+            @RequestParam Departement departement,
+            @AuthenticationPrincipal User admin
     ) {
-        return ResponseEntity.ok(adminService.updateUserDepartement(id, departement));
+        UserDTO result = adminService.updateUserDepartement(id, departement);
+        auditLogService.log(admin.getId(), admin.fullName(), AuditLog.ACTION_UPDATE_USER,
+                "Admin", "User", id.longValue(),
+                "Département de l'utilisateur #" + id + " changé en " + departement);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/mantis-users")

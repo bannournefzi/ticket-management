@@ -43,6 +43,8 @@ import { UserMeetingsComponent } from './meetings/user-meetings/user-meetings.co
 import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.component';
 import { UserSelectorComponent } from './meetings/user-selector/user-selector.component';
 import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calendar.component';
+import { AuditHistoryComponent } from './Metier/audit-history/audit-history.component';
+import { AuditLogsComponent } from './admin/audit-logs/audit-logs.component';
 
 
 @NgModule({
@@ -80,6 +82,8 @@ import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calen
     BaMeetingsComponent,
     UserSelectorComponent,
     MetierCalendarComponent,
+    AuditHistoryComponent,
+    AuditLogsComponent,
     
   ],
   imports: [

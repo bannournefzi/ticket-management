@@ -1,0 +1,130 @@
+<div class="audit-container">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="audit-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <i class="fas fa-history"></i> Mon Historique
+      </h1>
+      <p class="page-subtitle">Consultez l'ensemble de vos actions sur la plateforme</p>
+    </div>
+    <div class="header-right">
+      <select [(ngModel)]="actionTypeFilter" (change)="applyFilters()" class="filter-select">
+        <option value="">Toutes les actions</option>
+        <option value="LOGIN">Connexion</option>
+        <option value="CREATE_TICKET">Création ticket</option>
+        <option value="UPDATE_TICKET">Modification ticket</option>
+        <option value="CHANGE_TICKET_STATUS">Changement statut</option>
+        <option value="ASSIGN_TICKET">Assignation</option>
+        <option value="CREATE_COMMENT">Commentaire</option>
+        <option value="UPLOAD_ATTACHMENT">Pièce jointe</option>
+        <option value="CHANGE_PASSWORD">Mot de passe</option>
+      </select>
+      <button class="btn-refresh" (click)="loadHistory()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerte -->
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ═══ SKELETON LOADER ═══ -->
+  <div class="skeleton-wrap" *ngIf="isLoading">
+    <div class="skeleton-header"></div>
+    <div class="skeleton-row" *ngFor="let _ of [1,2,3,4,5]">
+      <div class="skeleton-cell skeleton-date"></div>
+      <div class="skeleton-cell skeleton-action"></div>
+      <div class="skeleton-cell skeleton-module"></div>
+      <div class="skeleton-cell skeleton-details"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TABLE ═══ -->
+  <div class="table-card" *ngIf="!isLoading">
+    <div class="table-meta">
+      <span class="table-count">
+        <i class="fas fa-list-ul"></i>
+        {{ totalElements }} entrée{{ totalElements > 1 ? 's' : '' }}
+      </span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="audit-table">
+
+        <!-- ── THEAD ── -->
+        <thead>
+          <tr>
+            <th class="col-date">Date</th>
+            <th class="col-action">Action</th>
+            <th class="col-module">Module</th>
+            <th class="col-entity">Entité</th>
+            <th class="col-details">Détails</th>
+          </tr>
+        </thead>
+
+        <!-- ── TBODY ── -->
+        <tbody>
+          <tr *ngFor="let log of logs" class="audit-row">
+            <!-- DATE -->
+            <td class="td-date" [title]="log.createdDate | date:'dd/MM/yyyy HH:mm'">
+              <div class="date-block">
+                <span class="date-relative">{{ getTimeAgo(log.createdDate) }}</span>
+                <span class="date-full">{{ log.createdDate | date:'dd/MM/yy HH:mm' }}</span>
+              </div>
+            </td>
+
+            <!-- ACTION -->
+            <td class="td-action">
+              <span class="action-badge" [ngClass]="getActionConfig(log.actionType).color">
+                <i [class]="getActionConfig(log.actionType).icon"></i>
+                {{ getActionConfig(log.actionType).label }}
+              </span>
+            </td>
+
+            <!-- MODULE -->
+            <td class="td-module">
+              <span class="module-chip">{{ log.module }}</span>
+            </td>
+
+            <!-- ENTITÉ -->
+            <td class="td-entity">
+              <span class="entity-type">{{ log.entityType }}</span>
+              <span class="entity-id" *ngIf="log.entityId">#{{ log.entityId }}</span>
+            </td>
+
+            <!-- DÉTAILS -->
+            <td class="td-details">
+              <span class="details-text">{{ log.details || '—' }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state-inline" *ngIf="logs.length === 0">
+      <div class="empty-illustration"><i class="fas fa-history"></i></div>
+      <h3 class="empty-title">{{ hasActiveFilters ? 'Aucun résultat' : 'Aucune activité' }}</h3>
+      <p class="empty-desc">{{ hasActiveFilters ? 'Essayez de modifier vos filtres.' : 'Vous n\'avez pas encore d\'activité enregistrée.' }}</p>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="totalElements > 0">
+      <div class="page-info">{{ getPageStart() }}–{{ getPageEnd() }} sur {{ totalElements }}</div>
+      <div class="page-controls" *ngIf="totalPages > 1">
+        <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(0)"><i class="fas fa-angle-double-left"></i></button>
+        <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(currentPage - 1)"><i class="fas fa-chevron-left"></i></button>
+        <span class="page-numbers">
+          <button *ngFor="let p of getPages()" class="page-num" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p + 1 }}</button>
+        </span>
+        <button class="page-btn" [disabled]="currentPage === totalPages - 1" (click)="goToPage(currentPage + 1)"><i class="fas fa-chevron-right"></i></button>
+        <button class="page-btn" [disabled]="currentPage === totalPages - 1" (click)="goToPage(totalPages - 1)"><i class="fas fa-angle-double-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+</div>

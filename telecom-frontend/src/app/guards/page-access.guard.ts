@@ -9,7 +9,8 @@ import { ToastrService } from 'ngx-toastr';
 const PUBLIC_PAGES = new Set([
   'DASHBOARD', 'CREER_TICKET', 'MES_TICKETS',
   'CALENDRIER_SLA', 'MESSAGES', 'MON_PROFIL',
-  'CALENDRIER_REUNIONS', 'REUNIONS'
+  'CALENDRIER_REUNIONS', 'REUNIONS',
+  'AUDIT_HISTORY', 'ADMIN_AUDIT_LOGS'
 ]);
 
 @Injectable({

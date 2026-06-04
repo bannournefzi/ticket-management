@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
+import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
+import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.auth.dto.ChangePasswordRequest;
 import tn.esprit.ticketmanagement.auth.dto.ForgotPasswordRequest;
 import tn.esprit.ticketmanagement.auth.entity.PasswordResetToken;
@@ -24,6 +26,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final Emailservice emailservice;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     // ────────────────────────────────────────────────────────────────────────────
     // FORGOT PASSWORD  →  send reset link by email
@@ -58,6 +61,10 @@ public class PasswordResetService {
                         user.getFirstName(),
                         resetLink
                 );
+
+                auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_FORGOT_PASSWORD,
+                        "Auth", "User", user.getId().longValue(),
+                        "Demande de réinitialisation de mot de passe pour " + user.getEmail());
 
             } catch (MessagingException e) {
                 throw new RuntimeException("Erreur lors de l'envoi de l'email", e);
@@ -95,6 +102,10 @@ public class PasswordResetService {
 
         resetToken.setUsedAt(LocalDateTime.now());
         tokenRepository.save(resetToken);
+
+        auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_RESET_PASSWORD,
+                "Auth", "User", user.getId().longValue(),
+                "Réinitialisation du mot de passe pour " + user.getEmail());
     }
 
     // ────────────────────────────────────────────────────────────────────────────
@@ -123,5 +134,9 @@ public class PasswordResetService {
         user.setEnabled(true);
         user.setAccountLocked(false);
         userRepository.save(user);
+
+        auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_CHANGE_PASSWORD,
+                "Auth", "User", user.getId().longValue(),
+                "Changement de mot de passe pour " + user.getEmail());
     }
 }

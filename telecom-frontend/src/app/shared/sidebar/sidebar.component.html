@@ -149,6 +149,12 @@
         <span class="nav-text">Base de Connaissances</span>
       </a>
 
+      <a routerLink="/metier/history" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Historique' : ''">
+        <i class="fas fa-history"></i>
+        <span class="nav-text">Historique</span>
+      </a>
+
     </ng-container>
 
     <!-- ══════════════ ADMIN ══════════════ -->
@@ -192,6 +198,12 @@
       <i class="fas fa-comment-dots"></i>
       <span class="nav-text">Messages</span>
     </a>
+
+      <a routerLink="/admin/logs" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Journaux d\'Audit' : ''">
+        <i class="fas fa-clipboard-list"></i>
+        <span class="nav-text">Journaux d'Audit</span>
+      </a>
 
       <a routerLink="/admin/settings" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Paramètres' : ''">

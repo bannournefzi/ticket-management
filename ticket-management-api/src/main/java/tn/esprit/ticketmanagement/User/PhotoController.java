@@ -8,6 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
+import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 
@@ -20,6 +22,7 @@ import java.io.IOException;
 public class PhotoController {
 
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     /**
      * Upload profile photo
@@ -52,6 +55,9 @@ public class PhotoController {
         user.setProfilePhotoType(contentType);
         userRepository.save(user);
 
+        auditLogService.log(id, user.fullName(), AuditLog.ACTION_UPDATE_PROFILE_PHOTO,
+                "User", "User", id.longValue(),
+                "Photo de profil uploadée pour l'utilisateur #" + id);
         return ResponseEntity.ok("Photo uploadée avec succès");
     }
 
@@ -90,6 +96,9 @@ public class PhotoController {
         user.setProfilePhotoType(null);
         userRepository.save(user);
 
+        auditLogService.log(id, user.fullName(), AuditLog.ACTION_DELETE_PROFILE_PHOTO,
+                "User", "User", id.longValue(),
+                "Photo de profil supprimée pour l'utilisateur #" + id);
         return ResponseEntity.noContent().build();
     }
 

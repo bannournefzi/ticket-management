@@ -34,6 +34,8 @@ import tn.esprit.ticketmanagement.Ticket.repository.TicketRepository;
 import tn.esprit.ticketmanagement.User.entity.User;
 import tn.esprit.ticketmanagement.User.enums.Departement;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
+import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
+import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.mantis.MantisProperties;
 import tn.esprit.ticketmanagement.mantis.MantisService;
 import jakarta.persistence.EntityManager;
@@ -72,6 +74,7 @@ public class TicketService {
     private EntityManager em;
     private final GroupRepository groupRepository;
     private final GroupMembershipRepository groupMembershipRepository;
+    private final AuditLogService auditLogService;
 
 
 
@@ -125,6 +128,9 @@ public class TicketService {
         log.info("Ticket #{} créé par {} [{}] (local only, not pushed to Mantis)",
                 saved.getId(), currentUser.fullName(), saved.getPriority());
 
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_CREATE_TICKET,
+                "Ticket", "Ticket", saved.getId().longValue(),
+                "Création du ticket #" + saved.getId() + " : " + saved.getTitle());
         return convertToDTO(saved);
     }
     // ══════════════════════════════════════════
@@ -326,6 +332,9 @@ return tickets.stream()
         log.info("Ticket #{} assigné à {} par {}",
                 ticketId, assignee.fullName(), currentUser.fullName());
 
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_ASSIGN_TICKET,
+                "Ticket", "Ticket", ticketId.longValue(),
+                "Ticket #" + ticketId + " assigné à " + assignee.fullName());
         return convertToDTO(saved);
     }
 
@@ -364,6 +373,10 @@ return tickets.stream()
                 ticketId);
 
         Ticket saved = ticketRepository.save(ticket);
+
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_TOGGLE_COMMENTS,
+                "Ticket", "Ticket", ticketId.longValue(),
+                (enabled ? "Activation" : "Désactivation") + " des commentaires du ticket #" + ticketId);
         return convertToDTO(saved);
     }
 
@@ -426,6 +439,9 @@ return tickets.stream()
         log.info("Ticket #{} : {} → {} par {}",
                 ticketId, oldStatus, newStatus, currentUser.fullName());
 
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_CHANGE_TICKET_STATUS,
+                "Ticket", "Ticket", ticketId.longValue(),
+                "Ticket #" + ticketId + " : " + oldStatus + " → " + newStatus);
         return convertToDTO(saved);
     }
 
@@ -503,6 +519,9 @@ return tickets.stream()
             ticket.setTags(request.getTags());
         }
 
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_UPDATE_TICKET,
+                "Ticket", "Ticket", ticketId.longValue(),
+                "Mise à jour du ticket #" + ticketId);
         return convertToDTO(ticketRepository.save(ticket));
     }
 
@@ -775,6 +794,10 @@ return tickets.stream()
         }
 
         Ticket saved = ticketRepository.save(ticket);
+
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_PUSH_TO_MANTIS,
+                "Ticket", "Ticket", ticketId.longValue(),
+                "Ticket #" + ticketId + " poussé vers Mantis #" + mantisId);
         return convertToDTO(saved);
     }
 
@@ -862,5 +885,10 @@ return tickets.stream()
         } catch (Exception e) {
             log.error("Erreur save attachments ticket {}: {}", ticketId, e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur sauvegarde pièces jointes", e);
-        }    }
+        }
+
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_UPLOAD_ATTACHMENT,
+                "Ticket", "Ticket", ticketId.longValue(),
+                batch.size() + " pièce(s) jointe(s) uploadée(s) sur le ticket #" + ticketId);
+    }
 }
