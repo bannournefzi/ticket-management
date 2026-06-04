@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../auth/service/auth.service';
 import { TicketService } from '../../services/ticket.service';
+import { PagePermissionService } from '../../services/page-permission.service';
 import { TicketStats } from '../../models/ticket.model';
 
 @Component({
@@ -22,7 +23,8 @@ export class SidebarComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private ticketService: TicketService
+    private ticketService: TicketService,
+    public pagePermissionService: PagePermissionService
   ) {}
 
   ngOnInit(): void {
@@ -33,6 +35,7 @@ export class SidebarComponent implements OnInit {
     const saved = localStorage.getItem('sidebarCollapsed');
     if (saved) this.isCollapsed = JSON.parse(saved);
 
+    this.pagePermissionService.loadMyPermissions().subscribe();
     this.loadStats();
   }
 

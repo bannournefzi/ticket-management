@@ -62,6 +62,8 @@ public class SecurityConfig {
                                         "/notifications/**"
 
                                 ).permitAll()
+                                .requestMatchers("/admin/permissions/**").hasRole("ADMIN")
+                                .requestMatchers("/user/permissions/my-pages").authenticated()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))

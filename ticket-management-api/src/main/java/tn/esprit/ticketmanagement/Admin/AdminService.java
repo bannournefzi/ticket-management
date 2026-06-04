@@ -19,6 +19,7 @@ import tn.esprit.ticketmanagement.User.repository.TokenRepository;
 import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.auth.service.Emailservice;
 import tn.esprit.ticketmanagement.role.Role;
+import tn.esprit.ticketmanagement.User.service.UserPagePermissionService;
 import tn.esprit.ticketmanagement.role.RoleRepository;
 
 
@@ -40,6 +41,7 @@ public class AdminService {
     private final Emailservice emailService;
     private final TokenRepository tokenRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final UserPagePermissionService userPagePermissionService;
 
 
 
@@ -95,6 +97,8 @@ public class AdminService {
                 .build();
 
         User savedUser = userRepository.save(user);
+
+        userPagePermissionService.grantAllDefaultPages(savedUser.getId());
 
         try {
             emailService.sendWelcomeEmail(
@@ -221,6 +225,9 @@ public class AdminService {
         // 5. Nettoyer les rôles et les tokens de sécurité
         jdbcTemplate.update("DELETE FROM users_roles WHERE users_id = ?", id);
         jdbcTemplate.update("DELETE FROM token WHERE user_id = ?", id);
+
+        // 5b. Nettoyage des permissions page-level
+        userPagePermissionService.deleteByUserId(id);
 
         // 6. Suppression finale de l'utilisateur !
         userRepository.deleteById(id);

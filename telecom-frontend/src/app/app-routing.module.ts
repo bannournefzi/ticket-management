@@ -4,8 +4,10 @@ import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { ValidateAccountComponent } from './auth/validate-account/validate-account.component';
 import { RoleGuard } from './guards/role.guard';
+import { PageAccessGuard } from './guards/page-access.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { MetierDashboardComponent } from './Metier/metier-dashboard/metier-dashboard.component';
+import { UserPermissionsComponent } from './admin/user-permissions/user-permissions.component';
 import { ItDashboardComponentComponent } from './BA/it-dashboard-component/it-dashboard-component.component';
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { UserListComponent } from './admin/users/user-list/user-list.component';
@@ -32,11 +34,10 @@ import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calen
 
 const routes: Routes = [
 
-
   { path: 'meetings',      component: BaMeetingsComponent,
   canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
 { path: 'metier/meetings', component: UserMeetingsComponent,
-  canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+  canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'REUNIONS' } },
 { path: 'meetings/room/:code', component: MeetingRoomComponent,
   canActivate: [RoleGuard],
   data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST'] } },
@@ -47,35 +48,35 @@ const routes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'settings', component: BaSettingsComponent},
-  
 
   {
     path: '', component: MainLayoutComponent, children: [
 
-      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
-      { path: 'create-ticket', component: CreateTicketComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
-      { path: 'my-tickets', component: TicketListComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'DASHBOARD' } },
+      { path: 'create-ticket', component: CreateTicketComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CREER_TICKET' } },
+      { path: 'my-tickets', component: TicketListComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'MES_TICKETS' } },
       { path: 'knowledge-base', component: KnowledgeBaseListComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
       { path: 'knowledge-base/:id', component: KnowledgeBaseDetailComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST', 'ROLE_ADMIN'] } },
       { path: 'business-analyst/tickets', component: BaTicketManagementComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'business-analyst', component: ItDashboardComponentComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'ticket-calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
-      { path: 'metier/calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+      { path: 'metier/calendar', component: TicketCalendarComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_SLA' } },
       { path: 'business-analyst/settings', component: BaSettingsComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
-      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'DASHBOARD' } },
       { path: 'security/sessions', component: SessionManagementComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_ADMIN'] } },
-      { path: 'metier/diagnostic', component: InteractiveTreeComponent,  canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+      { path: 'metier/diagnostic', component: InteractiveTreeComponent,  canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'ASSISTANT_DEPANNAGE' } },
 { path: 'metier/meeting-calendar', component: MetierCalendarComponent,
-  canActivate: [RoleGuard], data: { role: 'ROLE_USER' } },
+  canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_REUNIONS' } },
 
       {
         path: 'admin', canActivate: [RoleGuard], data: { role: 'ROLE_ADMIN' },
         children: [
           { path: '', component: AdminDashboardComponent, pathMatch: 'full' },
           { path: 'users', component: UserListComponent },
+          { path: 'users/:id/permissions', component: UserPermissionsComponent },
           { path: 'groups', component: GroupListComponent },
-          { path: 'groups/create', component: GroupFormComponent },        // ← ADD
-          { path: 'groups/:id', component: GroupDetailComponent },         // ← ADD
+          { path: 'groups/create', component: GroupFormComponent },
+          { path: 'groups/:id', component: GroupDetailComponent },
           { path: 'groups/:id/edit', component: GroupFormComponent },
         ]
       },

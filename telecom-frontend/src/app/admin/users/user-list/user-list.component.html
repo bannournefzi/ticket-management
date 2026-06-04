@@ -161,6 +161,9 @@
                 <button class="btn-action btn-edit" (click)="openEditModal(user)" title="Modifier">
                   <i class="fas fa-edit"></i>
                 </button>
+                <button *ngIf="user.roles.includes('ROLE_USER')" class="btn-action btn-permissions" (click)="openPermissions(user)" title="Gérer les accès">
+                  <i class="fas fa-shield-alt"></i>
+                </button>
                 <button class="btn-action btn-toggle" (click)="toggleStatus(user)"
                         [title]="user.enabled ? 'Désactiver' : 'Activer'">
                   <i [class]="user.enabled ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>

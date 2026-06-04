@@ -1,0 +1,90 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <div class="header-text">
+      <h1>Permissions applicatives</h1>
+      <p class="breadcrumb" *ngIf="user">
+        Admin <i class="fas fa-chevron-right"></i>
+        Utilisateurs <i class="fas fa-chevron-right"></i>
+        {{ user.firstName }} {{ user.lastName }}
+      </p>
+    </div>
+    <div class="header-summary" *ngIf="!isLoading">
+      <span class="summary-count">{{ grantedPages.size }}/{{ pages.length }}</span>
+      <span class="summary-label">activées</span>
+    </div>
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ errorMessage }}</span>
+    <button (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <ng-container *ngIf="!isLoading; else loading">
+    <div class="user-card" *ngIf="user">
+      <div class="user-avatar" [ngClass]="{
+        'avatar-admin': user.roles.includes('ROLE_ADMIN'),
+        'avatar-it': user.roles.includes('ROLE_BUSINESS_ANALYST'),
+        'avatar-user': user.roles.includes('ROLE_USER')
+      }">
+        {{ (user.firstName[0] || '') + (user.lastName[0] || '') }}
+      </div>
+      <div class="user-info">
+        <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+        <span class="user-email">{{ user.email }}</span>
+      </div>
+      <span class="user-role" [ngClass]="{
+        'role-admin': user.roles.includes('ROLE_ADMIN'),
+        'role-ba': user.roles.includes('ROLE_BUSINESS_ANALYST'),
+        'role-user': user.roles.includes('ROLE_USER')
+      }">
+        {{ (user.roles[0] || '').replace('ROLE_', '') }}
+      </span>
+    </div>
+
+    <div class="permissions-card">
+      <div class="card-title">
+        <i class="fas fa-sliders-h"></i>
+        Accès par fonctionnalité
+        <span class="granted-badge">{{ grantedPages.size }} / {{ pages.length }}</span>
+      </div>
+
+      <div class="section-label">
+        <i class="fas fa-lock-open"></i>
+        Accès permanents — toujours activés
+      </div>
+
+      <div class="pages-grid">
+        <div class="page-item page-public" *ngFor="let page of pages"
+             [class.item-granted]="isGranted(page.key)"
+             [class.is-public]="isPublicPage(page.key)">
+          <div class="item-icon" [class.icon-on]="isGranted(page.key)">
+            <i class="fas" [ngClass]="page.icon"></i>
+          </div>
+          <span class="item-label">{{ page.label }}</span>
+          <div class="item-status" *ngIf="isPublicPage(page.key)">
+            <i class="fas fa-check-circle" title="Toujours actif"></i>
+          </div>
+          <div class="item-toggle" *ngIf="!isPublicPage(page.key)">
+            <div class="toggle-track" [class.toggle-on]="isGranted(page.key)" [class.toggle-off]="!isGranted(page.key)"
+                 (click)="toggle(page.key, $event)">
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #loading>
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+  </ng-template>
+
+</div>

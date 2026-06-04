@@ -135,4 +135,16 @@ export class AdminService {
       `${this.baseUrl}/mantis-projects`
     );
   }
+
+  getUserPermissions(userId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/permissions/${userId}`);
+  }
+
+  grantPageAccess(userId: number, pageKey: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/permissions/${userId}/grant`, { pageKey });
+  }
+
+  revokePageAccess(userId: number, pageKey: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/permissions/${userId}/revoke`, { pageKey });
+  }
 }

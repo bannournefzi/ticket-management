@@ -402,14 +402,14 @@ return tickets.stream()
         log.info(">>> DEBUG: Ticket #{} saved, mantisId={}, newStatus={}", saved.getId(), saved.getMantisId(), newStatus);
 
         // Sync to Mantis if ticket is linked
-        if (saved.getMantisId() != null) {
-            try {
-                mantisService.updateIssueStatus(saved.getMantisId(), newStatus.name());
-                log.info("Ticket #{} status synced to Mantis #{}", saved.getId(), saved.getMantisId());
-            } catch (Exception e) {
-                log.warn("Could not sync status to Mantis: {}", e.getMessage());
-            }
-        }
+//        if (saved.getMantisId() != null) {
+//            try {
+//                mantisService.updateIssueStatus(saved.getMantisId(), newStatus.name());
+//                log.info("Ticket #{} status synced to Mantis #{}", saved.getId(), saved.getMantisId());
+//            } catch (Exception e) {
+//                log.warn("Could not sync status to Mantis: {}", e.getMessage());
+//            }
+//        }
 
         // Index for suggestion engine if resolved or closed
         if (newStatus == TicketStatus.RESOLVED || newStatus == TicketStatus.CLOSED) {

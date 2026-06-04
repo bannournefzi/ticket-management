@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Router } from '@angular/router';
 import { AdminService, UserDTO, UserStatsDTO, CreateUserRequest, UpdateUserRequest } from '../../../services/admin.service';
 import { PhotoService } from 'src/app/services/PhotoService';
 import { Subject } from 'rxjs';
@@ -68,7 +69,8 @@ export class UserListComponent implements OnInit, OnDestroy {
 
   constructor(
     private adminService: AdminService,
-    private photoService: PhotoService
+    private photoService: PhotoService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -455,6 +457,10 @@ toggleEditProject(projectName: string, event: Event): void {
         },
         error: () => this.showError('Erreur lors de la modification du statut')
       });
+  }
+
+  openPermissions(user: UserDTO): void {
+    this.router.navigate(['/admin/users', user.id, 'permissions']);
   }
 
   exportCSV(): void {

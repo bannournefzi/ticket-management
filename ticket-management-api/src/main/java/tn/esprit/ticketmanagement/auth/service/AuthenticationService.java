@@ -19,6 +19,7 @@ import tn.esprit.ticketmanagement.auth.dto.AuthenticationRequest;
 import tn.esprit.ticketmanagement.auth.dto.AuthenticationResponse;
 import tn.esprit.ticketmanagement.auth.email.EmailTemplateName;
 import tn.esprit.ticketmanagement.auth.entity.RegistrationRequest;
+import tn.esprit.ticketmanagement.User.service.UserPagePermissionService;
 import tn.esprit.ticketmanagement.role.Role;
 import tn.esprit.ticketmanagement.role.RoleRepository;
 import tn.esprit.ticketmanagement.security.jwtService;
@@ -44,6 +45,7 @@ public class AuthenticationService {
 
     private final jwtService jwtservice;
     private final PlatformNotificationService platformNotificationService;
+    private final UserPagePermissionService userPagePermissionService;
 
     @Value("${application.mailing.frontend.activation-url}")
     private String activationUrl;
@@ -67,6 +69,7 @@ public class AuthenticationService {
                 .build();
 
         userRepository.save(user);
+        userPagePermissionService.grantAllDefaultPages(user.getId());
         sendValidationEmail(user);
 
         // Notify all admins about new user registration

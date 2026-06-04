@@ -575,6 +575,7 @@ $shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
   &.btn-edit { background: $accent-lt; color: $accent; &:hover { background: $accent; color: #fff; } }
   &.btn-toggle { background: $green-lt; color: $green; &:hover { background: $green; color: #fff; } }
   &.btn-delete { background: $red-lt; color: $red; &:hover { background: $red; color: #fff; } }
+  &.btn-permissions { background: rgba(0, 188, 212, 0.12); color: #00BCD4; &:hover { background: #00BCD4; color: #fff; } }
 }
 
 // ===== EMPTY / LOADING =====

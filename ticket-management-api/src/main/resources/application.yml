@@ -41,3 +41,7 @@ springdoc:
 server:
   servlet:
     context-path: /api/v1/
+
+logging:
+  level:
+    tn.esprit.ticketmanagement.mantis: WARN

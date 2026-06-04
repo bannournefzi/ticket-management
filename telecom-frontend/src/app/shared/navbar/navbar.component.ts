@@ -2,6 +2,7 @@ import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/service/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { PagePermissionService } from '../../services/page-permission.service';
 import { Notification, NOTIFICATION_CONFIG, NotificationType } from '../../models/notification.model';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { Subject } from 'rxjs';
@@ -42,6 +43,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private notificationService: NotificationService,
+    private pagePermissionService: PagePermissionService,
     private router: Router
   ) {}
 
@@ -183,6 +185,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+    this.pagePermissionService.clearPermissions();
     this.router.navigate(['/login']);
   }
 

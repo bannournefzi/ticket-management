@@ -42,47 +42,48 @@
         <span class="nav-badge" *ngIf="myTicketCount">{{ myTicketCount }}</span>
       </a>
 
-
       <a routerLink="/metier/diagnostic" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Assistant de Dépannage' : ''">
+         class="nav-link" [title]="isCollapsed ? 'Assistant de Dépannage' : ''"
+         *ngIf="pagePermissionService.hasAccess('ASSISTANT_DEPANNAGE')">
         <i class="fas fa-robot"></i>
         <span class="nav-text">Assistant de Dépannage</span>
       </a>
-
-     
-     
 
       <div class="nav-section">
         <span class="nav-section-label">Outils</span>
       </div>
 
       <a routerLink="/knowledge-base" routerLinkActive="active"
-         class="nav-link" [title]="isCollapsed ? 'Base de Connaissances' : ''">
+         class="nav-link" [title]="isCollapsed ? 'Base de Connaissances' : ''"
+         *ngIf="pagePermissionService.hasAccess('BASE_CONNAISSANCES')">
         <i class="fas fa-book"></i>
         <span class="nav-text">Base de Connaissances</span>
       </a>
 
- <a routerLink="/metier/calendar" routerLinkActive="active"
+      <a routerLink="/metier/calendar" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Calendrier' : ''">
         <i class="fas fa-calendar-alt"></i>
         <span class="nav-text">Calendrier SLA</span>
       </a>
-      <a routerLink="/chat" routerLinkActive="active"
-       class="nav-link" [title]="isCollapsed ? 'Messages' : ''">
-      <i class="fas fa-comment-dots"></i>
-      <span class="nav-text">Messages</span>
-    </a>
-    <a routerLink="/metier/meeting-calendar" routerLinkActive="active"
-   class="nav-link" [title]="isCollapsed ? 'Calendrier Réunions' : ''">
-  <i class="fas fa-video"></i>
-  <span class="nav-text">Calendrier Réunions</span>
-</a>
 
-    <a routerLink="/metier/meetings" routerLinkActive="active"
-   class="nav-link" [title]="isCollapsed ? 'Réunions' : ''">
-  <i class="fas fa-video"></i>
-  <span class="nav-text">Réunions</span>
-</a>
+      <a routerLink="/chat" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Messages' : ''">
+        <i class="fas fa-comment-dots"></i>
+        <span class="nav-text">Messages</span>
+      </a>
+
+      <a routerLink="/metier/meeting-calendar" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Calendrier Réunions' : ''">
+        <i class="fas fa-video"></i>
+        <span class="nav-text">Calendrier Réunions</span>
+      </a>
+
+      <a routerLink="/metier/meetings" routerLinkActive="active"
+         class="nav-link" [title]="isCollapsed ? 'Réunions' : ''">
+        <i class="fas fa-video"></i>
+        <span class="nav-text">Réunions</span>
+      </a>
+
       <a routerLink="/metier/history" routerLinkActive="active"
          class="nav-link" [title]="isCollapsed ? 'Historique' : ''">
         <i class="fas fa-history"></i>
