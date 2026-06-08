@@ -16,3 +16,6 @@ dist/
 .DS_Store
 Thumbs.db
 *.env
+
+# Secrets (profile configs with credentials)
+application-dev.yml

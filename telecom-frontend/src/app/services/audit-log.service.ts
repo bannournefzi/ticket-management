@@ -3,13 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuditLog, AuditLogFilters } from '../models/audit-log.model';
 import { PageResponse } from '../models/ticket.model';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuditLogService {
 
-  private baseUrl = 'http://localhost:8088/api/v1/audit';
+  private baseUrl = `${environment.apiUrl}/audit`;
 
   constructor(private http: HttpClient) {}
 

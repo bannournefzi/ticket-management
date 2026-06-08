@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { KnowledgeBaseArticle } from '../models/knowledge-base.model';
+import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class KnowledgeBaseService {
-  private baseUrl = 'http://localhost:8088/api/v1/knowledge-base';
+  private baseUrl = `${environment.apiUrl}/knowledge-base`;
 
   constructor(private http: HttpClient) {}
 

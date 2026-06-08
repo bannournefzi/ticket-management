@@ -7,6 +7,7 @@ import { Notification, NOTIFICATION_CONFIG, NotificationType } from '../../model
 import { trigger, transition, style, animate } from '@angular/animations';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-navbar',
@@ -121,7 +122,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loadAvatar(): void {
     try {
       const userId = this.authService.getUserId();
-      this.avatarPhoto = `http://localhost:8088/api/v1/users/${userId}/photo`;
+      this.avatarPhoto = `${environment.apiUrl}/users/${userId}/photo`;
     } catch {}
   }
 

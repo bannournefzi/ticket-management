@@ -49,7 +49,6 @@ const routes: Routes = [
   { path: 'validate-account', component: ValidateAccountComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'settings', component: BaSettingsComponent},
 
   {
     path: '', component: MainLayoutComponent, children: [
@@ -64,13 +63,10 @@ const routes: Routes = [
       { path: 'ticket-calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'metier/calendar', component: TicketCalendarComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_SLA' } },
       { path: 'business-analyst/settings', component: BaSettingsComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
-      { path: 'metier', component: MetierDashboardComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'DASHBOARD' } },
       { path: 'security/sessions', component: SessionManagementComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_ADMIN'] } },
       { path: 'metier/diagnostic', component: InteractiveTreeComponent,  canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'ASSISTANT_DEPANNAGE' } },
-{ path: 'metier/meeting-calendar', component: MetierCalendarComponent,
-  canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_REUNIONS' } },
-      { path: 'metier/history', component: AuditHistoryComponent,
-        canActivate: [RoleGuard], data: { roles: ['ROLE_USER', 'ROLE_BUSINESS_ANALYST'], pageKey: 'AUDIT_HISTORY' } },
+      { path: 'metier/meeting-calendar', component: MetierCalendarComponent,canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_REUNIONS' } },
+      { path: 'metier/history', component: AuditHistoryComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'AUDIT_HISTORY' } },
 
       {
         path: 'admin', canActivate: [RoleGuard], data: { role: 'ROLE_ADMIN' },

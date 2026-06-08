@@ -528,7 +528,14 @@
     <span class="input-status-badge"><i class="fas fa-lock"></i></span>
   </div>
   <ng-template #editableEmail>
-    <input type="email" class="form-input" [(ngModel)]="newUser.email" placeholder="email@exemple.com" />
+    <input type="email" class="form-input"
+           [class.input-error]="newUser.email && !isValidEmail()"
+           [(ngModel)]="newUser.email" placeholder="email@exemple.com" />
+    <small class="field-error"
+           *ngIf="newUser.email && !isValidEmail()">
+      <i class="fas fa-exclamation-circle"></i>
+      Adresse email invalide
+    </small>
   </ng-template>
   <small class="form-hint auto-hint" *ngIf="newUser.role === 'ROLE_BUSINESS_ANALYST' && newUser.email">
     <i class="fas fa-magic"></i> Importé depuis MantisBT — non modifiable
@@ -553,18 +560,30 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Téléphone</label>
-            <input type="tel" class="form-input"
-                   [(ngModel)]="newUser.phone"
-                   placeholder="+216 XX XXX XXX" />
-          </div>
+           <div class="form-group">
+             <label>Téléphone</label>
+             <input type="tel" class="form-input"
+                    [class.input-error]="newUser.phone && !isValidPhone()"
+                    [(ngModel)]="newUser.phone"
+                    placeholder="+216 XX XXX XXX" />
+             <small class="field-error"
+                    *ngIf="newUser.phone && !isValidPhone()">
+               <i class="fas fa-exclamation-circle"></i>
+               Le numéro de téléphone doit contenir exactement 8 chiffres
+             </small>
+           </div>
 
-          <div class="form-group">
-            <label>Date de naissance</label>
-            <input type="date" class="form-input"
-                   [(ngModel)]="newUser.dateOfBirth" />
-          </div>
+           <div class="form-group">
+             <label>Date de naissance</label>
+             <input type="date" class="form-input"
+                    [class.input-error]="newUser.dateOfBirth && !isValidDateOfBirth()"
+                    [(ngModel)]="newUser.dateOfBirth" />
+             <small class="field-error"
+                    *ngIf="newUser.dateOfBirth && !isValidDateOfBirth()">
+               <i class="fas fa-exclamation-circle"></i>
+               L'utilisateur doit avoir au moins 20 ans
+             </small>
+           </div>
 
           <div class="form-group full-width">
             <label>Département</label>
@@ -590,7 +609,9 @@
       <button class="btn-cancel" (click)="closeCreateModal()">
         <i class="fas fa-times"></i> Annuler
       </button>
-      <button class="btn-save" (click)="createUser()">
+      <button class="btn-save" (click)="createUser()"
+              [disabled]="!isFormValid()"
+              [class.btn-disabled]="!isFormValid()">
         <i class="fas fa-paper-plane"></i> Créer et Envoyer
       </button>
     </div>

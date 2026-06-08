@@ -62,16 +62,16 @@ export class WebsocketService implements OnDestroy {
     this.connectionState$.next(ConnectionState.CONNECTING);
 
     this.client = new Client({
-   webSocketFactory: () => {
+ webSocketFactory: () => {
   const SockJSLib = (window as any)['SockJS'];
   const Constructor = SockJSLib?.default ?? SockJSLib;
-  return new Constructor(environment.wsEndpoint);
+  return new Constructor(environment.wsEndpoint);  
 },
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
-      debug: (msg) => { if (!environment.production) console.log('[STOMP]', msg); },
+     debug: () => {},
 
       onConnect: () => {
         this.connectionState$.next(ConnectionState.CONNECTED);

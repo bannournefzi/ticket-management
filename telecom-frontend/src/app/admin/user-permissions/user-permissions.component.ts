@@ -4,18 +4,13 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AdminService, UserDTO } from '../../services/admin.service';
+import { PUBLIC_PAGES } from '../../constants/public-pages.constant';
 
 interface PageConfig {
   key: string;
   label: string;
   icon: string;
 }
-
-const PUBLIC_PAGES = new Set([
-  'DASHBOARD', 'CREER_TICKET', 'MES_TICKETS',
-  'CALENDRIER_SLA', 'MESSAGES', 'MON_PROFIL',
-  'CALENDRIER_REUNIONS', 'REUNIONS'
-]);
 
 const ALL_PAGES: PageConfig[] = [
   { key: 'DASHBOARD', label: 'Dashboard', icon: 'fa-tachometer-alt' },
@@ -105,7 +100,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   }
 
   isPublicPage(pageKey: string): boolean {
-    return PUBLIC_PAGES.has(pageKey);
+    return PUBLIC_PAGES.includes(pageKey);
   }
 
   isGranted(pageKey: string): boolean {

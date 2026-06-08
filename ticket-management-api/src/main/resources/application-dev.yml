@@ -1,24 +1,23 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/Telecom
-    username: bannournefzi
-    password: bannour123
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/Telecom}
+    username: ${DB_USERNAME:bannournefzi}
+    password: ${DB_PASSWORD:bannour123}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
 
   mail:
     host: smtp.gmail.com
     port: 587
     username: nefzi.bannour19@gmail.com
-    password: ezjw lqut iery phdr
+    password: ${MAIL_PASSWORD:ezjw lqut iery phdr}
     properties:
       mail:
         smtp:
@@ -54,7 +53,7 @@ springdoc:
 application:
   security:
     jwt:
-      secret-key: WU9VUlNFQ1JFVEtFWU1VU1RCRUJBU0U2NEJJVFNFQ1JFVA==
+      secret-key: ${JWT_SECRET:WU9VUlNFQ1JFVEtFWU1VU1RCRUJBU0U2NEJJVFNFQ1JFVA==}
       expiration: 86400000
 
   file:
@@ -78,7 +77,7 @@ application:
 
   mantis:
     base-url: http://localhost:8989
-    api-token: Za83rlw9IhObreJA5CcGYjXfE1zfjDtA
+    api-token: ${MANTIS_API_KEY:Za83rlw9IhObreJA5CcGYjXfE1zfjDtA}
     project-id: 1
     sync:
       enabled: true
@@ -88,4 +87,6 @@ application:
 
 logging:
   level:
-    tn.esprit.ticketmanagement.mantis: WARN
+    tn.esprit.ticketmanagement.mantis: ERROR
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN

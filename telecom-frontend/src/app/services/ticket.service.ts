@@ -17,6 +17,7 @@ export interface MantisProject {
 }
 import { map } from 'rxjs/operators';
 import { TicketSuggestionResponse, AnalyticsEventRequest } from '../models/ticket-suggestion.model';
+import { environment } from '../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
@@ -24,7 +25,7 @@ import { TicketSuggestionResponse, AnalyticsEventRequest } from '../models/ticke
 
 export class TicketService {
 
-  private baseUrl = 'http://localhost:8088/api/v1/tickets';
+  private baseUrl = `${environment.apiUrl}/tickets`;
 
   constructor(private http: HttpClient) {}
 

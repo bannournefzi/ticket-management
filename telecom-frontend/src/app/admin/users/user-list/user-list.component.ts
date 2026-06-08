@@ -64,6 +64,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   };
 
   allMantisProjects: {id: number, name: string}[] = [];
+  private noPhotoUsers = new Set<number>();
 
   private destroy$ = new Subject<void>();
 
@@ -123,21 +124,23 @@ toggleEditProject(projectName: string, event: Event): void {
 
   // -- Data Loading --
 
-  loadUsers(): void {
-    this.isLoading = true;
-    this.adminService.getAllUsers().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (data) => {
-        this.users = data;
-        this.applyFilters();
-        this.isLoading = false;
-        this.loadAllPhotos();
-      },
-      error: () => {
-        this.showError('Erreur lors du chargement des utilisateurs');
-        this.isLoading = false;
-      }
-    });
-  }
+loadUsers(): void {
+  this.isLoading = true;
+  this.noPhotoUsers.clear();  
+  this.userPhotos.clear();
+  this.adminService.getAllUsers().pipe(takeUntil(this.destroy$)).subscribe({
+    next: (data) => {
+      this.users = data;
+      this.applyFilters();    
+      this.isLoading = false;
+      this.loadAllPhotos();   
+    },
+    error: () => {
+      this.showError('Erreur lors du chargement des utilisateurs');
+      this.isLoading = false;
+    }
+  });
+}
 
   loadStats(): void {
     this.adminService.getUserStats().pipe(takeUntil(this.destroy$)).subscribe({
@@ -157,58 +160,66 @@ toggleEditProject(projectName: string, event: Event): void {
   }
 
   // Load user photos efficiently
-  private loadAllPhotos(): void {
-    this.userPhotos.clear();
-    this.users.forEach(user => {
-      this.photoService.hasPhoto(user.id).pipe(takeUntil(this.destroy$)).subscribe({
-        next: (exists) => {
-          if (exists) {
-            this.photoService.getPhotoAsBlob(user.id).pipe(takeUntil(this.destroy$)).subscribe({
-              next: (blob) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  this.userPhotos.set(user.id, reader.result as string);
-                };
-                reader.readAsDataURL(blob);
-              },
-              error: () => {}
-            });
+private loadAllPhotos(): void {
+  this.paginatedUsers.forEach(user => {
+    if (this.userPhotos.has(user.id) || this.noPhotoUsers.has(user.id)) return;
+
+    this.photoService.getPhotoAsBlob(user.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob) => {
+          if (!blob || blob.size === 0) {        
+            this.noPhotoUsers.add(user.id);     
+            return;                               
           }
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            this.userPhotos.set(user.id, reader.result as string);
+          };
+          reader.readAsDataURL(blob);
         },
-        error: () => {}
+        error: () => {
+          this.noPhotoUsers.add(user.id);
+        }
       });
-    });
-  }
+  });
+}
 
   // -- Filtering --
 
   applyFilters(): void {
-    const sortedUsers = [...this.users].sort((a, b) => {
-      const dateA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
-      const dateB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
-      return dateB - dateA;
-    });
+  const sortedUsers = [...this.users].sort((a, b) => {
+    const dateA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+    const dateB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+    return dateB - dateA;
+  });
 
-    this.filteredUsers = sortedUsers.filter(user => {
-      const q = this.searchQuery.toLowerCase();
-      const matchSearch = !q ||
-        user.firstName.toLowerCase().includes(q) ||
-        user.lastName.toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q);
+  this.filteredUsers = sortedUsers.filter(user => {
+    const q = this.searchQuery.toLowerCase();
+    const matchSearch = !q ||
+      user.firstName.toLowerCase().includes(q) ||
+      user.lastName.toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q);
+    const matchRole = !this.selectedRole || user.roles.includes(this.selectedRole);
+    const matchStatus = !this.selectedStatus ||
+      (this.selectedStatus === 'active' && user.enabled) ||
+      (this.selectedStatus === 'inactive' && !user.enabled);
+    const matchDept = !this.selectedDepartement ||
+      user.departement === this.selectedDepartement;
+    return matchSearch && matchRole && matchStatus && matchDept;
+  });
 
-      const matchRole = !this.selectedRole || user.roles.includes(this.selectedRole);
+  this.currentPage = 1;
+  // ← NO loadAllPhotos() here
+}
 
-      const matchStatus = !this.selectedStatus ||
-        (this.selectedStatus === 'active' && user.enabled) ||
-        (this.selectedStatus === 'inactive' && !user.enabled);
-
-      const matchDept = !this.selectedDepartement ||
-        user.departement === this.selectedDepartement;
-
-      return matchSearch && matchRole && matchStatus && matchDept;
-    });
-    this.currentPage = 1;
+// setPage — keeps its loadAllPhotos call (correct)
+setPage(page: number): void {
+  if (page >= 1 && page <= this.totalPages) {
+    this.currentPage = page;
+    this.loadAllPhotos();
   }
+}
 
   resetFilters(): void {
     this.searchQuery = '';
@@ -233,11 +244,7 @@ toggleEditProject(projectName: string, event: Event): void {
     return Math.ceil(this.filteredUsers.length / this.itemsPerPage) || 1;
   }
 
-  setPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
+  
 
   get pages(): number[] {
     const pages: number[] = [];
@@ -386,16 +393,56 @@ toggleEditProject(projectName: string, event: Event): void {
   }
 }
 
+  isValidPhone(): boolean {
+    if (!this.newUser.phone) return true;
+    return /^[0-9]{8}$/.test(this.newUser.phone);
+  }
+
+  isValidEmail(): boolean {
+    if (!this.newUser.email) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newUser.email);
+  }
+
+  isValidDateOfBirth(): boolean {
+    if (!this.newUser.dateOfBirth) return true;
+    const birth = new Date(this.newUser.dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    const dayDiff = today.getDate() - birth.getDate();
+    const exactAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+    return exactAge >= 20;
+  }
+
+  isFormValid(): boolean {
+    return !!(
+      this.newUser.firstName &&
+      this.newUser.email &&
+      this.newUser.password &&
+      this.isValidEmail() &&
+      this.isValidPhone() &&
+      this.isValidDateOfBirth() &&
+      (this.newUser.role !== 'ROLE_BUSINESS_ANALYST' || this.newUser.username)
+    );
+  }
+
   createUser(): void {
-   if (
-  !this.newUser.firstName ||
-  !this.newUser.email ||
-  !this.newUser.password ||
-  (this.newUser.role === 'ROLE_BUSINESS_ANALYST' && !this.newUser.username)
-) {
-  this.showError('Veuillez remplir tous les champs obligatoires');
-  return;
-}
+   if (!this.isFormValid()) {
+    if (!this.newUser.firstName) {
+      this.showError('Le nom complet est obligatoire');
+    } else if (!this.isValidEmail()) {
+      this.showError('Adresse email invalide');
+    } else if (!this.isValidPhone()) {
+      this.showError('Le numéro de téléphone doit contenir exactement 8 chiffres');
+    } else if (!this.isValidDateOfBirth()) {
+      this.showError("L'utilisateur doit avoir au moins 20 ans");
+    } else if (this.newUser.role === 'ROLE_BUSINESS_ANALYST' && !this.newUser.username) {
+      this.showError('Le nom d utilisateur MantisBT est obligatoire');
+    } else {
+      this.showError('Veuillez remplir tous les champs obligatoires');
+    }
+    return;
+  }
 
     this.adminService.createUser(this.newUser)
       .pipe(takeUntil(this.destroy$))

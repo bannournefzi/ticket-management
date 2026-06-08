@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { environment } from '../environments/environment';
 
 export interface UserDTO {
   id: number;
@@ -64,7 +65,7 @@ export interface MantisUserDetails {
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private baseUrl = 'http://localhost:8088/api/v1/admin';
+  private baseUrl = `${environment.apiUrl}/admin`;
 
   constructor(private http: HttpClient) {}
 

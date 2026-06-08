@@ -1,10 +1,12 @@
-import { Component, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ViewChild } from '@angular/core';
 import { CalendarOptions, EventApi, EventClickArg } from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { TicketService } from '../../services/ticket.service';
 import { Ticket, TicketStatus } from '../../models/ticket.model';
@@ -14,7 +16,7 @@ import { Ticket, TicketStatus } from '../../models/ticket.model';
   templateUrl: './ticket-calendar.component.html',
   styleUrls: ['./ticket-calendar.component.scss']
 })
-export class TicketCalendarComponent implements OnInit {
+export class TicketCalendarComponent implements OnInit, OnDestroy {
 
   @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
 
@@ -37,6 +39,9 @@ export class TicketCalendarComponent implements OnInit {
   // Modal
   selectedTicket: Ticket | null = null;
   isDetailModalOpen = false;
+
+  private destroy$ = new Subject<void>();
+  private calendarInterval: any;
 
   // Statut labels
   statusLabels: Record<string, string> = {
@@ -100,12 +105,20 @@ export class TicketCalendarComponent implements OnInit {
     this.setupSlaAlerts();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.calendarInterval) {
+      clearInterval(this.calendarInterval);
+    }
+  }
+
   // ══════════════════════════════════════════
   //  DATA
   // ══════════════════════════════════════════
 
   loadTickets(): void {
-    this.ticketService.getMyTickets().subscribe({
+    this.ticketService.getMyTickets().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.allTickets = data;
         this.filteredTickets = [...data];
@@ -163,7 +176,7 @@ export class TicketCalendarComponent implements OnInit {
 
   setupSlaAlerts(): void {
     // Check every 5 minutes
-    setInterval(() => {
+    this.calendarInterval = setInterval(() => {
       if (this.showSlaAlerts) this.checkSlaAlerts();
     }, 5 * 60 * 1000);
 

@@ -251,12 +251,12 @@ public class TicketController {
                 ticketService.updateTicket(id, request, currentUser));
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Supprimer un ticket")
-    public ResponseEntity<Void> deleteTicket(@PathVariable Integer id) {
-        ticketService.deleteTicket(id);
-        return ResponseEntity.noContent().build();
-    }
+//    @DeleteMapping("/{id}")
+//    @Operation(summary = "Supprimer un ticket")
+//    public ResponseEntity<Void> deleteTicket(@PathVariable Integer id) {
+//        ticketService.deleteTicket(id);
+//        return ResponseEntity.noContent().build();
+//    }
 
     // ══════════════════════════════════════════
     //  STATISTIQUES & HISTORIQUE

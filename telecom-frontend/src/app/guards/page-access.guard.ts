@@ -5,13 +5,7 @@ import { map, catchError } from 'rxjs/operators';
 import { PagePermissionService } from '../services/page-permission.service';
 import { AuthService } from '../auth/service/auth.service';
 import { ToastrService } from 'ngx-toastr';
-
-const PUBLIC_PAGES = new Set([
-  'DASHBOARD', 'CREER_TICKET', 'MES_TICKETS',
-  'CALENDRIER_SLA', 'MESSAGES', 'MON_PROFIL',
-  'CALENDRIER_REUNIONS', 'REUNIONS',
-  'AUDIT_HISTORY', 'ADMIN_AUDIT_LOGS'
-]);
+import { PUBLIC_PAGES } from '../constants/public-pages.constant'
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +22,7 @@ export class PageAccessGuard implements CanActivate {
   canActivate(route: ActivatedRouteSnapshot): boolean | Observable<boolean> {
     const pageKey: string = route.data['pageKey'];
 
-    if (!pageKey || PUBLIC_PAGES.has(pageKey)) {
+    if (!pageKey || PUBLIC_PAGES.includes(pageKey)) {
       return true;
     }
 

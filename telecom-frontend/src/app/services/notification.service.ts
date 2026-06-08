@@ -4,13 +4,14 @@ import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil, tap, catchError } from 'rxjs/operators';
 import { Notification } from '../models/notification.model';
 import { WebsocketService, ConnectionState } from './WebsocketService';
+import { environment } from '../environments/environment';
 import { Client, IMessage } from '@stomp/stompjs';
 import { ToastrService } from 'ngx-toastr';
 import { NOTIFICATION_CONFIG } from '../models/notification.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
-  private baseUrl = 'http://localhost:8088/api/v1/notifications';
+  private baseUrl = `${environment.apiUrl}/notifications`;
   private wsDestination = '/user/queue/notify';
   private destroy$ = new Subject<void>();
 
@@ -106,7 +107,7 @@ export class NotificationService implements OnDestroy {
     this.http.post<void>(`${this.baseUrl}/test`, {}).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: () => console.log('[Notification] Test sent'),
+      next: () => { if (!environment.production) console.log('[Notification] Test sent'); },
       error: (err) => console.error('[Notification] Test failed:', err)
     });
   }
@@ -126,18 +127,18 @@ export class NotificationService implements OnDestroy {
   }
 
   private subscribeToNotifications(): void {
-    console.log('[Notification] Subscribing to', this.wsDestination);
+    if (!environment.production) console.log('[Notification] Subscribing to', this.wsDestination);
     this.wsService.subscribeAsync(this.wsDestination, (message: IMessage) => {
-      console.log('[Notification] Received raw message:', message.body);
+      if (!environment.production) console.log('[Notification] Received raw message:', message.body);
       try {
         const notification: Notification = JSON.parse(message.body);
-        console.log('[Notification] Parsed:', notification);
+        if (!environment.production) console.log('[Notification] Parsed:', notification);
         this.onNewNotification(notification);
       } catch (e) {
         console.error('Failed to parse notification:', e);
       }
     }).subscribe({
-      next: () => console.log('[Notification] WebSocket subscription active'),
+      next: () => { if (!environment.production) console.log('[Notification] WebSocket subscription active'); },
       error: (err) => console.error('Failed to subscribe to notifications:', err)
     });
   }
@@ -162,7 +163,7 @@ export class NotificationService implements OnDestroy {
       console.warn('[Notification] Unknown type:', notification.type);
       return;
     }
-    console.log('[Notification] Showing toast:', notification.title, '-', notification.message);
+    if (!environment.production) console.log('[Notification] Showing toast:', notification.title, '-', notification.message);
     const toastrMethod = config.toastr;
     const duration = 4000;
 

@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req ->
                         req
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                                // Truly public — no login needed
                                 .requestMatchers(
                                         "/auth/**",
                                         "/api/v1/auth/**",
@@ -56,22 +58,31 @@ public class SecurityConfig {
                                         "/swagger-ui.html",
                                         "/swagger-resources/**",
                                         "/actuator/**",
-                                        "/chatbot/**",
-                                        "/ai/**",
-                                        "/settings/**",
-                                        "/notifications/**"
-
+                                        "/chatbot/**"
                                 ).permitAll()
+
+                                // Any logged-in user
+                                .requestMatchers("/ai/**").authenticated()
+                                .requestMatchers("/notifications/**").authenticated()
+
+                                // Settings — read for all, write for ADMIN only
+                                .requestMatchers(HttpMethod.GET, "/settings/**").authenticated()
+                                .requestMatchers(HttpMethod.PUT, "/settings/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/settings/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/settings/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PATCH, "/settings/**").hasRole("ADMIN")
+
+                                //  Role-specific
                                 .requestMatchers("/admin/permissions/**").hasRole("ADMIN")
                                 .requestMatchers("/user/permissions/my-pages").authenticated()
                                 .requestMatchers("/audit/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/audit/my-history").authenticated()
+
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-//                .addFilterAfter(userSynchronizerFilter, JwtFilter.class);
         return http.build();
     }
 
