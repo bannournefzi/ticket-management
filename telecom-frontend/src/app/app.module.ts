@@ -31,6 +31,7 @@ import { TicketCalendarComponent } from './BA/ticket-calendar/ticket-calendar.co
 import { ChatbotComponent } from './chatbot/chatbot.component';
 import { ChatFormatPipe } from './Pipe/chat-format.pipe';
 import { BaSettingsComponent } from './BA/settings/settings.component';
+import { BaKnowledgeBaseComponent } from './BA/knowledge-base/ba-knowledge-base.component';
 import { KnowledgeBaseListComponent } from './Metier/knowledge-base/knowledge-base-list/knowledge-base-list.component';
 import { KnowledgeBaseDetailComponent } from './Metier/knowledge-base/knowledge-base-detail/knowledge-base-detail.component';
 import { CommonModule } from '@angular/common';
@@ -84,6 +85,7 @@ import { AuditLogsComponent } from './admin/audit-logs/audit-logs.component';
     MetierCalendarComponent,
     AuditHistoryComponent,
     AuditLogsComponent,
+    BaKnowledgeBaseComponent,
     
   ],
   imports: [

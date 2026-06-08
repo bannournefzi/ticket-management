@@ -5,9 +5,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.ticketmanagement.KnowledgeBase.CreateKnowledgeBaseArticleRequest;
+import tn.esprit.ticketmanagement.KnowledgeBase.RateArticleRequest;
+import tn.esprit.ticketmanagement.KnowledgeBase.UpdateKnowledgeBaseArticleRequest;
 import tn.esprit.ticketmanagement.KnowledgeBase.dto.KnowledgeBaseArticleDTO;
 import tn.esprit.ticketmanagement.KnowledgeBase.service.KnowledgeBaseService;
 import tn.esprit.ticketmanagement.User.entity.User;
@@ -50,8 +53,35 @@ public class KnowledgeBaseController {
         return ResponseEntity.ok(knowledgeBaseService.searchArticles(query));
     }
 
+    @GetMapping("/category/{category}")
+    @Operation(summary = "Articles par catégorie")
+    public ResponseEntity<List<KnowledgeBaseArticleDTO>> getArticlesByCategory(
+            @PathVariable String category) {
+        return ResponseEntity.ok(knowledgeBaseService.getArticlesByCategory(category));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Modifier un article de la base de connaissances")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_ANALYST')")
+    public ResponseEntity<KnowledgeBaseArticleDTO> updateArticle(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateKnowledgeBaseArticleRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(knowledgeBaseService.updateArticle(id, request, currentUser));
+    }
+
+    @PatchMapping("/{id}/rate")
+    @Operation(summary = "Évaluer un article (utile / pas utile)")
+    public ResponseEntity<KnowledgeBaseArticleDTO> rateArticle(
+            @PathVariable Long id,
+            @Valid @RequestBody RateArticleRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(knowledgeBaseService.rateArticle(id, request, currentUser));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Supprimer un article de la base de connaissances")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('BUSINESS_ANALYST')")
     public ResponseEntity<Void> deleteArticle(
             @PathVariable Long id,
             @AuthenticationPrincipal User currentUser) {

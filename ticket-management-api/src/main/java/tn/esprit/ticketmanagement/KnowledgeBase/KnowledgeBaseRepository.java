@@ -19,4 +19,6 @@ public interface KnowledgeBaseRepository extends JpaRepository<KnowledgeBaseArti
     List<KnowledgeBaseArticle> searchByKeyword(@Param("keyword") String keyword);
 
     List<KnowledgeBaseArticle> findByTicketId(Integer ticketId);
+
+    List<KnowledgeBaseArticle> findByCategory(String category);
 }

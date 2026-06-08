@@ -232,3 +232,52 @@ $radius:       8px;
     color: white;
   }
 }
+
+// Category chips
+.category-chips {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid $border;
+  background: $card;
+  color: $text-2;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover { border-color: $accent; color: $accent; }
+  &.active { background: $accent; color: white; border-color: $accent; }
+}
+
+// Card header left group
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  background: $accent-light;
+  color: $accent;
+}
+
+.card-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.helpful-stat {
+  font-size: 11px;
+  color: $text-3;
+  i { color: $success; margin-right: 2px; }
+}

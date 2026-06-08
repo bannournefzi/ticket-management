@@ -150,3 +150,148 @@ $radius:       8px;
     i { color: #065f46; }
   }
 }
+
+// Title section with badges
+.title-section {
+  background: $card;
+  border-radius: 10px;
+  border: 1px solid $border;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.title-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: $accent-light;
+  color: $accent;
+  i { font-size: 9px; }
+}
+.updated-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #fef3c7;
+  color: #92400e;
+  i { font-size: 9px; }
+}
+
+// Rating section
+.rating-section {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.rating-question {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-1;
+}
+.rating-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.btn-rate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border: 1.5px solid $border;
+  border-radius: $radius;
+  background: $card;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  i { font-size: 14px; }
+}
+.btn-rate-yes {
+  color: #065f46;
+  &:hover { background: #ecfdf5; border-color: $success; }
+}
+.btn-rate-no {
+  color: #991b1b;
+  &:hover { background: #fef2f2; border-color: #fecaca; }
+}
+.rating-stats {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 8px;
+  .stat {
+    font-size: 12px;
+    color: $text-3;
+    i { margin-right: 4px; }
+  }
+}
+.rating-feedback {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $success;
+}
+
+// Related articles
+.related-section {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 20px;
+  
+  h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: $text-1;
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    i { color: $accent; font-size: 13px; }
+  }
+}
+.related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.related-item {
+  padding: 12px;
+  border: 1px solid $border-light;
+  border-radius: $radius;
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover { border-color: $accent; background: #f9fafb; }
+}
+.related-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  .category-badge { font-size: 10px; padding: 1px 8px; }
+  .related-date { font-size: 11px; color: $text-3; margin-left: auto; }
+}
+.related-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-1;
+}

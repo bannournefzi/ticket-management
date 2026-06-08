@@ -1,0 +1,158 @@
+<div class="ba-kb-container">
+
+  <!-- Header -->
+  <div class="ba-kb-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-book"></i> Gestion de la Base de Connaissances
+      </h1>
+      <p class="page-subtitle">{{ articles.length }} article(s) — Gérez, modifiez et organisez les solutions</p>
+    </div>
+    <button class="btn-refresh" (click)="loadArticles()" [disabled]="isLoading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+    <button class="alert-close" (click)="successMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button class="alert-close" (click)="errorMessage = null"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar" *ngIf="articles.length > 0">
+    <div class="stat-card">
+      <span class="stat-value">{{ totalArticles }}</span>
+      <span class="stat-label">Total articles</span>
+    </div>
+    <div class="stat-card" *ngFor="let s of categoryStats">
+      <span class="stat-value">{{ s.count }}</span>
+      <span class="stat-label">{{ s.label }}</span>
+    </div>
+  </div>
+
+  <!-- Search & filter -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" [(ngModel)]="searchQuery" (input)="filter()"
+             placeholder="Rechercher par titre, description ou solution..." />
+    </div>
+    <select class="filter-select" [(ngModel)]="filterCategory" (change)="filter()">
+      <option value="">Toutes les catégories</option>
+      <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+    </select>
+    <button class="btn-clear" *ngIf="searchQuery || filterCategory" (click)="clearFilters()">
+      <i class="fas fa-times"></i> Effacer
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+    <span>Chargement...</span>
+  </div>
+
+  <!-- Empty -->
+  <div class="empty-state" *ngIf="!isLoading && filteredArticles.length === 0">
+    <i class="fas fa-book-open"></i>
+    <h3>Aucun article trouvé</h3>
+    <p>{{ searchQuery || filterCategory ? 'Essayez avec d\'autres filtres.' : 'Aucun article dans la base de connaissances.' }}</p>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper" *ngIf="!isLoading && filteredArticles.length > 0">
+    <table class="kb-table">
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Catégorie</th>
+          <th>Ticket lié</th>
+          <th>Auteur</th>
+          <th>Date</th>
+          <th>Utile</th>
+          <th class="th-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let article of filteredArticles">
+          <td class="td-title" (click)="viewArticle(article.id)">
+            <span class="article-title">{{ article.title }}</span>
+            <span class="article-desc" *ngIf="article.description">{{ article.description | slice:0:60 }}{{ article.description.length > 60 ? '...' : '' }}</span>
+          </td>
+          <td>
+            <span class="badge-category" [class.uncategorized]="!article.category">{{ getCategoryLabel(article.category) }}</span>
+          </td>
+          <td>
+            <span class="ticket-link" *ngIf="article.ticketId; else noTicket" (click)="$event.stopPropagation()">
+              <a [routerLink]="['/business-analyst/tickets']"><i class="fas fa-ticket-alt"></i> #{{ article.ticketId }}</a>
+            </span>
+            <ng-template #noTicket><span class="text-muted">—</span></ng-template>
+          </td>
+          <td class="td-meta">{{ article.createdByName }}</td>
+          <td class="td-meta">{{ getTimeAgo(article.createdAt) }}</td>
+          <td class="td-meta">
+            <span class="helpful-indicator" *ngIf="article.helpfulCount > 0 || article.notHelpfulCount > 0; else noRating">
+              <i class="fas fa-thumbs-up"></i> {{ article.helpfulCount }}
+              <i class="fas fa-thumbs-down"></i> {{ article.notHelpfulCount }}
+            </span>
+            <ng-template #noRating><span class="text-muted">—</span></ng-template>
+          </td>
+          <td class="td-actions">
+            <button class="btn-icon btn-edit" (click)="openEdit(article)" title="Modifier">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icon btn-delete" (click)="deleteArticle(article)" title="Supprimer">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEdit()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2><i class="fas fa-edit"></i> Modifier l'article</h2>
+        <button class="modal-close" (click)="closeEdit()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Titre</label>
+          <input type="text" class="form-input" [(ngModel)]="editForm.title" placeholder="Titre de l'article" />
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <select class="form-input" [(ngModel)]="editForm.category">
+            <option value="">Non classé</option>
+            <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea class="form-input form-textarea" [(ngModel)]="editForm.description"
+                    placeholder="Brève description du problème" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Solution</label>
+          <textarea class="form-input form-textarea" [(ngModel)]="editForm.solution"
+                    placeholder="Solution détaillée" rows="6"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" (click)="closeEdit()">Annuler</button>
+        <button class="btn btn-save" (click)="saveEdit()" [disabled]="isSaving || !editForm.title || !editForm.solution">
+          <i class="fas fa-spinner fa-spin" *ngIf="isSaving"></i>
+          {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

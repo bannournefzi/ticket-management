@@ -1062,3 +1062,72 @@ $radius:       8px;
     box-shadow: 0 0 0 3px rgba($success, 0.1);
   }
 }
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+.form-group-half {
+  flex: 1;
+}
+
+.preview-toggle {
+  margin: 8px 0;
+}
+.btn-link {
+  background: none;
+  border: none;
+  color: $accent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  &:hover { text-decoration: underline; }
+}
+
+.kb-preview {
+  background: #fafbfc;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 16px;
+  margin-top: 8px;
+}
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.preview-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  background: $accent-light;
+  color: $accent;
+  white-space: nowrap;
+}
+.preview-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: $text-1;
+}
+.preview-desc {
+  font-size: 13px;
+  color: $text-2;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.preview-solution {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: $radius;
+  padding: 12px;
+  strong { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #065f46; display: block; margin-bottom: 6px; }
+  p { margin: 0; font-size: 13px; color: #065f46; line-height: 1.6; white-space: pre-wrap; }
+}

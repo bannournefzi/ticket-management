@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.ticketmanagement.KnowledgeBase.CreateKnowledgeBaseArticleRequest;
 import tn.esprit.ticketmanagement.KnowledgeBase.KnowledgeBaseRepository;
+import tn.esprit.ticketmanagement.KnowledgeBase.RateArticleRequest;
+import tn.esprit.ticketmanagement.KnowledgeBase.UpdateKnowledgeBaseArticleRequest;
 import tn.esprit.ticketmanagement.KnowledgeBase.dto.KnowledgeBaseArticleDTO;
 import tn.esprit.ticketmanagement.KnowledgeBase.entity.KnowledgeBaseArticle;
 import tn.esprit.ticketmanagement.Ticket.entity.Ticket;
@@ -51,6 +53,7 @@ public class KnowledgeBaseService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .solution(request.getSolution())
+                .category(request.getCategory())
                 .createdBy(currentUser)
                 .createdByName(currentUser.fullName())
                 .ticketId(ticketId)
@@ -58,13 +61,11 @@ public class KnowledgeBaseService {
 
         KnowledgeBaseArticle saved = knowledgeBaseRepository.save(article);
 
-        // Mark ticket as converted to KB if ticket exists
         if (ticket != null) {
             ticket.setConvertedToKB(true);
             ticketRepository.save(ticket);
         }
 
-        // Index the new article for pre-submit suggestions
         try {
             ticketSuggestionIndexService.indexArticleForSuggestions(saved);
         } catch (Exception e) {
@@ -73,6 +74,52 @@ public class KnowledgeBaseService {
 
         log.info("Article created from ticket {} by user {}", ticketId, currentUser.fullName());
 
+        return convertToDTO(saved);
+    }
+
+    @Transactional
+    public KnowledgeBaseArticleDTO updateArticle(Long articleId, UpdateKnowledgeBaseArticleRequest request, User currentUser) {
+        if (!currentUser.isBusinessAnalyst()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Seul un Business Analyst peut modifier un article");
+        }
+
+        KnowledgeBaseArticle article = knowledgeBaseRepository.findById(articleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Article introuvable avec l'id: " + articleId));
+
+        article.setTitle(request.getTitle());
+        article.setDescription(request.getDescription());
+        article.setSolution(request.getSolution());
+        article.setCategory(request.getCategory());
+        article.setUpdatedBy(currentUser);
+
+        KnowledgeBaseArticle saved = knowledgeBaseRepository.save(article);
+
+        try {
+            ticketSuggestionIndexService.indexArticleForSuggestions(saved);
+        } catch (Exception e) {
+            log.warn("Could not re-index article #{} after update: {}", saved.getId(), e.getMessage());
+        }
+
+        log.info("Article {} updated by user {}", articleId, currentUser.fullName());
+        return convertToDTO(saved);
+    }
+
+    @Transactional
+    public KnowledgeBaseArticleDTO rateArticle(Long articleId, RateArticleRequest request, User currentUser) {
+        KnowledgeBaseArticle article = knowledgeBaseRepository.findById(articleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Article introuvable avec l'id: " + articleId));
+
+        if (Boolean.TRUE.equals(request.getHelpful())) {
+            article.setHelpfulCount((article.getHelpfulCount() != null ? article.getHelpfulCount() : 0) + 1);
+        } else {
+            article.setNotHelpfulCount((article.getNotHelpfulCount() != null ? article.getNotHelpfulCount() : 0) + 1);
+        }
+
+        KnowledgeBaseArticle saved = knowledgeBaseRepository.save(article);
+        log.info("Article {} rated helpful={} by user {}", articleId, request.getHelpful(), currentUser.getId());
         return convertToDTO(saved);
     }
 
@@ -101,17 +148,34 @@ public class KnowledgeBaseService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<KnowledgeBaseArticleDTO> getArticlesByCategory(String category) {
+        return knowledgeBaseRepository.findByCategory(category).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     private KnowledgeBaseArticleDTO convertToDTO(KnowledgeBaseArticle article) {
-        return KnowledgeBaseArticleDTO.builder()
+        var builder = KnowledgeBaseArticleDTO.builder()
                 .id(article.getId())
                 .title(article.getTitle())
                 .description(article.getDescription())
                 .solution(article.getSolution())
+                .category(article.getCategory())
                 .createdAt(article.getCreatedAt())
+                .updatedAt(article.getUpdatedAt())
                 .createdById(article.getCreatedBy().getId())
                 .createdByName(article.getCreatedByName())
                 .ticketId(article.getTicketId())
-                .build();
+                .helpfulCount(article.getHelpfulCount())
+                .notHelpfulCount(article.getNotHelpfulCount());
+
+        if (article.getUpdatedBy() != null) {
+            builder.updatedById(article.getUpdatedBy().getId())
+                    .updatedByName(article.getUpdatedBy().fullName());
+        }
+
+        return builder.build();
     }
 
     @Transactional
@@ -125,7 +189,6 @@ public class KnowledgeBaseService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Article introuvable avec l'id: " + articleId));
 
-        // If linked to a ticket, update the ticket
         if (article.getTicketId() != null) {
             ticketRepository.findById(article.getTicketId()).ifPresent(ticket -> {
                 ticket.setConvertedToKB(false);

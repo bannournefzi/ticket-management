@@ -32,6 +32,7 @@ import { BaMeetingsComponent } from './meetings/ba-meetings/ba-meetings.componen
 import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calendar.component';
 import { AuditHistoryComponent } from './Metier/audit-history/audit-history.component';
 import { AuditLogsComponent } from './admin/audit-logs/audit-logs.component';
+import { BaKnowledgeBaseComponent } from './BA/knowledge-base/ba-knowledge-base.component';
 
 
 const routes: Routes = [
@@ -63,6 +64,7 @@ const routes: Routes = [
       { path: 'ticket-calendar', component: TicketCalendarComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'metier/calendar', component: TicketCalendarComponent, canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_SLA' } },
       { path: 'business-analyst/settings', component: BaSettingsComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
+      { path: 'business-analyst/knowledge-base', component: BaKnowledgeBaseComponent, canActivate: [RoleGuard], data: { role: 'ROLE_BUSINESS_ANALYST' } },
       { path: 'security/sessions', component: SessionManagementComponent, canActivate: [RoleGuard], data: { roles: ['ROLE_ADMIN'] } },
       { path: 'metier/diagnostic', component: InteractiveTreeComponent,  canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'ASSISTANT_DEPANNAGE' } },
       { path: 'metier/meeting-calendar', component: MetierCalendarComponent,canActivate: [RoleGuard, PageAccessGuard], data: { role: 'ROLE_USER', pageKey: 'CALENDRIER_REUNIONS' } },

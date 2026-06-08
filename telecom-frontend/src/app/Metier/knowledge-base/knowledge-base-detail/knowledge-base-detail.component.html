@@ -15,7 +15,7 @@
 
   <!-- Article Content -->
   <div class="article-content" *ngIf="article && !isLoading">
-    
+
     <!-- Header -->
     <div class="article-header">
       <button class="btn-back" (click)="back()">
@@ -30,8 +30,18 @@
       </div>
     </div>
 
-    <!-- Title -->
-    <h1 class="article-title">{{ article.title }}</h1>
+    <!-- Title + badges -->
+    <div class="title-section">
+      <div class="title-badges">
+        <span class="category-badge" *ngIf="article.category">
+          <i class="fas fa-tag"></i> {{ getCategoryLabel(article.category) }}
+        </span>
+        <span class="updated-badge" *ngIf="article.updatedAt">
+          <i class="fas fa-pen"></i> Mis à jour {{ getTimeAgo(article.updatedAt) }}
+        </span>
+      </div>
+      <h1 class="article-title">{{ article.title }}</h1>
+    </div>
 
     <!-- Description -->
     <div class="article-section" *ngIf="article.description">
@@ -43,6 +53,38 @@
     <div class="article-section solution-section">
       <h2><i class="fas fa-lightbulb"></i> Solution</h2>
       <div class="section-content">{{ article.solution }}</div>
+    </div>
+
+    <!-- Helpful rating -->
+    <div class="rating-section">
+      <p class="rating-question">Cet article vous a-t-il été utile ?</p>
+      <div class="rating-buttons" *ngIf="!hasRated">
+        <button class="btn-rate btn-rate-yes" (click)="rateArticle(true)">
+          <i class="fas fa-thumbs-up"></i> Oui
+        </button>
+        <button class="btn-rate btn-rate-no" (click)="rateArticle(false)">
+          <i class="fas fa-thumbs-down"></i> Non
+        </button>
+      </div>
+      <div class="rating-stats" *ngIf="article.helpfulCount > 0 || article.notHelpfulCount > 0">
+        <span class="stat"><i class="fas fa-thumbs-up"></i> {{ article.helpfulCount }}</span>
+        <span class="stat"><i class="fas fa-thumbs-down"></i> {{ article.notHelpfulCount }}</span>
+      </div>
+      <div class="rating-feedback" *ngIf="ratingMessage">{{ ratingMessage }}</div>
+    </div>
+
+    <!-- Related articles -->
+    <div class="related-section" *ngIf="relatedArticles.length > 0">
+      <h2><i class="fas fa-link"></i> Articles liés</h2>
+      <div class="related-list">
+        <div class="related-item" *ngFor="let r of relatedArticles" (click)="viewArticle(r)">
+          <div class="related-header">
+            <span class="category-badge" *ngIf="r.category">{{ getCategoryLabel(r.category) }}</span>
+            <span class="related-date">{{ getTimeAgo(r.createdAt) }}</span>
+          </div>
+          <span class="related-title">{{ r.title }}</span>
+        </div>
+      </div>
     </div>
 
   </div>

@@ -6,7 +6,7 @@
       <h1 class="page-title">
         <i class="fas fa-book"></i> Base de Connaissances
       </h1>
-      <p class="page-subtitle">Trouvez des réponses à vos questions</p>
+      <p class="page-subtitle">{{ articles.length }} article(s) — Trouvez des réponses à vos problèmes</p>
     </div>
     <button class="btn-refresh" (click)="loadArticles()" [disabled]="isLoading">
       <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
@@ -29,10 +29,17 @@
       <i class="fas fa-search"></i>
       <input type="text" [(ngModel)]="searchQuery" (input)="search()"
              placeholder="Rechercher dans la base de connaissances..." />
-      <button class="search-btn" (click)="search()">
-        <i class="fas fa-arrow-right"></i>
-      </button>
     </div>
+  </div>
+
+  <!-- Category chips -->
+  <div class="category-chips" *ngIf="articles.length > 0">
+    <button class="chip" [class.active]="!filterCategory" (click)="setCategory('')">Tous</button>
+    <button class="chip" *ngFor="let c of categories"
+            [class.active]="filterCategory === c.value"
+            (click)="setCategory(c.value)">
+      {{ c.label }}
+    </button>
   </div>
 
   <!-- Loading -->
@@ -45,20 +52,26 @@
   <div class="empty-state" *ngIf="!isLoading && filteredArticles.length === 0">
     <i class="fas fa-book-open"></i>
     <h3>Aucun article trouvé</h3>
-    <p>{{ searchQuery ? 'Essayez avec d\'autres mots-clés.' : 'Aucun article disponible pour le moment.' }}</p>
+    <p>{{ searchQuery || filterCategory ? 'Essayez avec d\'autres mots-clés ou catégories.' : 'Aucun article disponible pour le moment.' }}</p>
   </div>
 
   <!-- Articles Grid -->
   <div class="articles-grid" *ngIf="!isLoading && filteredArticles.length > 0">
     <div class="article-card" *ngFor="let article of filteredArticles" (click)="viewArticle(article)">
       <div class="card-header">
-        <i class="fas fa-file-alt"></i>
+        <div class="card-header-left">
+          <i class="fas fa-file-alt"></i>
+          <span class="category-badge" *ngIf="article.category">{{ getCategoryLabel(article.category) }}</span>
+        </div>
         <span class="card-date">{{ getTimeAgo(article.createdAt) }}</span>
       </div>
       <h3 class="card-title">{{ article.title }}</h3>
       <p class="card-description">{{ article.description | slice:0:120 }}{{ article.description && article.description.length > 120 ? '...' : '' }}</p>
       <div class="card-footer">
         <span class="author"><i class="fas fa-user"></i> {{ article.createdByName }}</span>
+        <div class="card-stats" *ngIf="article.helpfulCount > 0 || article.notHelpfulCount > 0">
+          <span class="helpful-stat"><i class="fas fa-thumbs-up"></i> {{ article.helpfulCount }}</span>
+        </div>
         <div class="card-actions" (click)="$event.stopPropagation()">
           <button class="btn-delete" *ngIf="isUserBA()" (click)="deleteArticle(article)" title="Supprimer">
             <i class="fas fa-trash"></i>

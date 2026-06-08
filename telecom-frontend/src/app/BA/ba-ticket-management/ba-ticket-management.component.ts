@@ -4,6 +4,7 @@ import { TicketService } from '../../services/ticket.service';
 import { CommentService } from '../../services/CommentService';
 import { AuthService } from '../../auth/service/auth.service';
 import { KnowledgeBaseService } from '../../services/knowledge-base.service';
+import { ARTICLE_CATEGORIES } from '../../models/knowledge-base.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -84,7 +85,10 @@ export class BaTicketManagementComponent implements OnInit {
   kbTitle = '';
   kbDescription = '';
   kbSolution = '';
+  kbCategory = '';
   isSavingKb = false;
+  showKbPreview = false;
+  kbCategories = ARTICLE_CATEGORIES;
 
   currentUserId = 0;
 
@@ -634,6 +638,8 @@ confirmPushToMantis(): void {
     this.kbTitle = this.selectedTicket.title;
     this.kbDescription = this.selectedTicket.description;
     this.kbSolution = '';
+    this.kbCategory = '';
+    this.showKbPreview = false;
     this.isKbModalOpen = true;
   }
 
@@ -648,7 +654,8 @@ confirmPushToMantis(): void {
     this.kbService.createFromTicket(this.selectedTicket.id, {
       title: this.kbTitle.trim(),
       description: this.kbDescription.trim(),
-      solution: this.kbSolution.trim()
+      solution: this.kbSolution.trim(),
+      category: this.kbCategory || undefined
     }).subscribe({
       next: () => {
         this.isSavingKb = false;
@@ -662,11 +669,17 @@ confirmPushToMantis(): void {
     });
   }
 
+  getCategoryLabel(value: string): string {
+    return this.kbCategories.find(c => c.value === value)?.label || value;
+  }
+
   closeKbModal(): void {
     this.isKbModalOpen = false;
     this.kbTitle = '';
     this.kbDescription = '';
     this.kbSolution = '';
+    this.kbCategory = '';
+    this.showKbPreview = false;
   }
 
   canConvertToKB(): boolean {

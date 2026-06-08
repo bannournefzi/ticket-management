@@ -6,7 +6,7 @@ import lombok.*;
 @Getter @Setter
 @Builder
 @NoArgsConstructor @AllArgsConstructor
-public class CreateKnowledgeBaseArticleRequest {
+public class UpdateKnowledgeBaseArticleRequest {
 
     @NotBlank(message = "Le titre est obligatoire")
     private String title;

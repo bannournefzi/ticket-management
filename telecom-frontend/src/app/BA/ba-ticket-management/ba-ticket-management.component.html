@@ -598,22 +598,56 @@
         <label class="form-label">Titre <span class="required">*</span></label>
         <input type="text" class="form-input" [(ngModel)]="kbTitle" placeholder="Titre de l'article">
       </div>
+
+      <div class="form-row">
+        <div class="form-group form-group-half">
+          <label class="form-label">Catégorie</label>
+          <select class="form-input" [(ngModel)]="kbCategory">
+            <option value="">Non classé</option>
+            <option *ngFor="let c of kbCategories" [value]="c.value">{{ c.label }}</option>
+          </select>
+        </div>
+        <div class="form-group form-group-half">
+          <label class="form-label">Ticket source</label>
+          <input type="text" class="form-input" [value]="'#' + (selectedTicket?.id || '')" disabled />
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Description (Problème)</label>
-        <textarea class="form-textarea" [(ngModel)]="kbDescription" rows="4" placeholder="Description du problème"></textarea>
+        <textarea class="form-textarea" [(ngModel)]="kbDescription" rows="3" placeholder="Description du problème"></textarea>
       </div>
       <div class="form-group">
         <label class="form-label">Solution <span class="required">*</span></label>
-        <textarea class="form-textarea solution-input" [(ngModel)]="kbSolution" rows="6" 
+        <textarea class="form-textarea solution-input" [(ngModel)]="kbSolution" rows="5"
                   placeholder="Décrivez la solution étape par étape..."></textarea>
+      </div>
+
+      <!-- Preview toggle -->
+      <div class="preview-toggle" *ngIf="kbTitle || kbSolution">
+        <button class="btn-link" (click)="showKbPreview = !showKbPreview">
+          <i class="fas" [class.fa-eye]="!showKbPreview" [class.fa-eye-slash]="showKbPreview"></i>
+          {{ showKbPreview ? 'Masquer' : 'Aperçu' }}
+        </button>
+      </div>
+      <div class="kb-preview" *ngIf="showKbPreview && (kbTitle || kbSolution)">
+        <div class="preview-header">
+          <span class="preview-badge" *ngIf="kbCategory">{{ getCategoryLabel(kbCategory) }}</span>
+          <span class="preview-title">{{ kbTitle || 'Sans titre' }}</span>
+        </div>
+        <div class="preview-desc" *ngIf="kbDescription">{{ kbDescription }}</div>
+        <div class="preview-solution">
+          <strong>Solution :</strong>
+          <p>{{ kbSolution }}</p>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" (click)="closeKbModal()">Annuler</button>
-      <button class="btn-confirm" (click)="saveKnowledgeBase()" [disabled]="isSavingKb || !kbSolution.trim()">
+      <button class="btn-confirm" (click)="saveKnowledgeBase()" [disabled]="isSavingKb || !kbTitle.trim() || !kbSolution.trim()">
         <i class="fas fa-spinner fa-spin" *ngIf="isSavingKb"></i>
         <i class="fas fa-save" *ngIf="!isSavingKb"></i>
-        {{ isSavingKb ? 'Création...' : 'Enregistrer' }}
+        {{ isSavingKb ? 'Création...' : 'Publier l\'article' }}
       </button>
     </div>
   </div>
