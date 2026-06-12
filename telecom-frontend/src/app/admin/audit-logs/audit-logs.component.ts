@@ -178,7 +178,7 @@ export class AuditLogsComponent implements OnInit {
   // ══════════════════════════════════════════
 
   exportCSV(): void {
-    const headers = ['ID', 'Utilisateur', 'Action', 'Module', 'Entité', 'ID Entité', 'Détails', 'Adresse IP', 'Date'];
+    const headers = ['ID', 'Utilisateur', 'Action', 'Module', 'Entité', 'ID Entité', 'Date'];
     const rows = this.logs.map(l => [
       l.id,
       `"${l.userFullName.replace(/"/g, '""')}"`,
@@ -186,8 +186,6 @@ export class AuditLogsComponent implements OnInit {
       l.module,
       l.entityType,
       l.entityId ?? '',
-      `"${(l.details || '').replace(/"/g, '""')}"`,
-      l.ipAddress,
       l.createdDate ? new Date(l.createdDate).toLocaleDateString('fr-FR') : ''
     ]);
     const csv = [headers, ...rows].map(r => r.join(';')).join('\n');

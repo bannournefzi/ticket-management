@@ -39,7 +39,6 @@
       <div class="skeleton-cell skeleton-date"></div>
       <div class="skeleton-cell skeleton-action"></div>
       <div class="skeleton-cell skeleton-module"></div>
-      <div class="skeleton-cell skeleton-details"></div>
     </div>
   </div>
 
@@ -62,7 +61,6 @@
             <th class="col-action">Action</th>
             <th class="col-module">Module</th>
             <th class="col-entity">Entité</th>
-            <th class="col-details">Détails</th>
           </tr>
         </thead>
 
@@ -94,11 +92,6 @@
             <td class="td-entity">
               <span class="entity-type">{{ log.entityType }}</span>
               <span class="entity-id" *ngIf="log.entityId">#{{ log.entityId }}</span>
-            </td>
-
-            <!-- DÉTAILS -->
-            <td class="td-details">
-              <span class="details-text">{{ log.details || '—' }}</span>
             </td>
           </tr>
         </tbody>

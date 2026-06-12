@@ -45,7 +45,6 @@ export class ProfileComponent implements OnInit {
   departement = '';
   dateOfBirth = '';
   phone = '';
-  address = '';
 
   // Photo
   avatarPreview: string | null = null;
@@ -93,13 +92,12 @@ export class ProfileComponent implements OnInit {
 
   initForms(): void {
     this.infoForm = this.fb.group({
-      firstName:    ['', Validators.required],
-      lastName:     ['', Validators.required],
+      firstName:    [{ value: '', disabled: true }],
+      lastName:     [{ value: '', disabled: true }],
       email:        [{ value: this.email, disabled: true }],
       phone:        [''],
-      address:      [''],
       dateOfBirth:  [''],
-      departement:  [''],
+      departement:  [{ value: '', disabled: true }],
     });
 
     this.passwordForm = this.fb.group({
@@ -115,10 +113,7 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: (user) => {
           this.infoForm.patchValue({
-            firstName:   user.firstName   || '',
-            lastName:    user.lastName    || '',
             phone:       user.phone       || '',
-            address:     user.address     || '',
             dateOfBirth: user.dateOfBirth || '',
             departement: user.departement || '',
           });
@@ -129,7 +124,6 @@ export class ProfileComponent implements OnInit {
           this.departement = user.departement || '';
           this.dateOfBirth = user.dateOfBirth || '';
           this.phone       = user.phone       || '';
-          this.address     = user.address     || '';
         },
         error: () => {
           const p = this.fullName.split(' ');
@@ -226,13 +220,9 @@ export class ProfileComponent implements OnInit {
     this.errorInfo = null;
 
     const body = {
-      firstName:   this.infoForm.value.firstName,
-      lastName:    this.infoForm.value.lastName,
       email:       this.email,
       phone:       this.infoForm.value.phone       || '',
-      address:     this.infoForm.value.address      || '',
       dateOfBirth: this.infoForm.value.dateOfBirth  || null,
-      departement: this.infoForm.value.departement  || null,
       role:        this.role,
     };
 
@@ -241,12 +231,8 @@ export class ProfileComponent implements OnInit {
         next: () => {
           this.isLoadingInfo = false;
           this.successInfo = true;
-          this.fullName    = `${body.firstName} ${body.lastName}`;
-          this.initials    = this.buildInitials(this.fullName);
-          this.departement = body.departement || '';
           this.dateOfBirth = body.dateOfBirth || '';
           this.phone       = body.phone       || '';
-          this.address     = body.address     || '';
           setTimeout(() => this.successInfo = false, 4000);
         },
         error: (err) => {

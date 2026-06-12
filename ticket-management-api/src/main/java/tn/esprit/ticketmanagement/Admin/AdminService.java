@@ -123,11 +123,8 @@ public class AdminService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        user.setFirstName(userDTO.getFirstName());
-        user.setLastName(userDTO.getLastName());
         user.setPhone(userDTO.getPhone());
         user.setDateOfBirth(userDTO.getDateOfBirth());
-        user.setDepartement(userDTO.getDepartement());
 
         if (!user.getEmail().equals(userDTO.getEmail())) {
             userRepository.findByEmail(userDTO.getEmail())

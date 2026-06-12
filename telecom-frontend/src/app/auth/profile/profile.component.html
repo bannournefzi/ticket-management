@@ -84,21 +84,21 @@
 
               <div class="form-row">
                 <div class="input-group">
-                  <label class="input-label">Prénom <span class="required">*</span></label>
-                  <div class="input-wrapper" [class.input-error]="infoForm.get('firstName')?.invalid && infoForm.get('firstName')?.touched">
+                  <label class="input-label">Prénom</label>
+                  <div class="input-wrapper input-disabled">
                     <i class="fas fa-user input-icon"></i>
-                    <input type="text" formControlName="firstName" class="input-field" placeholder="Votre prénom"/>
+                    <input type="text" formControlName="firstName" class="input-field" readonly/>
+                    <span class="input-badge">Non modifiable</span>
                   </div>
-                  <span class="input-hint" *ngIf="infoForm.get('firstName')?.invalid && infoForm.get('firstName')?.touched">Champ obligatoire</span>
                 </div>
 
                 <div class="input-group">
-                  <label class="input-label">Nom <span class="required">*</span></label>
-                  <div class="input-wrapper" [class.input-error]="infoForm.get('lastName')?.invalid && infoForm.get('lastName')?.touched">
+                  <label class="input-label">Nom</label>
+                  <div class="input-wrapper input-disabled">
                     <i class="fas fa-user input-icon"></i>
-                    <input type="text" formControlName="lastName" class="input-field" placeholder="Votre nom"/>
+                    <input type="text" formControlName="lastName" class="input-field" readonly/>
+                    <span class="input-badge">Non modifiable</span>
                   </div>
-                  <span class="input-hint" *ngIf="infoForm.get('lastName')?.invalid && infoForm.get('lastName')?.touched">Champ obligatoire</span>
                 </div>
               </div>
 
@@ -132,20 +132,21 @@
               <div class="form-row">
                 <div class="input-group">
                   <label class="input-label">Département</label>
-                  <div class="input-wrapper">
+                  <div class="input-wrapper input-disabled">
                     <i class="fas fa-building input-icon"></i>
                     <select formControlName="departement" class="input-field input-select">
                       <option value="">-- Non défini --</option>
                       <option *ngFor="let d of departements" [value]="d">{{ getDepartementLabel(d) }}</option>
                     </select>
+                    <span class="input-badge">Non modifiable</span>
                   </div>
                 </div>
 
                 <div class="input-group">
-                  <label class="input-label">Adresse</label>
+                  <label class="input-label">Date de naissance</label>
                   <div class="input-wrapper">
-                    <i class="fas fa-map-marker-alt input-icon"></i>
-                    <input type="text" formControlName="address" class="input-field" placeholder="Votre adresse"/>
+                    <i class="fas fa-birthday-cake input-icon"></i>
+                    <input type="date" formControlName="dateOfBirth" class="input-field"/>
                   </div>
                 </div>
               </div>

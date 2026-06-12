@@ -142,7 +142,6 @@ $act-mantis: #b91c1c;  $act-mantis-bg: #fee2e2;
   &.skeleton-date   { width: 80px; }
   &.skeleton-action { width: 100px; }
   &.skeleton-module { width: 80px; }
-  &.skeleton-details { flex: 1; }
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
@@ -215,7 +214,6 @@ $act-mantis: #b91c1c;  $act-mantis-bg: #fee2e2;
 .col-action { width: 150px; }
 .col-module { width: 120px; }
 .col-entity { width: 120px; }
-.col-details { min-width: 200px; }
 
 // ════════════════════════════════════════════════════════════
 // CELL: DATE
@@ -289,19 +287,6 @@ $act-mantis: #b91c1c;  $act-mantis-bg: #fee2e2;
   font-size: 11px;
   color: $text-3;
   font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
-}
-
-// ════════════════════════════════════════════════════════════
-// CELL: DETAILS
-// ════════════════════════════════════════════════════════════
-.details-text {
-  font-size: 12px;
-  color: $text-2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
-  max-width: 350px;
 }
 
 // ════════════════════════════════════════════════════════════

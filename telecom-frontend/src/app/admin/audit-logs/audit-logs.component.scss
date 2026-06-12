@@ -225,8 +225,6 @@ $act-mantis: #b91c1c;  $act-mantis-bg: #fee2e2;
   &.skeleton-action { width: 100px; }
   &.skeleton-module { width: 80px; }
   &.skeleton-entity { width: 80px; }
-  &.skeleton-details { flex: 1; }
-  &.skeleton-ip     { width: 100px; }
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
@@ -300,8 +298,6 @@ $act-mantis: #b91c1c;  $act-mantis-bg: #fee2e2;
 .col-action { width: 150px; }
 .col-module { width: 120px; }
 .col-entity { width: 120px; }
-.col-details { min-width: 200px; }
-.col-ip     { width: 130px; }
 
 // ════════════════════════════════════════════════════════════
 // CELL: USER
@@ -411,31 +407,6 @@ $act-mantis: #b91c1c;  $act-mantis-bg: #fee2e2;
 }
 
 // ════════════════════════════════════════════════════════════
-// CELL: DETAILS
-// ════════════════════════════════════════════════════════════
-.details-text {
-  font-size: 12px;
-  color: $text-2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
-  max-width: 300px;
-}
-
-// ════════════════════════════════════════════════════════════
-// CELL: IP
-// ════════════════════════════════════════════════════════════
-.ip-address {
-  font-size: 11px;
-  color: $text-3;
-  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
-  background: $border-light;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-// ════════════════════════════════════════════════════════════
 // EMPTY STATE
 // ════════════════════════════════════════════════════════════
 .empty-state-inline {
@@ -478,9 +449,6 @@ $act-mantis: #b91c1c;  $act-mantis-bg: #fee2e2;
 // ════════════════════════════════════════════════════════════
 // RESPONSIVE
 // ════════════════════════════════════════════════════════════
-@media (max-width: 1024px) {
-  .col-ip, .td-ip { display: none; }
-}
 @media (max-width: 768px) {
   .audit-logs-container { padding: 12px; }
   .audit-header { padding: 12px 16px; }
