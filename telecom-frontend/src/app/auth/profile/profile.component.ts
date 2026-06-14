@@ -257,6 +257,7 @@ export class ProfileComponent implements OnInit {
         this.isLoadingPassword = false;
         this.successPassword = true;
         this.passwordForm.reset();
+        this.authService.clearMustChangePassword();
         setTimeout(() => this.successPassword = false, 5000);
       },
       error: (err) => {

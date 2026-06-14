@@ -189,6 +189,7 @@ public class AuthenticationService {
 
         return AuthenticationResponse.builder()
                 .token(jwtToken)
+                .mustChangePassword(Boolean.TRUE.equals(user.getMustChangePassword()))
                 .build();
     }
 

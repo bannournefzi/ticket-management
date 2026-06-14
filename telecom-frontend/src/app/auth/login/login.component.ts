@@ -48,6 +48,7 @@ goToForgotPassword(): void {
       next: (response) => {
         const token = response.token;
         localStorage.setItem('access_token', token);
+        this.authService.setMustChangePassword(response.mustChangePassword);
 
         this.isLoading = false;
 

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.ticketmanagement.Ticket.*;
+import tn.esprit.ticketmanagement.Ticket.dto.AttachmentDTO;
 import tn.esprit.ticketmanagement.Ticket.dto.TicketDTO;
 import tn.esprit.ticketmanagement.Ticket.dto.TicketHistoryDTO;
 import tn.esprit.ticketmanagement.Ticket.dto.TicketStatsDTO;
@@ -297,6 +298,25 @@ public class TicketController {
             @PathVariable Integer ticketId,
             @PathVariable Long attachmentId) {
         return ticketService.getAttachment(ticketId, attachmentId);
+    }
+
+    @PatchMapping("/{ticketId}/attachments/{attachmentId}/push-to-mantis")
+    @Operation(summary = "Pousser une pièce jointe vers Mantis")
+    public ResponseEntity<Void> pushAttachmentToMantis(
+            @PathVariable Integer ticketId,
+            @PathVariable Long attachmentId,
+            @AuthenticationPrincipal User currentUser) {
+        ticketService.pushAttachmentToMantis(ticketId, attachmentId, currentUser);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/{ticketId}/attachments/upload-and-push", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Uploader une pièce jointe et la pousser vers Mantis")
+    public ResponseEntity<AttachmentDTO> uploadAndPushToMantis(
+            @PathVariable Integer ticketId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(ticketService.uploadAndPushToMantis(ticketId, file, currentUser));
     }
 
     @PatchMapping("/{ticketId}/comments-enabled")

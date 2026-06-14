@@ -10,6 +10,7 @@ import tn.esprit.ticketmanagement.User.repository.UserRepository;
 import tn.esprit.ticketmanagement.Audit.entity.AuditLog;
 import tn.esprit.ticketmanagement.Audit.service.AuditLogService;
 import tn.esprit.ticketmanagement.auth.dto.ChangePasswordRequest;
+import tn.esprit.ticketmanagement.auth.dto.FirstLoginChangePasswordRequest;
 import tn.esprit.ticketmanagement.auth.dto.ForgotPasswordRequest;
 import tn.esprit.ticketmanagement.auth.entity.PasswordResetToken;
 import tn.esprit.ticketmanagement.auth.entity.ResetPasswordRequest;
@@ -133,10 +134,42 @@ public class PasswordResetService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setEnabled(true);
         user.setAccountLocked(false);
+        user.setMustChangePassword(false);
         userRepository.save(user);
 
         auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_CHANGE_PASSWORD,
                 "Auth", "User", user.getId().longValue(),
                 "Changement de mot de passe pour " + user.getEmail());
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────
+    // FIRST-LOGIN CHANGE PASSWORD  →  no current password required
+    // ────────────────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public void firstLoginChangePassword(FirstLoginChangePasswordRequest request, String userEmail) {
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("Les mots de passe ne correspondent pas");
+        }
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        if (!Boolean.TRUE.equals(user.getMustChangePassword())) {
+            throw new IllegalStateException("Aucun changement de mot de passe obligatoire requis");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit être différent de l'ancien");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
+        userRepository.save(user);
+
+        auditLogService.log(user.getId(), user.fullName(), AuditLog.ACTION_CHANGE_PASSWORD,
+                "Auth", "User", user.getId().longValue(),
+                "Premier changement de mot de passe pour " + user.getEmail());
     }
 }

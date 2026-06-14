@@ -98,6 +98,10 @@ public class User implements UserDetails, Principal {
     @Column(name = "departement")
     private Departement departement;
 
+    @Column(name = "must_change_password")
+    @Builder.Default
+    private Boolean mustChangePassword = true;
+
     /* =========================
        Business Logic Methods
        ========================= */

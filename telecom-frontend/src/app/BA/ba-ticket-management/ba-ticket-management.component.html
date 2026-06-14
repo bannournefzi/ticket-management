@@ -364,7 +364,39 @@
               <button class="btn-download" (click)="downloadAttachment(selectedTicket!.id, att.id, att.fileName)" title="Télécharger">
                 <i class="fas fa-download"></i>
               </button>
+              <button class="btn-mantis-push" *ngIf="selectedTicket?.mantisId"
+                      (click)="pushAttachmentToMantis(att.id)"
+                      [title]="pushedAttachmentIds.has(att.id) ? 'Envoyé vers Mantis' : 'Envoyer vers Mantis'"
+                      [class.pushed]="pushedAttachmentIds.has(att.id)"
+                      [disabled]="pushingAttachmentId === att.id">
+                <span *ngIf="pushingAttachmentId === att.id"><span class="mini-spinner"></span></span>
+                <i *ngIf="pushingAttachmentId !== att.id && !pushedAttachmentIds.has(att.id)" class="fas fa-share-alt"></i>
+                <i *ngIf="pushedAttachmentIds.has(att.id)" class="fas fa-check"></i>
+              </button>
             </div>
+          </div>
+        </div>
+
+        <!-- Upload zone: Ajouter & envoyer vers Mantis -->
+        <div class="mantis-upload-zone" *ngIf="selectedTicket?.mantisId"
+             (dragover)="$event.preventDefault()"
+             (drop)="onMantisDrop($event)">
+          <div class="mantis-upload-error" *ngIf="mantisUploadError">
+            <i class="fas fa-exclamation-triangle"></i> {{ mantisUploadError }}
+          </div>
+          <div class="mantis-upload-content" *ngIf="!isUploadingToMantis">
+            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+            <p class="upload-text">Ajouter & envoyer vers Mantis</p>
+            <p class="upload-hint">Glissez un fichier ou cliquez pour parcourir</p>
+            <button class="btn-upload-mantis" (click)="mantisFileInput.click()">
+              <i class="fas fa-folder-open"></i> Choisir un fichier
+            </button>
+            <input #mantisFileInput type="file" class="file-input-hidden"
+                   (change)="onMantisFileSelected($event)" accept="*"/>
+          </div>
+          <div class="mantis-upload-progress" *ngIf="isUploadingToMantis">
+            <span class="mini-spinner"></span>
+            <span>Envoi vers Mantis...</span>
           </div>
         </div>
         <div class="quick-actions" *ngIf="getAvailableTransitions(selectedTicket).length > 0">

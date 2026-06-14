@@ -891,4 +891,120 @@ return tickets.stream()
                 "Ticket", "Ticket", ticketId.longValue(),
                 batch.size() + " pièce(s) jointe(s) uploadée(s) sur le ticket #" + ticketId);
     }
+
+    // ══════════════════════════════════════════
+    //  PUSH ATTACHMENT TO MANTIS
+    // ══════════════════════════════════════════
+
+    public void pushAttachmentToMantis(Integer ticketId, Long attachmentId, User currentUser) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket introuvable"));
+
+        if (ticket.getMantisId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Le ticket #" + ticketId + " n'a pas encore été poussé vers Mantis");
+        }
+
+        TicketAttachment attachment = ticketAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pièce jointe introuvable"));
+
+        if (!attachment.getTicket().getId().equals(ticketId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Cette pièce jointe n'appartient pas au ticket");
+        }
+
+        mantisService.uploadIssueAttachment(
+                ticket.getMantisId(),
+                attachment.getFileName(),
+                attachment.getContentType(),
+                attachment.getFileData()
+        );
+
+        log.info("Attachment '{}' pushed to Mantis #{} for ticket #{}",
+                attachment.getFileName(), ticket.getMantisId(), ticketId);
+
+        auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_PUSH_ATTACHMENT_TO_MANTIS,
+                "Ticket", "Ticket", ticketId.longValue(),
+                "Pièce jointe '" + attachment.getFileName() + "' poussée vers Mantis #" + ticket.getMantisId());
+    }
+
+    @Transactional
+    public AttachmentDTO uploadAndPushToMantis(Integer ticketId, MultipartFile file, User currentUser) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket introuvable"));
+
+        if (ticket.getMantisId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Le ticket #" + ticketId + " n'a pas encore été poussé vers Mantis");
+        }
+
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fichier vide");
+        }
+
+        final long MAX_SIZE = 2_147_328L;
+        if (file.getSize() > MAX_SIZE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Le fichier " + file.getOriginalFilename() + " dépasse 2,097 KB");
+        }
+
+        try {
+            String originalName = file.getOriginalFilename();
+            String safeName = (originalName == null || originalName.trim().isEmpty())
+                    ? "attachment-" + System.currentTimeMillis()
+                    : originalName.trim();
+
+            String safeContentType = (file.getContentType() == null || file.getContentType().isBlank())
+                    ? "application/octet-stream"
+                    : file.getContentType();
+
+            TicketAttachment attachment = TicketAttachment.builder()
+                    .ticket(ticket)
+                    .fileName(safeName)
+                    .contentType(safeContentType)
+                    .sizeBytes(file.getSize())
+                    .fileData(file.getBytes())
+                    .uploadedAt(LocalDateTime.now())
+                    .build();
+
+            em.createNativeQuery("""
+                    INSERT INTO ticket_attachments
+                    (ticket_id, file_name, content_type, size_bytes, file_data, uploaded_at)
+                    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                """)
+                    .setParameter(1, ticket.getId())
+                    .setParameter(2, attachment.getFileName())
+                    .setParameter(3, attachment.getContentType())
+                    .setParameter(4, attachment.getSizeBytes())
+                    .setParameter(5, attachment.getFileData())
+                    .setParameter(6, attachment.getUploadedAt())
+                    .executeUpdate();
+
+            AttachmentDTO dto = AttachmentDTO.builder()
+                    .fileName(attachment.getFileName())
+                    .contentType(attachment.getContentType())
+                    .sizeBytes(attachment.getSizeBytes())
+                    .uploadedAt(attachment.getUploadedAt())
+                    .build();
+
+            mantisService.uploadIssueAttachment(
+                    ticket.getMantisId(),
+                    attachment.getFileName(),
+                    attachment.getContentType(),
+                    attachment.getFileData()
+            );
+
+            log.info("Attachment '{}' uploaded and pushed to Mantis #{} for ticket #{}",
+                    attachment.getFileName(), ticket.getMantisId(), ticketId);
+
+            auditLogService.log(currentUser.getId(), currentUser.fullName(), AuditLog.ACTION_PUSH_ATTACHMENT_TO_MANTIS,
+                    "Ticket", "Ticket", ticketId.longValue(),
+                    "Pièce jointe '" + attachment.getFileName() + "' uploadée et poussée vers Mantis #" + ticket.getMantisId());
+
+            return dto;
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lecture fichier", e);
+        }
+    }
 }

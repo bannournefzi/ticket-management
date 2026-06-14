@@ -5,6 +5,7 @@ export interface AuthenticationRequest {
 
 export interface AuthenticationResponse {
   token: string;
+  mustChangePassword: boolean;
 }
 
 export interface RegistrationRequest {

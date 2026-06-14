@@ -9,12 +9,10 @@ import {
   TicketPriority,
   TicketStatus,
   TicketCategory,
-  PageResponse
+  PageResponse,
+  Attachment,
+  MantisProject
 } from '../models/ticket.model';
-export interface MantisProject {
-  id: number;
-  name: string;
-}
 import { map } from 'rxjs/operators';
 import { TicketSuggestionResponse, AnalyticsEventRequest } from '../models/ticket-suggestion.model';
 import { environment } from '../environments/environment';
@@ -206,6 +204,18 @@ downloadAttachment(ticketId: number, attachmentId: number): Observable<Blob> {
   return this.http.get(`${this.baseUrl}/${ticketId}/attachments/${attachmentId}`, {
     responseType: 'blob'
   });
+}
+
+pushAttachmentToMantis(ticketId: number, attachmentId: number): Observable<void> {
+  return this.http.patch<void>(
+    `${this.baseUrl}/${ticketId}/attachments/${attachmentId}/push-to-mantis`, {});
+}
+
+uploadAndPushToMantis(ticketId: number, file: File): Observable<Attachment> {
+  const fd = new FormData();
+  fd.append('file', file);
+  return this.http.post<Attachment>(
+    `${this.baseUrl}/${ticketId}/attachments/upload-and-push`, fd);
 }
 
 toggleCommentsEnabled(ticketId: number, enabled: boolean): Observable<Ticket> {

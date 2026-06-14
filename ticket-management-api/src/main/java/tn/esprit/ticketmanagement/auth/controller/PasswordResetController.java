@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;                        
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.ticketmanagement.auth.dto.ChangePasswordRequest;
+import tn.esprit.ticketmanagement.auth.dto.FirstLoginChangePasswordRequest;
 import tn.esprit.ticketmanagement.auth.dto.ForgotPasswordRequest;
 import tn.esprit.ticketmanagement.auth.service.PasswordResetService;
 import tn.esprit.ticketmanagement.auth.entity.ResetPasswordRequest;
@@ -53,6 +54,21 @@ public class PasswordResetController {
 
         String userEmail = authentication.getName();
         passwordResetService.changePassword(request, userEmail);
+        return ResponseEntity.ok(Map.of("message", "Mot de passe modifié avec succès"));
+    }
+
+    @PostMapping("/first-login-change-password")
+    public ResponseEntity<Map<String, String>> firstLoginChangePassword(
+            @RequestBody @Valid FirstLoginChangePasswordRequest request
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(Map.of("message", "Non authentifié"));
+        }
+
+        String userEmail = authentication.getName();
+        passwordResetService.firstLoginChangePassword(request, userEmail);
         return ResponseEntity.ok(Map.of("message", "Mot de passe modifié avec succès"));
     }
 }

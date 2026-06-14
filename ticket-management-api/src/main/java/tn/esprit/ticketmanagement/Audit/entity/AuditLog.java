@@ -67,6 +67,7 @@ public class AuditLog {
     public static final String ACTION_PUSH_TO_MANTIS = "PUSH_TO_MANTIS";
     public static final String ACTION_CREATE_COMMENT = "CREATE_COMMENT";
     public static final String ACTION_DELETE_COMMENT = "DELETE_COMMENT";
+    public static final String ACTION_PUSH_ATTACHMENT_TO_MANTIS = "PUSH_ATTACHMENT_TO_MANTIS";
     public static final String ACTION_UPLOAD_ATTACHMENT = "UPLOAD_ATTACHMENT";
     public static final String ACTION_TOGGLE_COMMENTS = "TOGGLE_COMMENTS";
     public static final String ACTION_CREATE_USER = "CREATE_USER";

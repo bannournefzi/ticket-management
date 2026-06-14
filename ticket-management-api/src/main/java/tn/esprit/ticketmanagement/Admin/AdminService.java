@@ -99,6 +99,8 @@ public class AdminService {
                 )
                 .build();
 
+        user.setMustChangePassword(true);
+
         User savedUser = userRepository.save(user);
 
         userPagePermissionService.grantAllDefaultPages(savedUser.getId());

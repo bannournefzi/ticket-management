@@ -46,6 +46,7 @@ import { UserSelectorComponent } from './meetings/user-selector/user-selector.co
 import { MetierCalendarComponent } from './meetings/metier-calendar/metier-calendar.component';
 import { AuditHistoryComponent } from './Metier/audit-history/audit-history.component';
 import { AuditLogsComponent } from './admin/audit-logs/audit-logs.component';
+import { FirstLoginModalComponent } from './first-login-modal/first-login-modal.component';
 
 
 @NgModule({
@@ -86,6 +87,7 @@ import { AuditLogsComponent } from './admin/audit-logs/audit-logs.component';
     AuditHistoryComponent,
     AuditLogsComponent,
     BaKnowledgeBaseComponent,
+    FirstLoginModalComponent,
     
   ],
   imports: [

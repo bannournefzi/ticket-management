@@ -292,6 +292,8 @@ export class BaTicketManagementComponent implements OnInit {
     this.newComment        = '';
     this.isInternalNote    = false;
     this.ticketHistory     = [];
+    this.pushedAttachmentIds = new Set();
+    this.mantisUploadError = null;
     this.loadComments(ticket.id);
     this.loadMantisComments(ticket.id);
   }
@@ -457,6 +459,12 @@ export class BaTicketManagementComponent implements OnInit {
 selectedMantisProjectId: number | null = null;
 isMantisModalOpen = false;
 
+// ── Attachment Mantis Push ──────────────────────────────────────────────
+pushingAttachmentId: number | null = null;
+pushedAttachmentIds: Set<number> = new Set();
+isUploadingToMantis = false;
+mantisUploadError: string | null = null;
+
 openMantisModal(ticket: Ticket): void {
   this.selectedTicket = ticket;
   this.isDetailModalOpen = false;
@@ -498,6 +506,67 @@ confirmPushToMantis(): void {
     }
   });
 }
+
+  // ══════════════════════════════════════════
+  //  ATTACHMENT MANTIS PUSH
+  // ══════════════════════════════════════════
+
+  pushAttachmentToMantis(attachmentId: number): void {
+    if (!this.selectedTicket) return;
+    this.pushingAttachmentId = attachmentId;
+
+    this.ticketService.pushAttachmentToMantis(this.selectedTicket.id, attachmentId).subscribe({
+      next: () => {
+        this.pushedAttachmentIds.add(attachmentId);
+        this.pushingAttachmentId = null;
+      },
+      error: (err) => {
+        this.pushingAttachmentId = null;
+        const msg = err.error?.message || 'Erreur envoi vers Mantis';
+        this.mantisUploadError = msg;
+        setTimeout(() => this.mantisUploadError = null, 4000);
+      }
+    });
+  }
+
+  onMantisFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.[0] && this.selectedTicket) {
+      this.uploadToMantis(input.files[0]);
+    }
+  }
+
+  onMantisDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer?.files[0] && this.selectedTicket) {
+      this.uploadToMantis(event.dataTransfer.files[0]);
+    }
+  }
+
+  private uploadToMantis(file: File): void {
+    if (!this.selectedTicket) return;
+    this.isUploadingToMantis = true;
+    this.mantisUploadError = null;
+
+    this.ticketService.uploadAndPushToMantis(this.selectedTicket.id, file).subscribe({
+      next: (att) => {
+        if (this.selectedTicket) {
+          this.selectedTicket = {
+            ...this.selectedTicket,
+            attachments: [...(this.selectedTicket.attachments || []), att]
+          };
+        }
+        this.pushedAttachmentIds.add(att.id);
+        this.isUploadingToMantis = false;
+      },
+      error: (err) => {
+        this.isUploadingToMantis = false;
+        const msg = err.error?.message || 'Erreur upload vers Mantis';
+        this.mantisUploadError = msg;
+        setTimeout(() => this.mantisUploadError = null, 4000);
+      }
+    });
+  }
 
   // ══════════════════════════════════════════
   //  CONFIG SAFE ACCESSORS (FIX #2 & #5)

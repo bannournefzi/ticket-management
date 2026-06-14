@@ -75,6 +75,30 @@ export class AuthService {
     });
   }
 
+  // ── First-login password change ───────────────────────────────────────────
+
+  firstLoginChangePassword(
+    newPassword: string,
+    confirmPassword: string
+  ): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/first-login-change-password`, {
+      newPassword,
+      confirmPassword
+    });
+  }
+
+  mustChangePassword(): boolean {
+    return localStorage.getItem('must_change_password') === 'true';
+  }
+
+  setMustChangePassword(value: boolean): void {
+    localStorage.setItem('must_change_password', String(value));
+  }
+
+  clearMustChangePassword(): void {
+    localStorage.removeItem('must_change_password');
+  }
+
   // ── Token / Role helpers (unchanged) ───────────────────────────────────────
 
   getToken(): string | null {

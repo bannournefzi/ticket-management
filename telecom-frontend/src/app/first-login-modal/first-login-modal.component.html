@@ -1,0 +1,81 @@
+<div class="first-login-overlay">
+  <div class="first-login-card">
+    <div *ngIf="!success; else successState">
+      <div class="card-header">
+        <div class="icon-lock">
+          <i class="fas fa-lock"></i>
+        </div>
+        <h2>Changement de mot de passe obligatoire</h2>
+        <p class="subtitle">Vous devez définir un nouveau mot de passe avant de continuer.</p>
+      </div>
+
+      <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="password-form">
+        <div class="form-group">
+          <label for="newPassword">Nouveau mot de passe</label>
+          <div class="input-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="newPassword"
+              formControlName="newPassword"
+              placeholder="Minimum 8 caractères"
+              class="form-control"
+            />
+            <button type="button" class="toggle-visibility" (click)="showPassword = !showPassword">
+              <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
+          <div *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched" class="field-error">
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['required']">Le mot de passe est obligatoire.</span>
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">Minimum 8 caractères.</span>
+          </div>
+        </div>
+
+        <div class="strength-bar" *ngIf="passwordForm.value.newPassword">
+          <div class="strength-track">
+            <div class="strength-fill" [style.width.%]="strengthWidth" [class]="strengthClass"></div>
+          </div>
+          <span class="strength-label" [class]="strengthClass">{{ strengthLabel }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmer le mot de passe</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            placeholder="Répétez le mot de passe"
+            class="form-control"
+          />
+          <div *ngIf="passwordForm.get('confirmPassword')?.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched" class="field-error">
+            Les mots de passe ne correspondent pas.
+          </div>
+        </div>
+
+        <div *ngIf="errorMessage" class="alert alert-error">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="isLoading">
+          <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+          <span *ngIf="!isLoading">Changer le mot de passe</span>
+          <span *ngIf="isLoading">Modification en cours...</span>
+        </button>
+      </form>
+    </div>
+
+    <ng-template #successState>
+      <div class="success-state">
+        <div class="icon-success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h2>Mot de passe modifié avec succès</h2>
+        <p>Votre mot de passe a été mis à jour. Vous pouvez maintenant accéder à l'application.</p>
+        <button class="btn btn-primary" (click)="goToProfile()">
+          <i class="fas fa-user"></i>
+          Aller au profil
+        </button>
+      </div>
+    </ng-template>
+  </div>
+</div>
