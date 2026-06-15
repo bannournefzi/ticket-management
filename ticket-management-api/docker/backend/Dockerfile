@@ -46,10 +46,10 @@ RUN mkdir -p /app/logs /app/uploads && \
 USER appuser
 
 # Port exposé (doit correspondre à server.port dans application.properties)
-EXPOSE 8080
+EXPOSE 8088
 
 # Variables d'environnement par défaut (surchargeables au runtime)
-ENV SPRING_PROFILES_ACTIVE=prod
+#ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_OPTS="-Xms256m -Xmx512m"
 
 # Health check Docker natif
