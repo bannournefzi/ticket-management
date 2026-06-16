@@ -36,8 +36,10 @@
               "src/styles.scss",
               "node_modules/ngx-toastr/toastr.css"
             ],
-            "scripts": [    "node_modules/sockjs-client/dist/sockjs.min.js"],
-            "allowedCommonJsDependencies": [        
+            "scripts": [
+              "node_modules/sockjs-client/dist/sockjs.min.js"
+            ],
+            "allowedCommonJsDependencies": [
               "@stomp/stompjs",
               "sockjs-client"
             ]
@@ -45,17 +47,17 @@
           "configurations": {
             "production": {
               "budgets": [
-  {
-    "type": "initial",
-    "maximumWarning": "1mb",
-    "maximumError": "3mb"
-  },
-{
-    "type": "anyComponentStyle",
-    "maximumWarning": "40kb",
-    "maximumError": "60kb"
-}
-],
+                {
+                  "type": "initial",
+                  "maximumWarning": "1mb",
+                  "maximumError": "3mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "40kb",
+                  "maximumError": "60kb"
+                }
+              ],
               "outputHashing": "all"
             },
             "development": {
@@ -105,11 +107,23 @@
             ],
             "scripts": []
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
   },
   "cli": {
-    "analytics": "1b7b542b-f8dc-4169-a58a-67c3c1bb15d2"
+    "analytics": "1b7b542b-f8dc-4169-a58a-67c3c1bb15d2",
+    "schematicCollections": [
+      "angular-eslint"
+    ]
   }
 }
