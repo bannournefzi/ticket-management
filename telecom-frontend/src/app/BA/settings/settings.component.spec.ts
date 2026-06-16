@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SettingsComponent } from './settings.component';
+import { BaSettingsComponent  } from './settings.component';
 
-describe('SettingsComponent', () => {
-  let component: SettingsComponent;
-  let fixture: ComponentFixture<SettingsComponent>;
+describe('BaSettingsComponent', () => {
+  let component: BaSettingsComponent;
+  let fixture: ComponentFixture<BaSettingsComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [SettingsComponent]
+      declarations: [BaSettingsComponent]
     });
-    fixture = TestBed.createComponent(SettingsComponent);
+    fixture = TestBed.createComponent(BaSettingsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
