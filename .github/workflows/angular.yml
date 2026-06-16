@@ -70,3 +70,31 @@ jobs:
           name: test-results
           path: telecom-frontend/coverage/
           retention-days: 7
+
+  # ══════════════════════════════════════════════
+  # JOB 3 — SonarCloud Analysis
+  # ══════════════════════════════════════════════
+  sonar:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: telecom-frontend
+          args: >
+            -Dsonar.projectKey=bannournefzi_ticket-management
+            -Dsonar.organization=bannournefzi
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/*.spec.ts,**/node_modules/**
+            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
