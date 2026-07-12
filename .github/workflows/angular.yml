@@ -77,7 +77,7 @@ jobs:
             -Dsonar.exclusions=**/*.spec.ts,**/node_modules/**
             -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
 
-  # ══════════════════════════════════════════════
+    # ══════════════════════════════════════════════
   # JOB 4 — Build Angular
   # ══════════════════════════════════════════════
   build:
@@ -91,9 +91,14 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: telecom-frontend/package-lock.json
-      - run: npm ci --legacy-peer-deps
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
         working-directory: telecom-frontend
-      - run: npm run build -- --configuration production
+      - name: Fix TypeScript version
+        run: npm install typescript@5.1.6 --save-dev --legacy-peer-deps
+        working-directory: telecom-frontend
+      - name: Build Angular
+        run: npm run build -- --configuration production
         working-directory: telecom-frontend
       - uses: actions/upload-artifact@v4
         with:

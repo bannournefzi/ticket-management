@@ -67,9 +67,9 @@ public class SLAConfig {
     }
 
     public enum SLAStatus {
-        ON_TRACK,   // ✅ Dans les délais
-        AT_RISK,    // ⚠️ Risque de dépassement
-        BREACHED,   // 🔴 SLA dépassé !
-        MET         // ✅ Résolu dans les délais
+        ON_TRACK,
+        AT_RISK,
+        BREACHED,
+        MET
     }
 }
